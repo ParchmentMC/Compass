@@ -1,0 +1,5 @@
+@ParametersAreNonnullByDefault
+@MethodsReturnNonnullByDefault
+package net.parchmentmc.compass.util;
+
+import javax.annotation.ParametersAreNonnullByDefault;

@@ -1,0 +1,8 @@
+plugins {
+    id 'net.parchmentmc.compass'
+}
+
+repositories {
+    mavenCentral()
+    maven { url = "https://maven.minecraftforge.net/" }
+}
