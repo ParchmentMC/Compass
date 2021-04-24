@@ -1,12 +1,12 @@
-package net.parchmentmc.compass;
+package org.parchmentmc.compass;
 
 import de.undercouch.gradle.tasks.download.Download;
-import net.parchmentmc.compass.manifest.LauncherManifest;
-import net.parchmentmc.compass.manifest.VersionManifest;
-import net.parchmentmc.compass.tasks.DisplayMinecraftVersions;
-import net.parchmentmc.compass.tasks.DownloadObfuscationMappings;
-import net.parchmentmc.compass.tasks.DownloadVersionManifests;
-import net.parchmentmc.compass.util.JSONUtil;
+import org.parchmentmc.compass.manifest.LauncherManifest;
+import org.parchmentmc.compass.manifest.VersionManifest;
+import org.parchmentmc.compass.tasks.DisplayMinecraftVersions;
+import org.parchmentmc.compass.tasks.DownloadObfuscationMappings;
+import org.parchmentmc.compass.tasks.DownloadVersionManifests;
+import org.parchmentmc.compass.util.JSONUtil;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.provider.Provider;

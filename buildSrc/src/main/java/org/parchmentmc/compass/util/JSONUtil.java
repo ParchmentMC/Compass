@@ -1,8 +1,8 @@
-package net.parchmentmc.compass.util;
+package org.parchmentmc.compass.util;
 
 import com.squareup.moshi.*;
-import net.parchmentmc.compass.manifest.LauncherManifest;
-import net.parchmentmc.compass.manifest.VersionManifest;
+import org.parchmentmc.compass.manifest.LauncherManifest;
+import org.parchmentmc.compass.manifest.VersionManifest;
 import okio.BufferedSource;
 import okio.Okio;
 import org.jetbrains.annotations.Nullable;

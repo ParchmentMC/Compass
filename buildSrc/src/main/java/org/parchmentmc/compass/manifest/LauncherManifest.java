@@ -1,4 +1,4 @@
-package net.parchmentmc.compass.manifest;
+package org.parchmentmc.compass.manifest;
 
 import java.io.Serializable;
 import java.time.OffsetDateTime;

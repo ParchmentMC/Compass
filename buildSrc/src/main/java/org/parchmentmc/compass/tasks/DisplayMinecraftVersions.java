@@ -1,6 +1,6 @@
-package net.parchmentmc.compass.tasks;
+package org.parchmentmc.compass.tasks;
 
-import net.parchmentmc.compass.manifest.LauncherManifest;
+import org.parchmentmc.compass.manifest.LauncherManifest;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.Property;

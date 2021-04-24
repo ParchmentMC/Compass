@@ -1,4 +1,4 @@
-package net.parchmentmc.compass.manifest;
+package org.parchmentmc.compass.manifest;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;

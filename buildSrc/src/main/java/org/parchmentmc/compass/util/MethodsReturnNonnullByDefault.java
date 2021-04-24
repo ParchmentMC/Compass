@@ -1,4 +1,4 @@
-package net.parchmentmc.compass.util;
+package org.parchmentmc.compass.util;
 
 import javax.annotation.Nonnull;
 import javax.annotation.meta.TypeQualifierDefault;

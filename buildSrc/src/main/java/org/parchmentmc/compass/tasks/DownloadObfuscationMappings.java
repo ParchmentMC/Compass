@@ -1,7 +1,7 @@
-package net.parchmentmc.compass.tasks;
+package org.parchmentmc.compass.tasks;
 
 import de.undercouch.gradle.tasks.download.DownloadAction;
-import net.parchmentmc.compass.manifest.VersionManifest;
+import org.parchmentmc.compass.manifest.VersionManifest;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFileProperty;

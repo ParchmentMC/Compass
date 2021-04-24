@@ -1,7 +1,5 @@
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-package net.parchmentmc.compass.tasks;
-
-import net.parchmentmc.compass.util.MethodsReturnNonnullByDefault;
+package org.parchmentmc.compass.util;
 
 import javax.annotation.ParametersAreNonnullByDefault;

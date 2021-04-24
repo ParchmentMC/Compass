@@ -1,12 +1,10 @@
-package net.parchmentmc.compass.tasks;
+package org.parchmentmc.compass.tasks;
 
 import de.undercouch.gradle.tasks.download.Download;
 import de.undercouch.gradle.tasks.download.VerifyAction;
-import net.parchmentmc.compass.manifest.LauncherManifest;
+import org.parchmentmc.compass.manifest.LauncherManifest;
 import org.gradle.api.InvalidUserDataException;
-import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
-import org.gradle.api.file.RegularFile;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
