@@ -1,11 +1,11 @@
 package org.parchmentmc.compass.tasks;
 
-import org.parchmentmc.compass.manifest.LauncherManifest;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
+import org.parchmentmc.compass.manifest.LauncherManifest;
 
 public abstract class DisplayMinecraftVersions extends DefaultTask {
     @Input

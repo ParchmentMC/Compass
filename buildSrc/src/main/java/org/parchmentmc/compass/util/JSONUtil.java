@@ -1,11 +1,11 @@
 package org.parchmentmc.compass.util;
 
 import com.squareup.moshi.*;
-import org.parchmentmc.compass.manifest.LauncherManifest;
-import org.parchmentmc.compass.manifest.VersionManifest;
 import okio.BufferedSource;
 import okio.Okio;
 import org.jetbrains.annotations.Nullable;
+import org.parchmentmc.compass.manifest.LauncherManifest;
+import org.parchmentmc.compass.manifest.VersionManifest;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,9 +16,8 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
 public final class JSONUtil {
-    public static JsonAdapter<OffsetDateTime> OFFSET_DATE_TIME_ADAPTER = new OffsetDateTimeAdapter();
-    private static final Moshi MOSHI = new Moshi.Builder()
-            .add(OffsetDateTime.class, OFFSET_DATE_TIME_ADAPTER)
+    public static final Moshi MOSHI = new Moshi.Builder()
+            .add(OffsetDateTime.class, new OffsetDateTimeAdapter())
             .build();
 
     private JSONUtil() {
