@@ -1,15 +1,18 @@
 package org.parchmentmc.compass;
 
 import de.undercouch.gradle.tasks.download.Download;
+import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.parchmentmc.compass.manifest.LauncherManifest;
+import org.parchmentmc.compass.manifest.VersionManifest;
 import org.parchmentmc.compass.tasks.DisplayMinecraftVersions;
 import org.parchmentmc.compass.tasks.DownloadObfuscationMaps;
-import org.parchmentmc.compass.tasks.DownloadVersionManifests;
+import org.parchmentmc.compass.tasks.DownloadVersionManifest;
 import org.parchmentmc.compass.util.JSONUtil;
 
 public class CompassPlugin implements Plugin<Project> {
@@ -25,8 +28,8 @@ public class CompassPlugin implements Plugin<Project> {
         downloadLauncherManifest.configure(t -> {
             t.setGroup(COMPASS_GROUP);
             t.setDescription("Downloads the launcher manifest.");
-            t.src(extension.getManifestURL());
-            t.dest(t.getProject().getLayout().getBuildDirectory().dir("launcherManifest").map(d -> d.file("manifest.json").getAsFile()));
+            t.src(extension.getLauncherManifestURL());
+            t.dest(t.getProject().getLayout().getBuildDirectory().dir(t.getName()).map(d -> d.file("manifest.json").getAsFile()));
             t.overwrite(true);
             t.onlyIfModified(true);
             t.useETag(true);
@@ -34,33 +37,42 @@ public class CompassPlugin implements Plugin<Project> {
         });
 
         //noinspection NullableProblems
-        final Provider<LauncherManifest> manifest = downloadLauncherManifest.map(Download::getDest).map(JSONUtil::tryParseLauncherManifest);
+        final Provider<LauncherManifest> launcherManifest = downloadLauncherManifest
+                .map(Download::getDest)
+                .map(JSONUtil::tryParseLauncherManifest);
 
         final TaskProvider<DisplayMinecraftVersions> displayMinecraftVersions = tasks.register("displayMinecraftVersions", DisplayMinecraftVersions.class);
         displayMinecraftVersions.configure(t -> {
             t.setGroup(COMPASS_GROUP);
             t.setDescription("Displays all known Minecraft versions.");
-            t.getManifest().set(manifest);
+            t.getManifest().set(launcherManifest);
         });
 
-        TaskProvider<DownloadVersionManifests> downloadVersionManifests = tasks.register("downloadVersionManifests", DownloadVersionManifests.class);
-        downloadVersionManifests.configure(t -> {
+        final Provider<LauncherManifest.VersionData> versionData = launcherManifest.zip(extension.getVersion(),
+                (mf, ver) -> mf.versions.stream()
+                        .filter(str -> str.id.equals(ver))
+                        .findFirst()
+                        .orElseThrow(() -> new InvalidUserDataException("No version data found for " + ver)));
+
+        TaskProvider<DownloadVersionManifest> downloadVersionManifest = tasks.register("downloadVersionManifest", DownloadVersionManifest.class);
+        downloadVersionManifest.configure(t -> {
             t.setGroup(COMPASS_GROUP);
-            t.setDescription("Download the version manifests for each version.");
-            t.getLauncherManifest().convention(manifest);
-            t.getVersionStorage().convention(extension.getVersionStorage());
-            t.getVersions().convention(extension.getVersions());
-            t.getOutputFileName().convention(extension.getVersionManifest());
+            t.setDescription("Downloads the version manifest.");
+            t.getVersionData().set(versionData);
+            t.getVersion().set(extension.getVersion());
         });
 
-        TaskProvider<DownloadObfuscationMaps> downloadObfuscationMappings = tasks.register("downloadObfuscationMappings", DownloadObfuscationMaps.class);
-        downloadObfuscationMappings.configure(t -> {
+        //noinspection NullableProblems
+        final Provider<VersionManifest> versionManifest = downloadVersionManifest
+                .flatMap(DownloadVersionManifest::getOutput)
+                .map(RegularFile::getAsFile)
+                .map(JSONUtil::tryParseVersionManifest);
+
+        TaskProvider<DownloadObfuscationMaps> downloadObfuscationMaps = tasks.register("downloadObfuscationMaps", DownloadObfuscationMaps.class);
+        downloadObfuscationMaps.configure(t -> {
             t.setGroup(COMPASS_GROUP);
-            t.dependsOn(downloadVersionManifests);
-            t.setDescription("Download the obfuscation mappings for each version.");
-            t.getVersionStorage().convention(extension.getVersionStorage());
-            t.getVersions().convention(extension.getVersions());
-            t.getVersionManifestFilename().convention(downloadVersionManifests.flatMap(DownloadVersionManifests::getOutputFileName));
+            t.setDescription("Downloads the client and server obfuscation maps.");
+            t.getVersionManifest().set(versionManifest);
         });
 
         /*
