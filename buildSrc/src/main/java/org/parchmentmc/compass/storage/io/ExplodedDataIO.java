@@ -23,14 +23,22 @@ import static com.squareup.moshi.Types.newParameterizedType;
 import static com.squareup.moshi.Types.subtypeOf;
 
 // Writes out the data as folders based on package
-public class ExplodedDataIO {
-    private static final Moshi MOSHI = JSONUtil.MOSHI;
+public class ExplodedDataIO implements MappingDataIO {
+    public static final ExplodedDataIO INSTANCE = new ExplodedDataIO(JSONUtil.MOSHI, "  ");
+
+    private final Moshi moshi;
+    private final String indent;
+
+    public ExplodedDataIO(Moshi moshi, String indent) {
+        this.moshi = moshi;
+        this.indent = indent;
+    }
 
     private static final ParameterizedType PACKAGE_COLLECTION_TYPE =
             newParameterizedType(Collection.class, subtypeOf(MappingDataContainer.PackageData.class));
     private static final String EXTENSION = ".json";
 
-    public static void write(Path base, MappingDataContainer data) throws IOException {
+    public void write(MappingDataContainer data, Path base) throws IOException {
         if (Files.exists(base)) {
             // noinspection ResultOfMethodCallIgnored
             Files.walk(base)
@@ -42,10 +50,10 @@ public class ExplodedDataIO {
 
         // Write out packages.json
         try (BufferedSink sink = Okio.buffer(Okio.sink(base.resolve("packages.json")))) {
-            MOSHI.adapter(PACKAGE_COLLECTION_TYPE).indent("    ").toJson(sink, data.getPackages());
+            moshi.adapter(PACKAGE_COLLECTION_TYPE).indent(indent).toJson(sink, data.getPackages());
         }
 
-        JsonAdapter<MappingDataContainer.ClassData> classAdapter = MOSHI.adapter(MappingDataContainer.ClassData.class).indent("  ");
+        JsonAdapter<MappingDataContainer.ClassData> classAdapter = moshi.adapter(MappingDataContainer.ClassData.class).indent(indent);
         Path classesBase = base.resolve("classes");
         for (MappingDataContainer.ClassData classData : data.getClasses()) {
             String className = classData.getName() + EXTENSION;
@@ -61,15 +69,15 @@ public class ExplodedDataIO {
         }
     }
 
-    public static ImmutableMappingDataContainer read(Path base) throws IOException {
+    public ImmutableMappingDataContainer read(Path base) throws IOException {
         Collection<? extends MappingDataContainer.PackageData> packages;
         try (BufferedSource source = Okio.buffer(Okio.source(base.resolve("packages.json")))) {
-            packages = MOSHI.<Collection<? extends MappingDataContainer.PackageData>>adapter(PACKAGE_COLLECTION_TYPE).fromJson(source);
+            packages = moshi.<Collection<? extends MappingDataContainer.PackageData>>adapter(PACKAGE_COLLECTION_TYPE).indent(indent).fromJson(source);
         }
 
         List<MappingDataContainer.ClassData> classes = new ArrayList<>();
 
-        JsonAdapter<MappingDataContainer.ClassData> classAdapter = MOSHI.adapter(MappingDataContainer.ClassData.class).indent("  ");
+        JsonAdapter<MappingDataContainer.ClassData> classAdapter = moshi.adapter(MappingDataContainer.ClassData.class).indent(indent);
         Path classesBase = base.resolve("classes");
         Files.walkFileTree(classesBase, new SimpleFileVisitor<Path>() {
             @Override

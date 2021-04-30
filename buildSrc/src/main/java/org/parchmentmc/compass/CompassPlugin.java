@@ -104,11 +104,11 @@ public class CompassPlugin implements Plugin<Project> {
                 Path obfPath = output.resolve("obf");
                 Path mojPath = output.resolve("moj");
 
-                ExplodedDataIO.write(obfPath, obf);
-                ExplodedDataIO.write(mojPath, moj);
+                ExplodedDataIO.INSTANCE.write(obf, obfPath);
+                ExplodedDataIO.INSTANCE.write(moj, mojPath);
 
-                MappingDataContainer readObf = ExplodedDataIO.read(obfPath);
-                MappingDataContainer readMoj = ExplodedDataIO.read(mojPath);
+                MappingDataContainer readObf = ExplodedDataIO.INSTANCE.read(obfPath);
+                MappingDataContainer readMoj = ExplodedDataIO.INSTANCE.read(mojPath);
 
                 try (BufferedSink sink = Okio.buffer(Okio.sink(output.resolve("input_obf.json")))) {
                     JSONUtil.MOSHI.adapter(MappingDataContainer.class).indent("  ").toJson(sink, obf);
