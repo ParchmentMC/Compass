@@ -1,8 +1,13 @@
 repositories {
     gradlePluginPortal()
+    maven {
+        name = 'MinecraftForge'
+        url = 'https://maven.minecraftforge.net/'
+    }
 }
 
 dependencies {
     implementation 'de.undercouch:gradle-download-task:4.1.1'
     implementation 'com.squareup.moshi:moshi:1.12.0'
+    implementation 'net.minecraftforge:srgutils:0.4.1'
 }

@@ -1,19 +1,30 @@
 package org.parchmentmc.compass;
 
 import de.undercouch.gradle.tasks.download.Download;
+import net.minecraftforge.srgutils.IMappingFile;
+import okio.BufferedSink;
+import okio.Okio;
+import org.gradle.api.DefaultTask;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.RegularFile;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.parchmentmc.compass.manifest.LauncherManifest;
 import org.parchmentmc.compass.manifest.VersionManifest;
+import org.parchmentmc.compass.storage.MappingDataContainer;
+import org.parchmentmc.compass.storage.io.ExplodedDataIO;
 import org.parchmentmc.compass.tasks.DisplayMinecraftVersions;
 import org.parchmentmc.compass.tasks.DownloadObfuscationMaps;
 import org.parchmentmc.compass.tasks.DownloadVersionManifest;
 import org.parchmentmc.compass.util.JSONUtil;
+import org.parchmentmc.compass.util.MappingUtil;
+
+import java.io.IOException;
+import java.nio.file.Path;
 
 public class CompassPlugin implements Plugin<Project> {
     public static final String COMPASS_GROUP = "compass";
@@ -75,62 +86,58 @@ public class CompassPlugin implements Plugin<Project> {
             t.getVersionManifest().set(versionManifest);
         });
 
-        /*
-        t.doLast(_t -> {
+        DefaultTask writeExploded = tasks.create("writeExploded", DefaultTask.class);
+        writeExploded.dependsOn(downloadObfuscationMaps);
+        writeExploded.setGroup(COMPASS_GROUP);
+        writeExploded.setDescription("temporary task; Writes out the combined obfuscation maps into exploded directories.");
+        writeExploded.doLast(t -> {
+            Provider<IMappingFile> obfMapProvider = downloadObfuscationMaps.flatMap(s -> s.getClientMappingOutput().zip(s.getServerMappingOutput(),
+                    (client, server) -> MappingUtil.loadAndEnsureSuperset(client.getAsFile().toPath(), server.getAsFile().toPath())));
             try {
-                IMappingFile map = IMappingFile.load(t.getClientMappings().get().getAsFile());
+                Path output = extension.getStorageDirectory().get().getAsFile().toPath();
+                IMappingFile mojToObf = obfMapProvider.get();
+
                 // getMapped() == obfuscated, getOriginal() == mojmap
+                MappingDataContainer obf = MappingUtil.createBuilderFrom(mojToObf, true);
+                MappingDataContainer moj = MappingUtil.createBuilderFrom(mojToObf, false);
 
-                File file = project.file("versions/21w15a/data.json");
-                JsonAdapter<StorageFile> adapter = JSONUtil.MOSHI.adapter(StorageFile.class).indent("\t");
-                StorageFile storedFile = new StorageFile("21w15a");
+                Path obfPath = output.resolve("obf");
+                Path mojPath = output.resolve("moj");
 
-                for (IMappingFile.IClass cls : map.getClasses()) {
-                    int idx = cls.getOriginal().lastIndexOf('/');
-                    String name;
-                    if (idx == -1) {
-                        name = cls.getOriginal();
-                    } else {
-                        name = cls.getOriginal().substring(0, idx);
-                    }
-                    StorageFile.StoredPackage storedPackage = new StorageFile.StoredPackage();
-//                                storedPackage.addJavadoc("package " + name);
-                    storedFile.addPackage(name, storedPackage);
+                ExplodedDataIO.write(obfPath, obf);
+                ExplodedDataIO.write(mojPath, moj);
 
-                    StorageFile.StoredClass storedClass = new StorageFile.StoredClass();
-//                                storedClass.addJavadoc("class " + cls.getMapped() + " [" + cls.getOriginal() + "]");
-                    storedFile.addClass(cls.getMapped(), storedClass);
+                MappingDataContainer readObf = ExplodedDataIO.read(obfPath);
+                MappingDataContainer readMoj = ExplodedDataIO.read(mojPath);
 
-                    for (IMappingFile.IField field : cls.getFields()) {
-                        StorageFile.StoredField storedField = new StorageFile.StoredField();
-//                                    storedField.addJavadoc(String.format("class %s [%s]; field %s [%s]", cls.getMapped(), cls.getOriginal(), field.getMapped(), field.getOriginal()));
-                        storedClass.addField(field.getMapped(), storedField);
-                    }
-
-                    for (IMappingFile.IMethod method : cls.getMethods()) {
-                        StorageFile.StoredMethod storedMethod = new StorageFile.StoredMethod();
-//                                    storedMethod.addJavadoc(String.format("class %s [%s]; method %s [%s] %s", cls.getMapped(), cls.getOriginal(), method.getMapped(), method.getOriginal(), method.getDescriptor()));
-                        storedClass.addMethod(method.getMapped(), storedMethod);
-
-                        Map<Integer, String> paramMap = SignatureHelper.countParameters(method.getMappedDescriptor());
-//                                    paramMap.forEach(storedMethod::addParam);
-                    }
-
+                try (BufferedSink sink = Okio.buffer(Okio.sink(output.resolve("input_obf.json")))) {
+                    JSONUtil.MOSHI.adapter(MappingDataContainer.class).indent("  ").toJson(sink, obf);
+                }
+                try (BufferedSink sink = Okio.buffer(Okio.sink(output.resolve("input_moj.json")))) {
+                    JSONUtil.MOSHI.adapter(MappingDataContainer.class).indent("  ").toJson(sink, moj);
                 }
 
-                if (!file.exists()) {
-                    file.getParentFile().mkdirs();
-                    file.createNewFile();
+                try (BufferedSink sink = Okio.buffer(Okio.sink(output.resolve("output_obf.json")))) {
+                    JSONUtil.MOSHI.adapter(MappingDataContainer.class).indent("  ").toJson(sink, readObf);
                 }
-                try (BufferedSink sink = Okio.buffer(Okio.sink(file))) {
-                    adapter.toJson(sink, storedFile);
+                try (BufferedSink sink = Okio.buffer(Okio.sink(output.resolve("output_moj.json")))) {
+                    JSONUtil.MOSHI.adapter(MappingDataContainer.class).indent("  ").toJson(sink, readMoj);
                 }
 
+                Logger logger = t.getLogger();
+                if (obf.equals(readObf)) {
+                    logger.lifecycle("Obfuscation: Input mapping data matches read mapping data output");
+                } else {
+                    logger.warn("Obfuscation: Input mapping data DOES NOT match read mapping data output");
+                }
+                if (moj.equals(readMoj)) {
+                    logger.lifecycle("Mojmaps: Input mapping data matches read mapping data output");
+                } else {
+                    logger.warn("Mojmaps: Input mapping data DOES NOT match read mapping data output");
+                }
             } catch (IOException e) {
                 throw new AssertionError(e);
             }
         });
-        */
-
     }
 }

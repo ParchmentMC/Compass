@@ -16,5 +16,4 @@ build
 
 run
 
-versions/**/manifest.json
-versions/**/mojmap
+data

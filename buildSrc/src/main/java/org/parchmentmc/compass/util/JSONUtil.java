@@ -6,6 +6,7 @@ import okio.Okio;
 import org.jetbrains.annotations.Nullable;
 import org.parchmentmc.compass.manifest.LauncherManifest;
 import org.parchmentmc.compass.manifest.VersionManifest;
+import org.parchmentmc.compass.storage.io.MappingDataContainerAdapter;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -18,6 +19,7 @@ import java.time.format.DateTimeFormatter;
 public final class JSONUtil {
     public static final Moshi MOSHI = new Moshi.Builder()
             .add(OffsetDateTime.class, new OffsetDateTimeAdapter())
+            .add(new MappingDataContainerAdapter())
             .build();
 
     private JSONUtil() {
