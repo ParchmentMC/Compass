@@ -117,4 +117,26 @@ public class MappingUtil {
 
         return builder;
     }
+
+    public static MappingDataBuilder constructPackageData(MappingDataContainer container) {
+        if (container instanceof MappingDataBuilder) {
+            return constructPackageData((MappingDataBuilder) container);
+        }
+        return constructPackageData(createBuilderFrom(container));
+    }
+
+    // Creates packages based on the classes
+    public static MappingDataBuilder constructPackageData(MappingDataBuilder builder) {
+        for (MappingDataBuilder.MutableClassData cls : builder.getClasses()) {
+            int lastIndex = cls.getName().lastIndexOf('/');
+            String pkgName = ""; // default package
+            if (lastIndex != -1) { // has a package
+                pkgName = cls.getName().substring(0, lastIndex);
+            }
+            if (builder.getPackage(pkgName) == null) {
+                builder.addPackage(pkgName);
+            }
+        }
+        return builder;
+    }
 }

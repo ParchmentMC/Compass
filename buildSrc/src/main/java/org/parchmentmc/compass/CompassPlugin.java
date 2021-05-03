@@ -54,8 +54,8 @@ public class CompassPlugin implements Plugin<Project> {
                 IMappingFile mojToObf = obfMapProvider.get();
 
                 // getMapped() == obfuscated, getOriginal() == mojmap
-                MappingDataContainer obf = MappingUtil.createBuilderFrom(mojToObf, true);
-                MappingDataContainer moj = MappingUtil.createBuilderFrom(mojToObf, false);
+                MappingDataContainer obf = MappingUtil.constructPackageData(MappingUtil.createBuilderFrom(mojToObf, true));
+                MappingDataContainer moj = MappingUtil.constructPackageData(MappingUtil.createBuilderFrom(mojToObf, false));
 
                 Path obfPath = output.resolve("obf");
                 Path mojPath = output.resolve("moj");
