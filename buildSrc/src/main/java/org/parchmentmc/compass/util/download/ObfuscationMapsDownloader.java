@@ -113,6 +113,7 @@ public class ObfuscationMapsDownloader {
         }
 
         obfuscationMap = MappingUtil.loadAndEnsureSuperset(clientMappings.toPath(), serverMappings.toPath());
+        obfuscationMap = MappingUtil.constructPackageData(obfuscationMap);
 
         return obfuscationMap;
     }

@@ -35,6 +35,16 @@ public class MappingDataBuilder implements MappingDataContainer {
         return pkg;
     }
 
+    public MutablePackageData getOrCreatePackage(String packageName) {
+        return packagesMap.computeIfAbsent(packageName, this::addPackage);
+    }
+
+    public MappingDataBuilder clearPackages() {
+        packages.clear();
+        packagesMap.clear();
+        return this;
+    }
+
     @Override
     public Collection<? extends MutableClassData> getClasses() {
         return classesView;
@@ -53,6 +63,16 @@ public class MappingDataBuilder implements MappingDataContainer {
         return cls;
     }
 
+    public MutableClassData getOrCreateClass(String className) {
+        return classesMap.computeIfAbsent(className, this::addClass);
+    }
+
+    public MappingDataBuilder clearClasses() {
+        classes.clear();
+        classesMap.clear();
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -66,7 +86,15 @@ public class MappingDataBuilder implements MappingDataContainer {
         return Objects.hash(getPackages(), getClasses());
     }
 
-    public static class MutablePackageData implements MappingDataContainer.PackageData {
+    public interface MutableHasJavadoc<T> {
+        default T addJavadoc(String... line) {
+            return addJavadoc(Arrays.asList(line));
+        }
+
+        T addJavadoc(Collection<? extends String> lines);
+    }
+
+    public static class MutablePackageData implements MappingDataContainer.PackageData, MutableHasJavadoc<MutablePackageData> {
         private final String name;
         private final List<String> javadoc = new ArrayList<>();
         private transient final List<String> javadocView = Collections.unmodifiableList(javadoc);
@@ -83,10 +111,6 @@ public class MappingDataBuilder implements MappingDataContainer {
         @Override
         public List<String> getJavadoc() {
             return javadocView;
-        }
-
-        public MutablePackageData addJavadoc(String... line) {
-            return addJavadoc(Arrays.asList(line));
         }
 
         public MutablePackageData addJavadoc(Collection<? extends String> lines) {
@@ -108,7 +132,7 @@ public class MappingDataBuilder implements MappingDataContainer {
         }
     }
 
-    public static class MutableClassData implements MappingDataContainer.ClassData {
+    public static class MutableClassData implements MappingDataContainer.ClassData, MutableHasJavadoc<MutableClassData> {
         private final String name;
         private final List<String> javadoc = new ArrayList<>();
         private transient final List<String> javadocView = Collections.unmodifiableList(javadoc);
@@ -134,10 +158,6 @@ public class MappingDataBuilder implements MappingDataContainer {
         @Override
         public List<String> getJavadoc() {
             return javadocView;
-        }
-
-        public MutableClassData addJavadoc(String... line) {
-            return addJavadoc(Arrays.asList(line));
         }
 
         public MutableClassData addJavadoc(Collection<? extends String> lines) {
@@ -168,6 +188,16 @@ public class MappingDataBuilder implements MappingDataContainer {
             return field;
         }
 
+        public MutableFieldData getOrCreateField(String packageName) {
+            return fieldsMap.computeIfAbsent(packageName, this::addField);
+        }
+
+        public MutableClassData clearFields() {
+            fields.clear();
+            fieldsMap.clear();
+            return this;
+        }
+
         @Override
         public Collection<MutableMethodData> getMethods() {
             return methodsView;
@@ -184,6 +214,16 @@ public class MappingDataBuilder implements MappingDataContainer {
             methods.add(method);
             methodsMap.put(key(methodName, descriptor), method);
             return method;
+        }
+
+        public MutableMethodData getOrCreateMethod(String methodName, String descriptor) {
+            return methodsMap.computeIfAbsent(key(methodName, descriptor), key -> this.addMethod(methodName, descriptor));
+        }
+
+        public MutableClassData clearMethods() {
+            methods.clear();
+            methodsMap.clear();
+            return this;
         }
 
         private String key(String methodName, String descriptor) {
@@ -205,13 +245,13 @@ public class MappingDataBuilder implements MappingDataContainer {
         }
     }
 
-    public static class MutableFieldData implements MappingDataContainer.FieldData {
+    public static class MutableFieldData implements MappingDataContainer.FieldData, MutableHasJavadoc<MutableFieldData> {
         private final String name;
         private String descriptor;
         private final List<String> javadoc = new ArrayList<>();
         private transient final List<String> javadocView = Collections.unmodifiableList(javadoc);
 
-        MutableFieldData(String name) {
+        MutableFieldData(String name) { // TODO: move descriptor here
             this.name = name;
         }
 
@@ -234,10 +274,6 @@ public class MappingDataBuilder implements MappingDataContainer {
         @Override
         public List<String> getJavadoc() {
             return javadocView;
-        }
-
-        public MutableFieldData addJavadoc(String... line) {
-            return addJavadoc(Arrays.asList(line));
         }
 
         public MutableFieldData addJavadoc(Collection<? extends String> lines) {
@@ -265,7 +301,7 @@ public class MappingDataBuilder implements MappingDataContainer {
         }
     }
 
-    public static class MutableMethodData implements MappingDataContainer.MethodData {
+    public static class MutableMethodData implements MappingDataContainer.MethodData, MutableHasJavadoc<MutableMethodData> {
         private final String name;
         private final String descriptor;
         private final List<String> javadoc = new ArrayList<>();
@@ -292,10 +328,6 @@ public class MappingDataBuilder implements MappingDataContainer {
         @Override
         public List<String> getJavadoc() {
             return javadocView;
-        }
-
-        public MutableMethodData addJavadoc(String... line) {
-            return addJavadoc(Arrays.asList(line));
         }
 
         public MutableMethodData addJavadoc(Collection<? extends String> lines) {
@@ -326,6 +358,10 @@ public class MappingDataBuilder implements MappingDataContainer {
             return param;
         }
 
+        public MutableParameterData getOrCreateParameter(byte index) {
+            return parametersMap.computeIfAbsent(index, this::addParameter);
+        }
+
         public MutableMethodData clearParameters() {
             parameters.clear();
             parametersMap.clear();
@@ -347,7 +383,7 @@ public class MappingDataBuilder implements MappingDataContainer {
         }
     }
 
-    public static class MutableParameterData implements MappingDataContainer.ParameterData {
+    public static class MutableParameterData implements MappingDataContainer.ParameterData, MutableHasJavadoc<MutableParameterData> {
         private final byte index;
         @Nullable
         private String name = null;
@@ -396,6 +432,12 @@ public class MappingDataBuilder implements MappingDataContainer {
         @Override
         public int hashCode() {
             return Objects.hash(getIndex(), getName(), getJavadoc());
+        }
+
+        @Override
+        public MutableParameterData addJavadoc(Collection<? extends String> lines) {
+            this.javadoc = lines.stream().findFirst().orElse(null);
+            return this;
         }
     }
 }

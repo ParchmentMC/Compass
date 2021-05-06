@@ -4,14 +4,20 @@ import net.minecraftforge.srgutils.IMappingFile;
 import okio.BufferedSink;
 import okio.Okio;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.NamedDomainObjectSet;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
+import org.parchmentmc.compass.providers.DelegatingProvider;
+import org.parchmentmc.compass.providers.IntermediateProvider;
+import org.parchmentmc.compass.providers.mcpconfig.SRGProvider;
 import org.parchmentmc.compass.storage.MappingDataBuilder;
 import org.parchmentmc.compass.storage.MappingDataContainer;
+import org.parchmentmc.compass.storage.input.InputsReader;
 import org.parchmentmc.compass.storage.io.ExplodedDataIO;
 import org.parchmentmc.compass.tasks.DisplayMinecraftVersions;
 import org.parchmentmc.compass.util.JSONUtil;
@@ -19,6 +25,7 @@ import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.compass.util.download.ManifestsDownloader;
 import org.parchmentmc.compass.util.download.ObfuscationMapsDownloader;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -28,6 +35,13 @@ import java.util.Comparator;
 
 public class CompassPlugin implements Plugin<Project> {
     public static final String COMPASS_GROUP = "compass";
+
+    private final NamedDomainObjectSet<IntermediateProvider> intermediates;
+
+    @Inject
+    public CompassPlugin(ObjectFactory objectFactory) {
+        this.intermediates = objectFactory.namedDomainObjectSet(IntermediateProvider.class);
+    }
 
     @Override
     public void apply(Project project) {
@@ -106,11 +120,38 @@ public class CompassPlugin implements Plugin<Project> {
             });
         });
 
+        Provider<IMappingFile> obfMapProvider = obfuscationMaps.getObfuscationMap();
+        // noinspection NullableProblems
+        Provider<IMappingFile> officialMapProvider = obfMapProvider.map(IMappingFile::reverse);
+
+        intermediates.add(new DelegatingProvider("obf", officialMapProvider.map(s -> s.chain(s.reverse()))));
+        intermediates.add(new DelegatingProvider("official", officialMapProvider));
+        intermediates.add(new SRGProvider("srg", project));
+
+        TaskProvider<DefaultTask> combineInputData = tasks.register("createStagingFromInputs", DefaultTask.class);
+        combineInputData.configure(t -> {
+            t.setGroup(COMPASS_GROUP);
+            t.setDescription("Combines the input files with the current production data to create the staging data.");
+            t.doLast(_t -> {
+                try {
+                    InputsReader inputsReader = new InputsReader(intermediates);
+
+                    MappingDataContainer inputData = inputsReader.parse(extension.getInputs().get().getAsFile().toPath());
+                    MappingDataContainer baseData = ExplodedDataIO.INSTANCE.read(extension.getProductionData().get().getAsFile());
+
+                    MappingDataContainer combinedData = MappingUtil.combine(baseData, inputData);
+
+                    ExplodedDataIO.INSTANCE.write(combinedData, extension.getStagingData().get().getAsFile());
+                } catch (Exception e) {
+                    throw new AssertionError(e);
+                }
+            });
+        });
+
         DefaultTask writeExploded = tasks.create("writeExploded", DefaultTask.class);
         writeExploded.setGroup(COMPASS_GROUP);
         writeExploded.setDescription("temporary task; Writes out the combined obfuscation maps into exploded directories.");
         writeExploded.doLast(t -> {
-            Provider<IMappingFile> obfMapProvider = obfuscationMaps.getObfuscationMap();
             try {
                 Path output = extension.getProductionData().get().getAsFile().toPath();
                 IMappingFile mojToObf = obfMapProvider.get();
@@ -157,5 +198,9 @@ public class CompassPlugin implements Plugin<Project> {
                 throw new AssertionError(e);
             }
         });
+    }
+
+    public NamedDomainObjectSet<IntermediateProvider> getIntermediates() {
+        return intermediates;
     }
 }

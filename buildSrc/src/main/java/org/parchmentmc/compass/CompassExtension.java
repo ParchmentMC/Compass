@@ -9,6 +9,7 @@ public class CompassExtension {
     private final DirectoryProperty productionData;
     private final Property<String> version;
     private final DirectoryProperty stagingData;
+    private final DirectoryProperty inputs;
 
     public CompassExtension(final Project project) {
         manifestURL = project.getObjects().property(String.class)
@@ -18,6 +19,8 @@ public class CompassExtension {
         version = project.getObjects().property(String.class);
         stagingData = project.getObjects().directoryProperty()
                 .convention(project.getLayout().getProjectDirectory().dir("staging").dir("data"));
+        inputs = project.getObjects().directoryProperty()
+                .convention(project.getLayout().getProjectDirectory().dir("input"));
     }
 
     public Property<String> getLauncherManifestURL() {
@@ -34,5 +37,9 @@ public class CompassExtension {
 
     public DirectoryProperty getStagingData() {
         return stagingData;
+    }
+
+    public DirectoryProperty getInputs() {
+        return inputs;
     }
 }

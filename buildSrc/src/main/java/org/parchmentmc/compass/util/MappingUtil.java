@@ -1,5 +1,6 @@
 package org.parchmentmc.compass.util;
 
+import net.minecraftforge.srgutils.IMappingBuilder;
 import net.minecraftforge.srgutils.IMappingFile;
 import org.parchmentmc.compass.storage.MappingDataBuilder;
 import org.parchmentmc.compass.storage.MappingDataContainer;
@@ -129,14 +130,119 @@ public class MappingUtil {
     public static MappingDataBuilder constructPackageData(MappingDataBuilder builder) {
         for (MappingDataBuilder.MutableClassData cls : builder.getClasses()) {
             int lastIndex = cls.getName().lastIndexOf('/');
-            String pkgName = ""; // default package
             if (lastIndex != -1) { // has a package
-                pkgName = cls.getName().substring(0, lastIndex);
-            }
-            if (builder.getPackage(pkgName) == null) {
-                builder.addPackage(pkgName);
+                String pkgName = cls.getName().substring(0, lastIndex);
+                builder.getOrCreatePackage(pkgName);
             }
         }
+
+        return builder;
+    }
+
+    /**
+     * Constructs packages for the given mapping file based on the class names, and returns a new mapping file with the
+     * constructed packages.
+     *
+     * <p>Packages constructed by this method (whether pre-existing or not) will have the {@code constructed} metadata key with
+     * a value of {@code "true"}.</p>
+     *
+     * @param mapping The mapping file to construct pages
+     * @return a copy of the mapping file with the constructed packages
+     */
+    public static IMappingFile constructPackageData(IMappingFile mapping) {
+        IMappingBuilder builder = IMappingBuilder.create("left", "right");
+
+        for (IMappingFile.IPackage pkg : mapping.getPackages()) {
+            IMappingBuilder.IPackage newPkg = builder.addPackage(pkg.getOriginal(), pkg.getMapped());
+            pkg.getMetadata().forEach(newPkg::meta);
+        }
+
+        for (IMappingFile.IClass cls : mapping.getClasses()) {
+            int lastIndex = cls.getOriginal().lastIndexOf('/');
+            if (lastIndex != -1) {
+                String pkgName = cls.getOriginal().substring(0, lastIndex);
+                builder.addPackage(pkgName, pkgName)
+                        .meta("constructed", "true");
+            }
+
+            IMappingBuilder.IClass newCls = builder.addClass(cls.getOriginal(), cls.getMapped());
+            cls.getMetadata().forEach(newCls::meta);
+
+            for (IMappingFile.IField field : cls.getFields()) {
+                IMappingBuilder.IField newField = newCls.field(field.getOriginal(), field.getMapped())
+                        .descriptor(field.getDescriptor());
+                field.getMetadata().forEach(newField::meta);
+            }
+
+            for (IMappingFile.IMethod method : cls.getMethods()) {
+                IMappingBuilder.IMethod newMethod = newCls.method(method.getDescriptor(), method.getOriginal(), method.getMapped());
+                method.getMetadata().forEach(newMethod::meta);
+
+                for (IMappingFile.IParameter param : method.getParameters()) {
+                    IMappingBuilder.IParameter newParam = newMethod.parameter(param.getIndex(), param.getOriginal(), param.getMapped());
+                    param.getMetadata().forEach(newParam::meta);
+                }
+            }
+        }
+
+        return builder.build().getMap("left", "right");
+    }
+
+    public static MappingDataContainer combine(MappingDataContainer baseData, MappingDataContainer newData) {
+        if (newData.getClasses().isEmpty() && newData.getPackages().isEmpty()) return baseData;
+
+        MappingDataBuilder builder = new MappingDataBuilder();
+
+        baseData.getPackages().forEach(pkg -> {
+            MappingDataContainer.PackageData newPkg = newData.getPackage(pkg.getName());
+            builder.addPackage(pkg.getName()).addJavadoc(newPkg != null ? newPkg.getJavadoc() : pkg.getJavadoc());
+        });
+
+        baseData.getClasses().forEach(cls -> {
+            MappingDataContainer.ClassData newCls = newData.getClass(cls.getName());
+            MappingDataBuilder.MutableClassData classData = builder.addClass(cls.getName())
+                    .addJavadoc(newCls != null ? newCls.getJavadoc() : cls.getJavadoc());
+
+            cls.getFields().forEach(field -> {
+                MappingDataContainer.FieldData newField = newCls != null ? newCls.getField(field.getName()) : null;
+                classData.addField(field.getName()).setDescriptor(field.getDescriptor())
+                        .addJavadoc(newField != null ? newField.getJavadoc() : field.getJavadoc());
+            });
+
+            cls.getMethods().forEach(method -> {
+                MappingDataContainer.MethodData newMethod = newCls != null ? newCls.getMethod(method.getName(), method.getDescriptor()) : null;
+                MappingDataBuilder.MutableMethodData methodData = classData.addMethod(method.getName(), method.getDescriptor())
+                        .addJavadoc(newMethod != null ? newMethod.getJavadoc() : method.getJavadoc());
+
+                method.getParameters().forEach(param -> {
+                    MappingDataContainer.ParameterData newParam = newMethod != null ? newMethod.getParameter(param.getIndex()) : null;
+                    methodData.addParameter(param.getIndex()).setName(param.getName())
+                            .setJavadoc(newParam != null ? newParam.getJavadoc() : param.getJavadoc());
+                });
+                if (newMethod != null) {
+                    newMethod.getParameters().forEach(param -> {
+                        if (method.getParameter(param.getIndex()) == null)
+                            methodData.addParameter(param.getIndex()).setName(param.getName()).setJavadoc(param.getJavadoc());
+                    });
+                }
+            });
+
+            if (newCls != null) {
+                newCls.getFields().forEach(field -> {
+                    if (cls.getField(field.getName()) == null)
+                        classData.addField(field.getName()).setDescriptor(field.getDescriptor()).addJavadoc(field.getJavadoc());
+                });
+
+                newCls.getMethods().forEach(method -> {
+                    if (cls.getMethod(method.getName(), method.getDescriptor()) == null) {
+                        MappingDataBuilder.MutableMethodData methodData = classData.addMethod(method.getName(), method.getDescriptor()).addJavadoc(method.getJavadoc());
+
+                        method.getParameters().forEach(t -> methodData.addParameter(t.getIndex()).setName(t.getName()).setJavadoc(t.getJavadoc()));
+                    }
+                });
+            }
+        });
+
         return builder;
     }
 }
