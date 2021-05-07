@@ -1,5 +1,6 @@
 package org.parchmentmc.compass.tasks;
 
+import com.squareup.moshi.Moshi;
 import net.minecraftforge.srgutils.IMappingFile;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
@@ -15,12 +16,16 @@ import org.parchmentmc.compass.CompassPlugin;
 import org.parchmentmc.compass.providers.IntermediateProvider;
 import org.parchmentmc.compass.storage.MappingDataContainer;
 import org.parchmentmc.compass.storage.io.ExplodedDataIO;
+import org.parchmentmc.compass.storage.io.MappingDataContainerAdapter;
 import org.parchmentmc.compass.storage.io.SingleFileDataIO;
 import org.parchmentmc.compass.util.MappingUtil;
 
 import java.io.IOException;
 
 public class GenerateExport extends DefaultTask {
+    private static SingleFileDataIO IO = new SingleFileDataIO(new Moshi.Builder()
+            .add(new MappingDataContainerAdapter(true)).build(), "  ");
+    
     private final DirectoryProperty input;
     private final Property<String> intermediate;
     private final RegularFileProperty output;
@@ -47,7 +52,7 @@ public class GenerateExport extends DefaultTask {
 
         MappingDataContainer remappedData = MappingUtil.remapData(data, mapping);
 
-        SingleFileDataIO.INSTANCE.write(remappedData, output.get().getAsFile());
+        IO.write(remappedData, output.get().getAsFile());
     }
 
     @InputDirectory

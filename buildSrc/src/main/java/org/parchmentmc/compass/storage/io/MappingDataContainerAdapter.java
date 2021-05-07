@@ -10,6 +10,25 @@ import java.util.Collections;
 import java.util.List;
 
 public class MappingDataContainerAdapter {
+    private final boolean ignoreNonDocumented;
+
+    public MappingDataContainerAdapter(boolean ignoreNonDocumented) {
+        this.ignoreNonDocumented = ignoreNonDocumented;
+    }
+
+    public MappingDataContainerAdapter() {
+        this(false);
+    }
+
+    /**
+     * Returns whether this adapter will ignore mapping data entries which have no javadocs.
+     *
+     * @return if ignoring entries without javadocs
+     */
+    public boolean isIgnoreNonDocumented() {
+        return ignoreNonDocumented;
+    }
+
     /* ****************** Serialization ****************** */
 
     @ToJson
@@ -27,6 +46,8 @@ public class MappingDataContainerAdapter {
     void packageToJson(JsonWriter writer,
                        MappingDataContainer.PackageData packageData,
                        JsonAdapter<List<String>> stringListAdapter) throws IOException {
+        if (isIgnoreNonDocumented() && packageData.getJavadoc().isEmpty()) return;
+
         writer.beginObject()
                 .name("name").value(packageData.getName());
         if (!packageData.getJavadoc().isEmpty())
@@ -40,14 +61,21 @@ public class MappingDataContainerAdapter {
                      JsonAdapter<List<String>> stringListAdapter,
                      JsonAdapter<Collection<? extends MappingDataContainer.FieldData>> fieldAdapter,
                      JsonAdapter<Collection<? extends MappingDataContainer.MethodData>> methodAdapter) throws IOException {
+        Object fields = fieldAdapter.toJsonValue(classData.getFields());
+        Object methods = methodAdapter.toJsonValue(classData.getMethods());
+        if (isIgnoreNonDocumented()
+                && (fields == null || (fields instanceof Collection && ((Collection<?>) fields).isEmpty()))
+                && (methods == null || (methods instanceof Collection && ((Collection<?>) methods).isEmpty()))
+                && classData.getJavadoc().isEmpty()) return;
+
         writer.beginObject()
                 .name("name").value(classData.getName());
         if (!classData.getJavadoc().isEmpty())
             writer.name("javadoc").jsonValue(stringListAdapter.toJsonValue(classData.getJavadoc()));
         if (!classData.getFields().isEmpty())
-            writer.name("fields").jsonValue(fieldAdapter.toJsonValue(classData.getFields()));
+            writer.name("fields").jsonValue(fields);
         if (!classData.getMethods().isEmpty())
-            writer.name("methods").jsonValue(methodAdapter.toJsonValue(classData.getMethods()));
+            writer.name("methods").jsonValue(methods);
         writer.endObject();
     }
 
@@ -55,6 +83,8 @@ public class MappingDataContainerAdapter {
     void fieldToJson(JsonWriter writer,
                      MappingDataContainer.FieldData fieldData,
                      JsonAdapter<List<String>> stringListAdapter) throws IOException {
+        if (isIgnoreNonDocumented() && fieldData.getJavadoc().isEmpty()) return;
+
         writer.beginObject()
                 .name("name").value(fieldData.getName())
                 .name("descriptor").value(fieldData.getDescriptor());
@@ -68,19 +98,26 @@ public class MappingDataContainerAdapter {
                       MappingDataContainer.MethodData methodData,
                       JsonAdapter<List<String>> stringListAdapter,
                       JsonAdapter<Collection<? extends MappingDataContainer.ParameterData>> paramAdapter) throws IOException {
+        Object params = paramAdapter.toJsonValue(methodData.getParameters());
+        if (isIgnoreNonDocumented()
+                && (params == null || (params instanceof Collection && ((Collection<?>) params).isEmpty()))
+                && methodData.getJavadoc().isEmpty()) return;
+
         writer.beginObject()
                 .name("name").value(methodData.getName())
                 .name("descriptor").value(methodData.getDescriptor());
         if (!methodData.getJavadoc().isEmpty())
             writer.name("javadoc").jsonValue(stringListAdapter.toJsonValue(methodData.getJavadoc()));
         if (!methodData.getParameters().isEmpty())
-            writer.name("parameters").jsonValue(paramAdapter.toJsonValue(methodData.getParameters()));
+            writer.name("parameters").jsonValue(params);
         writer.endObject();
     }
 
     @ToJson
     void paramToJson(JsonWriter writer,
                      MappingDataContainer.ParameterData paramData) throws IOException {
+        if (isIgnoreNonDocumented() && paramData.getName() == null && paramData.getJavadoc() == null) return;
+
         writer.beginObject()
                 .name("index").value(paramData.getIndex());
         if (paramData.getName() != null)
