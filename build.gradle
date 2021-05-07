@@ -1,5 +1,11 @@
+import org.parchmentmc.compass.tasks.GenerateExport
+
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+
 plugins {
     id 'org.parchmentmc.compass'
+    id 'maven-publish'
 }
 
 repositories {
@@ -9,4 +15,32 @@ repositories {
 
 compass {
     version = '1.16.5'
+}
+
+def now = OffsetDateTime.now(ZoneOffset.UTC)
+def dateTime = now.format("yyyyMMdd-HHmmss")
+
+publishing {
+    publications.create('datedExport', MavenPublication) { p ->
+        p.artifact(tasks.named("generateOfficialExport", GenerateExport).flatMap { it.output }) {
+            classifier = null
+        }
+        p.artifact(tasks.named("generateObfExport", GenerateExport).flatMap { it.output }) {
+            classifier = "obf"
+        }
+        p.artifact(tasks.named("generateSrgExport", GenerateExport).flatMap { it.output }) {
+            classifier = "srg"
+        }
+        p.groupId = "org.parchmentmc.mappings"
+        afterEvaluate {
+            p.artifactId = compass.version.get()
+            p.version = "SNAPSHOT"
+        }
+    }
+    repositories {
+        maven {
+            name "projectLocal"
+            url "file://${project.file('repo').absolutePath}"
+        }
+    }
 }

@@ -20,6 +20,7 @@ import org.parchmentmc.compass.storage.MappingDataContainer;
 import org.parchmentmc.compass.storage.input.InputsReader;
 import org.parchmentmc.compass.storage.io.ExplodedDataIO;
 import org.parchmentmc.compass.tasks.DisplayMinecraftVersions;
+import org.parchmentmc.compass.tasks.GenerateExport;
 import org.parchmentmc.compass.util.JSONUtil;
 import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.compass.util.download.ManifestsDownloader;
@@ -32,6 +33,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.Locale;
 
 public class CompassPlugin implements Plugin<Project> {
     public static final String COMPASS_GROUP = "compass";
@@ -127,6 +129,15 @@ public class CompassPlugin implements Plugin<Project> {
         intermediates.add(new DelegatingProvider("obf", officialMapProvider.map(s -> s.chain(s.reverse()))));
         intermediates.add(new DelegatingProvider("official", officialMapProvider));
         intermediates.add(new SRGProvider("srg", project));
+
+        intermediates.all(prov -> {
+            String capitalized = prov.getName().substring(0, 1).toUpperCase(Locale.ROOT) + prov.getName().substring(1);
+            tasks.register("generate" + capitalized + "Export", GenerateExport.class, t -> {
+                t.setGroup(COMPASS_GROUP);
+                t.setDescription("Generates an export file using the '" + prov.getName() + "' intermediate provider.");
+                t.getIntermediate().set(prov.getName());
+            });
+        });
 
         TaskProvider<DefaultTask> combineInputData = tasks.register("createStagingFromInputs", DefaultTask.class);
         combineInputData.configure(t -> {

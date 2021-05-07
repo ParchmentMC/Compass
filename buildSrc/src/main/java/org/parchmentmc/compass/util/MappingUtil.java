@@ -245,4 +245,37 @@ public class MappingUtil {
 
         return builder;
     }
+
+    // Mapping should be names from data -> target names
+    public static MappingDataContainer remapData(MappingDataContainer data, IMappingFile mapping) {
+        MappingDataBuilder builder = new MappingDataBuilder();
+
+        data.getPackages().forEach(pkg -> builder.addPackage(mapping.remapPackage(pkg.getName())).addJavadoc(pkg.getJavadoc()));
+
+        data.getClasses().forEach(cls -> {
+            IMappingFile.IClass mappedClass = mapping.getClass(cls.getName());
+            if (mappedClass == null) return;
+            MappingDataBuilder.MutableClassData classData = builder.addClass(mappedClass.getMapped()).addJavadoc(cls.getJavadoc());
+
+            cls.getFields().forEach(field -> {
+                IMappingFile.IField mappedField = mappedClass.getField(field.getName());
+                if (mappedField == null) return;
+                // TODO: remove descriptor from field?
+                String descriptor = mappedField.getMappedDescriptor();
+                if (descriptor == null) descriptor = mapping.remapDescriptor(field.getDescriptor());
+                classData.addField(mappedField.getMapped()).setDescriptor(descriptor).addJavadoc(field.getJavadoc());
+            });
+
+            cls.getMethods().forEach(method -> {
+                IMappingFile.IMethod mappedMethod = mappedClass.getMethod(method.getName(), method.getDescriptor());
+                if (mappedMethod == null) return;
+                MappingDataBuilder.MutableMethodData methodData = classData.addMethod(mappedMethod.getMapped(), mappedMethod.getMappedDescriptor())
+                        .addJavadoc(method.getJavadoc());
+
+                method.getParameters().forEach(param -> methodData.addParameter(param.getIndex()).setName(param.getName()).setJavadoc(param.getJavadoc()));
+            });
+        });
+
+        return builder;
+    }
 }
