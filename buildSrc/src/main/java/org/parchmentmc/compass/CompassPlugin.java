@@ -161,8 +161,8 @@ public class CompassPlugin implements Plugin<Project> {
                     MappingDataContainer combinedData = MappingUtil.combine(baseData, inputData);
 
                     ExplodedDataIO.INSTANCE.write(combinedData, extension.getStagingData().get().getAsFile());
-                } catch (Exception e) {
-                    throw new AssertionError(e);
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to produce new staging data from inputs and production data", e);
                 }
             });
         });
