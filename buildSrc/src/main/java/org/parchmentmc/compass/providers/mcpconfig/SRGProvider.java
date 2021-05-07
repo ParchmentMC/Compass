@@ -64,7 +64,8 @@ public class SRGProvider extends IntermediateProvider {
 
         IMappingFile mapping;
 
-        try (FileSystem fs = FileSystems.newFileSystem(file.toPath(), null)) {
+        //noinspection RedundantCast because JDK 13 added a (Path, Map<String, ?>) variant which means ambiguity
+        try (FileSystem fs = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null)) {
             MCPConfigFile configFile;
             try (BufferedSource source = Okio.buffer(Okio.source(fs.getPath(CONFIG_JSON)))) {
                 configFile = MOSHI.adapter(MCPConfigFile.class).fromJson(source);
