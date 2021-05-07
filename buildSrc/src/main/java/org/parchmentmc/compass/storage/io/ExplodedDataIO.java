@@ -58,13 +58,16 @@ public class ExplodedDataIO implements MappingDataIO {
         for (MappingDataContainer.ClassData classData : data.getClasses()) {
             String className = classData.getName() + EXTENSION;
 
+            String json = classAdapter.toJson(classData);
+            if (json.isEmpty()) continue;
+
             Path classPath = classesBase.resolve(className);
             if (classPath.getParent() != null && !Files.isDirectory(classPath.getParent())) {
                 Files.createDirectories(classPath.getParent());
             }
 
             try (BufferedSink sink = Okio.buffer(Okio.sink(classPath))) {
-                classAdapter.toJson(sink, classData);
+                sink.writeUtf8(json);
             }
         }
     }
