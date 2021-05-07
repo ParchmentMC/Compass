@@ -42,14 +42,19 @@ public class MappingDataBuilder implements MappingDataContainer {
     }
 
     public MutablePackageData addPackage(String packageName) {
-        MutablePackageData pkg = new MutablePackageData(packageName);
-        packages.add(pkg);
+        MutablePackageData pkg = createPackage(packageName);
         packagesMap.put(packageName, pkg);
         return pkg;
     }
 
     public MutablePackageData getOrCreatePackage(String packageName) {
-        return packagesMap.computeIfAbsent(packageName, this::addPackage);
+        return packagesMap.computeIfAbsent(packageName, this::createPackage);
+    }
+
+    private MutablePackageData createPackage(String packageName) {
+        MutablePackageData pkg = new MutablePackageData(packageName);
+        packagesMap.put(packageName, pkg);
+        return pkg;
     }
 
     public MappingDataBuilder clearPackages() {
