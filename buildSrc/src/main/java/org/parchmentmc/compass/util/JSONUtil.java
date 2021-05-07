@@ -20,6 +20,7 @@ public final class JSONUtil {
     public static final Moshi MOSHI = new Moshi.Builder()
             .add(OffsetDateTime.class, new OffsetDateTimeAdapter())
             .add(new MappingDataContainerAdapter())
+            .add(new SimpleVersion.Adapter())
             .build();
 
     private JSONUtil() {

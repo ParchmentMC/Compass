@@ -95,7 +95,7 @@ public class MappingUtil {
     }
 
     public static MappingDataBuilder createBuilderFrom(MappingDataContainer container) {
-        MappingDataBuilder builder = new MappingDataBuilder();
+        MappingDataBuilder builder = new MappingDataBuilder(container.getFormatVersion());
 
         // Copy packages
         container.getPackages().forEach(pkg -> builder.addPackage(pkg.getName()).addJavadoc(pkg.getJavadoc()));
@@ -191,7 +191,7 @@ public class MappingUtil {
     public static MappingDataContainer combine(MappingDataContainer baseData, MappingDataContainer newData) {
         if (newData.getClasses().isEmpty() && newData.getPackages().isEmpty()) return baseData;
 
-        MappingDataBuilder builder = new MappingDataBuilder();
+        MappingDataBuilder builder = new MappingDataBuilder(baseData.getFormatVersion());
 
         baseData.getPackages().forEach(pkg -> {
             MappingDataContainer.PackageData newPkg = newData.getPackage(pkg.getName());
@@ -248,7 +248,7 @@ public class MappingUtil {
 
     // Mapping should be names from data -> target names
     public static MappingDataContainer remapData(MappingDataContainer data, IMappingFile mapping) {
-        MappingDataBuilder builder = new MappingDataBuilder();
+        MappingDataBuilder builder = new MappingDataBuilder(data.getFormatVersion());
 
         data.getPackages().forEach(pkg -> builder.addPackage(mapping.remapPackage(pkg.getName())).addJavadoc(pkg.getJavadoc()));
 

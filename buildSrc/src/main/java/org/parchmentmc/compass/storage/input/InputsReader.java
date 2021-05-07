@@ -7,6 +7,7 @@ import org.parchmentmc.compass.providers.IntermediateProvider;
 import org.parchmentmc.compass.storage.ImmutableMappingDataContainer;
 import org.parchmentmc.compass.storage.MappingDataBuilder;
 import org.parchmentmc.compass.storage.MappingDataContainer;
+import org.parchmentmc.compass.util.SimpleVersion;
 
 import java.io.IOException;
 import java.nio.file.Files;

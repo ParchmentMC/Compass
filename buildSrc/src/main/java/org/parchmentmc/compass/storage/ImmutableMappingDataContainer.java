@@ -1,5 +1,7 @@
 package org.parchmentmc.compass.storage;
 
+import org.parchmentmc.compass.util.SimpleVersion;
+
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Function;
@@ -9,6 +11,8 @@ import java.util.stream.Collectors;
  * An immutable {@link MappingDataContainer}.
  */
 public class ImmutableMappingDataContainer implements MappingDataContainer {
+    private final SimpleVersion version;
+
     private final Set<MappingDataContainer.PackageData> packages = new TreeSet<>(PackageData.COMPARATOR);
     private final Collection<MappingDataContainer.PackageData> packagesView = Collections.unmodifiableSet(packages);
     private final Map<String, MappingDataContainer.PackageData> packagesMap = new HashMap<>();
@@ -17,11 +21,24 @@ public class ImmutableMappingDataContainer implements MappingDataContainer {
     private final Collection<MappingDataContainer.ClassData> classesView = Collections.unmodifiableSet(classes);
     private final Map<String, MappingDataContainer.ClassData> classesMap = new HashMap<>();
 
-    public ImmutableMappingDataContainer(Collection<? extends MappingDataContainer.PackageData> packages, Collection<? extends MappingDataContainer.ClassData> classes) {
+    public ImmutableMappingDataContainer(SimpleVersion version, Collection<? extends MappingDataContainer.PackageData> packages, Collection<? extends MappingDataContainer.ClassData> classes) {
+        this.version = version;
         this.packages.addAll(packages);
         this.classes.addAll(classes);
         this.packagesMap.putAll(this.packages.stream().collect(Collectors.toMap(MappingDataContainer.PackageData::getName, Function.identity())));
         this.classesMap.putAll(this.classes.stream().collect(Collectors.toMap(MappingDataContainer.ClassData::getName, Function.identity())));
+    }
+
+    public ImmutableMappingDataContainer(Collection<? extends MappingDataContainer.PackageData> packages, Collection<? extends MappingDataContainer.ClassData> classes) {
+        this(CURRENT_FORMAT, packages, classes);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SimpleVersion getFormatVersion() {
+        return version;
     }
 
     /**

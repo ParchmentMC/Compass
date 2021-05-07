@@ -1,5 +1,7 @@
 package org.parchmentmc.compass.storage;
 
+import org.parchmentmc.compass.util.SimpleVersion;
+
 import javax.annotation.Nullable;
 import java.util.*;
 
@@ -7,6 +9,7 @@ import java.util.*;
  * A mutable builder implementation of {@link MappingDataContainer}.
  */
 public class MappingDataBuilder implements MappingDataContainer {
+    private final SimpleVersion version;
     private final Set<MutablePackageData> packages = new TreeSet<>(PackageData.COMPARATOR);
     private transient final Map<String, MutablePackageData> packagesMap = new HashMap<>();
     private transient final Collection<MutablePackageData> packagesView = Collections.unmodifiableSet(packages);
@@ -14,7 +17,17 @@ public class MappingDataBuilder implements MappingDataContainer {
     private transient final Map<String, MutableClassData> classesMap = new HashMap<>();
     private transient final Collection<MutableClassData> classesView = Collections.unmodifiableSet(classes);
 
+    public MappingDataBuilder(SimpleVersion version) {
+        this.version = version;
+    }
+
     public MappingDataBuilder() {
+        this(CURRENT_FORMAT);
+    }
+
+    @Override
+    public SimpleVersion getFormatVersion() {
+        return version;
     }
 
     @Override

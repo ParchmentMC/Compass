@@ -8,6 +8,7 @@ import okio.Okio;
 import org.parchmentmc.compass.storage.ImmutableMappingDataContainer;
 import org.parchmentmc.compass.storage.MappingDataContainer;
 import org.parchmentmc.compass.util.JSONUtil;
+import org.parchmentmc.compass.util.SimpleVersion;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,6 +49,14 @@ public class ExplodedDataIO implements MappingDataIO {
         }
         Files.createDirectories(base);
 
+        // Write out version data
+        try (BufferedSink sink = Okio.buffer(Okio.sink(base.resolve("info.json")))) {
+            DataInfo info = new DataInfo();
+            info.version = data.getFormatVersion();
+
+            moshi.adapter(DataInfo.class).indent(indent).toJson(sink, info);
+        }
+
         // Write out packages.json
         try (BufferedSink sink = Okio.buffer(Okio.sink(base.resolve("packages.json")))) {
             moshi.adapter(PACKAGE_COLLECTION_TYPE).indent(indent).toJson(sink, data.getPackages());
@@ -73,6 +82,12 @@ public class ExplodedDataIO implements MappingDataIO {
     }
 
     public ImmutableMappingDataContainer read(Path base) throws IOException {
+
+        DataInfo info;
+        try (BufferedSource source = Okio.buffer(Okio.source(base.resolve("info.json")))) {
+            info = moshi.adapter(DataInfo.class).indent(indent).fromJson(source);
+        }
+
         Collection<? extends MappingDataContainer.PackageData> packages;
         try (BufferedSource source = Okio.buffer(Okio.source(base.resolve("packages.json")))) {
             packages = moshi.<Collection<? extends MappingDataContainer.PackageData>>adapter(PACKAGE_COLLECTION_TYPE).indent(indent).fromJson(source);
@@ -96,6 +111,10 @@ public class ExplodedDataIO implements MappingDataIO {
             }
         });
 
-        return new ImmutableMappingDataContainer(packages, classes);
+        return new ImmutableMappingDataContainer(info.version, packages, classes);
+    }
+
+    static class DataInfo {
+        public SimpleVersion version;
     }
 }

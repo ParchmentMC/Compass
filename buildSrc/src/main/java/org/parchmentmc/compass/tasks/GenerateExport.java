@@ -11,7 +11,6 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
-import org.parchmentmc.compass.CompassExtension;
 import org.parchmentmc.compass.CompassPlugin;
 import org.parchmentmc.compass.providers.IntermediateProvider;
 import org.parchmentmc.compass.storage.MappingDataContainer;
@@ -19,12 +18,14 @@ import org.parchmentmc.compass.storage.io.ExplodedDataIO;
 import org.parchmentmc.compass.storage.io.MappingDataContainerAdapter;
 import org.parchmentmc.compass.storage.io.SingleFileDataIO;
 import org.parchmentmc.compass.util.MappingUtil;
+import org.parchmentmc.compass.util.SimpleVersion;
 
 import java.io.IOException;
 
 public class GenerateExport extends DefaultTask {
-    private static SingleFileDataIO IO = new SingleFileDataIO(new Moshi.Builder()
-            .add(new MappingDataContainerAdapter(true)).build(), "  ");
+    private static final SingleFileDataIO IO = new SingleFileDataIO(new Moshi.Builder()
+            .add(new MappingDataContainerAdapter(true))
+            .add(new SimpleVersion.Adapter()).build(), "  ");
     
     private final DirectoryProperty input;
     private final Property<String> intermediate;

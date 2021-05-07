@@ -3,6 +3,7 @@ package org.parchmentmc.compass.storage.io;
 import com.squareup.moshi.*;
 import org.parchmentmc.compass.storage.ImmutableMappingDataContainer;
 import org.parchmentmc.compass.storage.MappingDataContainer;
+import org.parchmentmc.compass.util.SimpleVersion;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -34,9 +35,11 @@ public class MappingDataContainerAdapter {
     @ToJson
     void containerToJson(JsonWriter writer,
                          MappingDataContainer container,
+                         JsonAdapter<SimpleVersion> versionAdapter,
                          JsonAdapter<Collection<? extends MappingDataContainer.PackageData>> packageAdapter,
                          JsonAdapter<Collection<? extends MappingDataContainer.ClassData>> classAdapter) throws IOException {
         writer.beginObject();
+        writer.name("version").jsonValue(versionAdapter.toJsonValue(container.getFormatVersion()));
         writer.name("packages").jsonValue(packageAdapter.toJsonValue(container.getPackages()));
         writer.name("classes").jsonValue(classAdapter.toJsonValue(container.getClasses()));
         writer.endObject();
@@ -131,10 +134,11 @@ public class MappingDataContainerAdapter {
 
     @FromJson
     MappingDataContainer containerToJson(JsonReader reader,
+                                         JsonAdapter<SimpleVersion> versionAdapter,
                                          JsonAdapter<Collection<? extends MappingDataContainer.PackageData>> packageAdapter,
                                          JsonAdapter<Collection<? extends MappingDataContainer.ClassData>> classAdapter) throws IOException {
 
-
+        SimpleVersion version = null;
         Collection<? extends MappingDataContainer.PackageData> packages = null;
         Collection<? extends MappingDataContainer.ClassData> classes = null;
 
@@ -142,6 +146,12 @@ public class MappingDataContainerAdapter {
         while (reader.hasNext()) {
             String propertyName = reader.nextName();
             switch (propertyName) {
+                case "version":
+                    version = versionAdapter.fromJson(reader);
+                    if (version != null && !version.isCompatibleWith(MappingDataContainer.CURRENT_FORMAT))
+                        throw new JsonDataException("Version " + version + " is incompatible with current version "
+                                + MappingDataContainer.CURRENT_FORMAT);
+                    break;
                 case "packages":
                     packages = packageAdapter.fromJson(reader);
                     break;
@@ -157,8 +167,9 @@ public class MappingDataContainerAdapter {
 
         if (packages == null) packages = Collections.emptyList();
         if (classes == null) classes = Collections.emptyList();
+        if (version == null) throw new JsonDataException("No version found");
 
-        return new ImmutableMappingDataContainer(packages, classes);
+        return new ImmutableMappingDataContainer(version, packages, classes);
     }
 
     @FromJson
