@@ -10,6 +10,7 @@ import org.parchmentmc.compass.util.JSONUtil;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class SingleFileDataIO implements MappingDataIO {
     public static final SingleFileDataIO INSTANCE = new SingleFileDataIO(JSONUtil.MOSHI, "  ");
@@ -35,7 +36,9 @@ public class SingleFileDataIO implements MappingDataIO {
     @Override
     public MappingDataContainer read(Path input) throws IOException {
         try (BufferedSource source = Okio.buffer(Okio.source(input))) {
-            return moshi.adapter(MappingDataContainer.class).indent(indent).fromJson(source);
+            MappingDataContainer data = moshi.adapter(MappingDataContainer.class).indent(indent).fromJson(source);
+            Objects.requireNonNull(data, "Data from " + input + " was deserialized as null");
+            return data;
         }
     }
 }

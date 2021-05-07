@@ -135,8 +135,8 @@ public class MappingDataContainerAdapter {
                                          JsonAdapter<Collection<? extends MappingDataContainer.ClassData>> classAdapter) throws IOException {
 
 
-        Collection<? extends MappingDataContainer.PackageData> packages = Collections.emptyList();
-        Collection<? extends MappingDataContainer.ClassData> classes = Collections.emptyList();
+        Collection<? extends MappingDataContainer.PackageData> packages = null;
+        Collection<? extends MappingDataContainer.ClassData> classes = null;
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -155,6 +155,9 @@ public class MappingDataContainerAdapter {
         }
         reader.endObject();
 
+        if (packages == null) packages = Collections.emptyList();
+        if (classes == null) classes = Collections.emptyList();
+
         return new ImmutableMappingDataContainer(packages, classes);
     }
 
@@ -163,7 +166,7 @@ public class MappingDataContainerAdapter {
                                                      JsonAdapter<List<String>> stringListAdapter) throws IOException {
 
         String name = null;
-        List<String> javadoc = Collections.emptyList();
+        List<String> javadoc = null;
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -183,6 +186,7 @@ public class MappingDataContainerAdapter {
         reader.endObject();
 
         if (name == null) throw new IllegalArgumentException("Package name must not be null");
+        if (javadoc == null) javadoc = Collections.emptyList();
 
         return new ImmutableMappingDataContainer.ImmutablePackageData(name, javadoc);
     }
@@ -194,9 +198,9 @@ public class MappingDataContainerAdapter {
                                                  JsonAdapter<Collection<? extends MappingDataContainer.FieldData>> fieldAdapter,
                                                  JsonAdapter<Collection<? extends MappingDataContainer.MethodData>> methodAdapter) throws IOException {
         String name = null;
-        List<String> javadoc = Collections.emptyList();
-        Collection<? extends MappingDataContainer.FieldData> fields = Collections.emptyList();
-        Collection<? extends MappingDataContainer.MethodData> methods = Collections.emptyList();
+        List<String> javadoc = null;
+        Collection<? extends MappingDataContainer.FieldData> fields = null;
+        Collection<? extends MappingDataContainer.MethodData> methods = null;
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -222,6 +226,9 @@ public class MappingDataContainerAdapter {
         reader.endObject();
 
         if (name == null) throw new IllegalArgumentException("Class name must not be null");
+        if (javadoc == null) javadoc = Collections.emptyList();
+        if (fields == null) fields = Collections.emptyList();
+        if (methods == null) methods = Collections.emptyList();
 
         return new ImmutableMappingDataContainer.ImmutableClassData(name, javadoc, fields, methods);
     }
@@ -231,7 +238,7 @@ public class MappingDataContainerAdapter {
                                                  JsonAdapter<List<String>> stringListAdapter) throws IOException {
         String name = null;
         String descriptor = null;
-        List<String> javadoc = Collections.emptyList();
+        List<String> javadoc = null;
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -255,6 +262,7 @@ public class MappingDataContainerAdapter {
 
         if (name == null) throw new IllegalArgumentException("Field name must not be null");
         if (descriptor == null) throw new IllegalArgumentException("Field descriptor must not be null");
+        if (javadoc == null) javadoc = Collections.emptyList();
 
         return new ImmutableMappingDataContainer.ImmutableFieldData(name, descriptor, javadoc);
     }
@@ -265,8 +273,8 @@ public class MappingDataContainerAdapter {
                                                    JsonAdapter<Collection<? extends MappingDataContainer.ParameterData>> paramAdapter) throws IOException {
         String name = null;
         String descriptor = null;
-        List<String> javadoc = Collections.emptyList();
-        Collection<? extends MappingDataContainer.ParameterData> parameters = Collections.emptyList();
+        List<String> javadoc = null;
+        Collection<? extends MappingDataContainer.ParameterData> parameters = null;
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -293,6 +301,8 @@ public class MappingDataContainerAdapter {
 
         if (name == null) throw new IllegalArgumentException("Method name must not be null");
         if (descriptor == null) throw new IllegalArgumentException("Method descriptor must not be null");
+        if (javadoc == null) javadoc = Collections.emptyList();
+        if (parameters == null) parameters = Collections.emptyList();
 
         return new ImmutableMappingDataContainer.ImmutableMethodData(name, descriptor, javadoc, parameters);
     }
