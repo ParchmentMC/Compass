@@ -88,6 +88,7 @@ public class CompassPlugin implements Plugin<Project> {
         promoteStagingToProduction.configure(t -> {
             t.setGroup(COMPASS_GROUP);
             t.setDescription("Promotes the staging data to production.");
+            t.onlyIf(_t -> extension.getStagingData().get().getAsFile().exists());
             t.doLast(_t -> {
                 File stagingDataDir = extension.getStagingData().get().getAsFile();
                 if (stagingDataDir.exists()) {
@@ -134,8 +135,15 @@ public class CompassPlugin implements Plugin<Project> {
             String capitalized = prov.getName().substring(0, 1).toUpperCase(Locale.ROOT) + prov.getName().substring(1);
             tasks.register("generate" + capitalized + "Export", GenerateExport.class, t -> {
                 t.setGroup(COMPASS_GROUP);
-                t.setDescription("Generates an export file using the '" + prov.getName() + "' intermediate provider.");
+                t.setDescription("Generates an export file using the '" + prov.getName() + "' intermediate provider and production data.");
                 t.getIntermediate().set(prov.getName());
+                t.getInput().set(extension.getProductionData());
+            });
+            tasks.register("generate" + capitalized + "StagingExport", GenerateExport.class, t -> {
+                t.setGroup(COMPASS_GROUP);
+                t.setDescription("Generates an export file using the '" + prov.getName() + "' intermediate provider and staging data.");
+                t.getIntermediate().set(prov.getName());
+                t.getInput().set(extension.getStagingData());
             });
         });
 

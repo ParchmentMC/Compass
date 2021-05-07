@@ -33,12 +33,12 @@ public class GenerateExport extends DefaultTask {
     public GenerateExport() {
         ObjectFactory objects = getProject().getObjects();
 
-        input = objects.directoryProperty()
-                .convention(getProject().getExtensions().getByType(CompassExtension.class).getProductionData());
-        intermediate = objects.property(String.class)
-                .convention("official");
+        input = objects.directoryProperty();
+        intermediate = objects.property(String.class);
         output = objects.fileProperty()
                 .convention(getProject().getLayout().getBuildDirectory().dir(getName()).map(d -> d.file("export.json")));
+
+        onlyIf(_t -> input.get().getAsFile().exists());
     }
 
     @TaskAction

@@ -25,16 +25,26 @@ publishing {
         p.artifact(tasks.named("generateOfficialExport", GenerateExport).flatMap { it.output }) {
             classifier = null
         }
-        p.artifact(tasks.named("generateObfExport", GenerateExport).flatMap { it.output }) {
-            classifier = "obf"
-        }
         p.artifact(tasks.named("generateSrgExport", GenerateExport).flatMap { it.output }) {
             classifier = "srg"
         }
         p.groupId = "org.parchmentmc.mappings"
         afterEvaluate {
             p.artifactId = compass.version.get()
-            p.version = "SNAPSHOT"
+            p.version = dateTime
+        }
+    }
+    publications.create('datedStagingExport', MavenPublication) { p ->
+        p.artifact(tasks.named("generateOfficialStagingExport", GenerateExport).flatMap { it.output }) {
+            classifier = null
+        }
+        p.artifact(tasks.named("generateSrgStagingExport", GenerateExport).flatMap { it.output }) {
+            classifier = "srg"
+        }
+        p.groupId = "org.parchmentmc.mappings"
+        afterEvaluate {
+            p.artifactId = compass.version.get()
+            p.version = "staging-SNAPSHOT"
         }
     }
     repositories {
