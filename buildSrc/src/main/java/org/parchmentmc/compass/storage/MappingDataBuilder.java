@@ -70,14 +70,19 @@ public class MappingDataBuilder implements MappingDataContainer {
     }
 
     public MutableClassData addClass(String className) {
-        MutableClassData cls = new MutableClassData(className);
-        classes.add(cls);
+        MutableClassData cls = createClass(className);
         classesMap.put(className, cls);
         return cls;
     }
 
     public MutableClassData getOrCreateClass(String className) {
-        return classesMap.computeIfAbsent(className, this::addClass);
+        return classesMap.computeIfAbsent(className, this::createClass);
+    }
+
+    private MutableClassData createClass(String className) {
+        MutableClassData cls = new MutableClassData(className);
+        classes.add(cls);
+        return cls;
     }
 
     public MappingDataBuilder clearClasses() {
@@ -195,14 +200,19 @@ public class MappingDataBuilder implements MappingDataContainer {
         }
 
         public MutableFieldData addField(String fieldName) {
-            MutableFieldData field = new MutableFieldData(fieldName);
-            fields.add(field);
+            MutableFieldData field = createField(fieldName);
             fieldsMap.put(fieldName, field);
             return field;
         }
 
-        public MutableFieldData getOrCreateField(String packageName) {
-            return fieldsMap.computeIfAbsent(packageName, this::addField);
+        public MutableFieldData getOrCreateField(String fieldName) {
+            return fieldsMap.computeIfAbsent(fieldName, this::createField);
+        }
+
+        private MutableFieldData createField(String fieldName) {
+            MutableFieldData field = new MutableFieldData(fieldName);
+            fields.add(field);
+            return field;
         }
 
         public MutableClassData clearFields() {
@@ -223,14 +233,19 @@ public class MappingDataBuilder implements MappingDataContainer {
         }
 
         public MutableMethodData addMethod(String methodName, String descriptor) {
-            MutableMethodData method = new MutableMethodData(methodName, descriptor);
-            methods.add(method);
+            MutableMethodData method = createMethod(methodName, descriptor);
             methodsMap.put(key(methodName, descriptor), method);
             return method;
         }
 
         public MutableMethodData getOrCreateMethod(String methodName, String descriptor) {
-            return methodsMap.computeIfAbsent(key(methodName, descriptor), key -> this.addMethod(methodName, descriptor));
+            return methodsMap.computeIfAbsent(key(methodName, descriptor), key -> this.createMethod(methodName, descriptor));
+        }
+
+        private MutableMethodData createMethod(String methodName, String descriptor) {
+            MutableMethodData method = new MutableMethodData(methodName, descriptor);
+            methods.add(method);
+            return method;
         }
 
         public MutableClassData clearMethods() {
@@ -365,14 +380,19 @@ public class MappingDataBuilder implements MappingDataContainer {
         }
 
         public MutableParameterData addParameter(byte index) {
-            MutableParameterData param = new MutableParameterData(index);
-            parameters.add(param);
+            MutableParameterData param = createParameter(index);
             parametersMap.put(index, param);
             return param;
         }
 
         public MutableParameterData getOrCreateParameter(byte index) {
-            return parametersMap.computeIfAbsent(index, this::addParameter);
+            return parametersMap.computeIfAbsent(index, this::createParameter);
+        }
+
+        private MutableParameterData createParameter(byte index) {
+            MutableParameterData param = new MutableParameterData(index);
+            parameters.add(param);
+            return param;
         }
 
         public MutableMethodData clearParameters() {
