@@ -18,7 +18,7 @@ public class CompassExtension {
                 .convention(project.getLayout().getProjectDirectory().dir("data"));
         version = project.getObjects().property(String.class);
         stagingData = project.getObjects().directoryProperty()
-                .convention(project.getLayout().getProjectDirectory().dir("staging").dir("data"));
+                .convention(project.getLayout().getProjectDirectory().dir("staging"));
         inputs = project.getObjects().directoryProperty()
                 .convention(project.getLayout().getProjectDirectory().dir("input"));
     }
