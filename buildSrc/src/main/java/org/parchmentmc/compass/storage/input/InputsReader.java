@@ -7,7 +7,6 @@ import org.parchmentmc.compass.providers.IntermediateProvider;
 import org.parchmentmc.compass.storage.ImmutableMappingDataContainer;
 import org.parchmentmc.compass.storage.MappingDataBuilder;
 import org.parchmentmc.compass.storage.MappingDataContainer;
-import org.parchmentmc.compass.util.SimpleVersion;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -83,54 +82,58 @@ public class InputsReader {
         SimpleInputFileReader.parseLines(temp, Files.readAllLines(file));
 
         for (MappingDataBuilder.MutablePackageData pkg : temp.getPackages()) {
-            IMappingFile.IPackage mappedPkg = mapping.getPackage(pkg.getName());
-            if (mappedPkg == null) continue;
-
-            builder.getOrCreatePackage(mappedPkg.getMapped())
+            builder.getOrCreatePackage(mapping.remapPackage(pkg.getName()))
                     .addJavadoc(pkg.getJavadoc());
         }
 
         // Copy classes
         for (MappingDataBuilder.MutableClassData cls : temp.getClasses()) {
-            System.out.println(cls.getName());
-            IMappingFile.IClass mappedClass = mapping.getClass(cls.getName());
-            if (mappedClass == null) continue;
-            System.out.println("class found: " + mappedClass.getMapped());
+            String clsName = cls.getName();
 
-            MappingDataBuilder.MutableClassData classBuilder = builder.getOrCreateClass(mappedClass.getMapped())
+            IMappingFile.IClass mappedClass = mapping.getClass(cls.getName());
+            if (mappedClass != null) {
+                clsName = mappedClass.getMapped();
+            }
+
+            MappingDataBuilder.MutableClassData classBuilder = builder.getOrCreateClass(clsName)
                     .addJavadoc(cls.getJavadoc());
 
             // Copy fields of classes
             for (MappingDataBuilder.MutableFieldData field : cls.getFields()) {
-                IMappingFile.IField mappedField = mappedClass.getField(field.getName());
-                if (mappedField == null) continue;
+                String fieldName = field.getName();
+                String fieldDescriptor = mapping.remapDescriptor(field.getDescriptor());
 
-                classBuilder.getOrCreateField(mappedField.getMapped())
-                        .setDescriptor(mapping.remapDescriptor(field.getDescriptor()))
-                        .addJavadoc(field.getJavadoc());
+                if (mappedClass != null) {
+                    IMappingFile.IField mappedField = mappedClass.getField(field.getName());
+                    if (mappedField != null) {
+                        fieldName = mappedField.getMapped();
+                        if (mappedField.getMappedDescriptor() != null) {
+                            fieldDescriptor = mappedField.getMappedDescriptor();
+                        }
+                    }
+                }
+
+                classBuilder.getOrCreateField(fieldName).setDescriptor(fieldDescriptor).addJavadoc(field.getJavadoc());
             }
 
             // Copy methods of classes
             for (MappingDataBuilder.MutableMethodData method : cls.getMethods()) {
-                System.out.println("m: " + method.getName() + " " + method.getDescriptor());
-                IMappingFile.IMethod mappedMethod = mappedClass.getMethod(method.getName(), method.getDescriptor());
-                if (mappedMethod == null) continue;
-                System.out.println("method found: " + mappedMethod.getMapped() + " " + mappedMethod.getMappedDescriptor());
+                String methodName = method.getName();
+                String methodDescriptor = method.getDescriptor();
 
-                MappingDataBuilder.MutableMethodData methodBuilder = classBuilder.getOrCreateMethod(
-                        mappedMethod.getMapped(), mappedMethod.getMappedDescriptor())
+                if (mappedClass != null) {
+                    IMappingFile.IMethod mappedMethod = mappedClass.getMethod(method.getName(), method.getDescriptor());
+                    if (mappedMethod != null) {
+                        methodName = mappedMethod.getMapped();
+                        methodDescriptor = mappedMethod.getMappedDescriptor();
+                    }
+                }
+
+                MappingDataBuilder.MutableMethodData methodBuilder = classBuilder.getOrCreateMethod(methodName, methodDescriptor)
                         .addJavadoc(method.getJavadoc());
 
-                Map<Integer, ? extends IMappingFile.IParameter> params = mappedMethod.getParameters().stream()
-                        .collect(Collectors.toMap(IMappingFile.IParameter::getIndex, t -> t)); // TODO: cache this?
-                for (MappingDataContainer.ParameterData param : method.getParameters()) {
-                    IMappingFile.IParameter mappedParam = params.get((int) param.getIndex());
-                    if (mappedParam != null) continue;
-
-                    methodBuilder.getOrCreateParameter(param.getIndex())
-                            .setName(param.getName())
-                            .setJavadoc(param.getJavadoc());
-                }
+                // TODO: determine better logic for handling parameters
+                method.getParameters().forEach(param -> methodBuilder.getOrCreateParameter(param.getIndex()).setName(param.getName()).setJavadoc(param.getJavadoc()));
             }
         }
 

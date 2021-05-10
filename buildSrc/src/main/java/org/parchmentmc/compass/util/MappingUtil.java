@@ -254,24 +254,45 @@ public class MappingUtil {
 
         data.getClasses().forEach(cls -> {
             IMappingFile.IClass mappedClass = mapping.getClass(cls.getName());
-            if (mappedClass == null) return;
-            MappingDataBuilder.MutableClassData classData = builder.addClass(mappedClass.getMapped()).addJavadoc(cls.getJavadoc());
+            String clsName = cls.getName();
+            if (mappedClass != null) {
+                clsName = mappedClass.getMapped();
+            }
+            MappingDataBuilder.MutableClassData classData = builder.addClass(clsName).addJavadoc(cls.getJavadoc());
 
             cls.getFields().forEach(field -> {
-                IMappingFile.IField mappedField = mappedClass.getField(field.getName());
-                if (mappedField == null) return;
-                // TODO: remove descriptor from field?
-                String descriptor = mappedField.getMappedDescriptor();
-                if (descriptor == null) descriptor = mapping.remapDescriptor(field.getDescriptor());
-                classData.addField(mappedField.getMapped()).setDescriptor(descriptor).addJavadoc(field.getJavadoc());
+                String fieldName = field.getName();
+                String fieldDescriptor = mapping.remapDescriptor(field.getDescriptor());
+
+                if (mappedClass != null) {
+                    IMappingFile.IField mappedField = mappedClass.getField(field.getName());
+                    if (mappedField != null) {
+                        fieldName = mappedField.getMapped();
+                        if (mappedField.getMappedDescriptor() != null) {
+                            fieldDescriptor = mappedField.getMappedDescriptor();
+                        }
+                    }
+                }
+
+                classData.addField(fieldName).setDescriptor(fieldDescriptor).addJavadoc(field.getJavadoc());
             });
 
             cls.getMethods().forEach(method -> {
-                IMappingFile.IMethod mappedMethod = mappedClass.getMethod(method.getName(), method.getDescriptor());
-                if (mappedMethod == null) return;
-                MappingDataBuilder.MutableMethodData methodData = classData.addMethod(mappedMethod.getMapped(), mappedMethod.getMappedDescriptor())
+                String methodName = method.getName();
+                String methodDescriptor = method.getDescriptor();
+
+                if (mappedClass != null) {
+                    IMappingFile.IMethod mappedMethod = mappedClass.getMethod(method.getName(), method.getDescriptor());
+                    if (mappedMethod != null) {
+                        methodName = mappedMethod.getMapped();
+                        methodDescriptor = mappedMethod.getMappedDescriptor();
+                    }
+                }
+
+                MappingDataBuilder.MutableMethodData methodData = classData.addMethod(methodName, methodDescriptor)
                         .addJavadoc(method.getJavadoc());
 
+                // TODO: determine better logic for handling parameters
                 method.getParameters().forEach(param -> methodData.addParameter(param.getIndex()).setName(param.getName()).setJavadoc(param.getJavadoc()));
             });
         });
