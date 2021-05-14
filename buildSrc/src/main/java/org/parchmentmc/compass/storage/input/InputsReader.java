@@ -4,6 +4,8 @@ import net.minecraftforge.srgutils.IMappingFile;
 import org.gradle.api.NamedDomainObjectCollection;
 import org.gradle.internal.Pair;
 import org.parchmentmc.compass.providers.IntermediateProvider;
+import org.parchmentmc.compass.storage.io.SingleFileDataIO;
+import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.feather.mapping.ImmutableMappingDataContainer;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
@@ -79,7 +81,14 @@ public class InputsReader {
     private void insertEntries(Path file, IMappingFile mapping, MappingDataBuilder builder) throws IOException {
         temp.clearPackages().clearClasses();
 
-        SimpleInputFileReader.parseLines(temp, Files.readAllLines(file));
+        String filename = file.getFileName().toString();
+        if (filename.endsWith(".txt")) {
+            SimpleInputFileReader.parseLines(temp, Files.readAllLines(file));
+        } else if (filename.endsWith(".json")) {
+            MappingUtil.copyData(SingleFileDataIO.INSTANCE.read(file), temp);
+        } else {
+            return;
+        }
 
         for (MappingDataBuilder.MutablePackageData pkg : temp.getPackages()) {
             builder.getOrCreatePackage(mapping.remapPackage(pkg.getName()))

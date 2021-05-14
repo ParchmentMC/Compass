@@ -216,4 +216,25 @@ public class MappingUtil {
 
         return builder;
     }
+
+    public static void copyData(MappingDataContainer base, MappingDataBuilder builder) {
+        // Copy packages
+        base.getPackages().forEach(pkg -> builder.createPackage(pkg.getName()).addJavadoc(pkg.getJavadoc()));
+
+        // Copy classes
+        base.getClasses().forEach(cls -> {
+            MappingDataBuilder.MutableClassData classData = builder.createClass(cls.getName()).addJavadoc(cls.getJavadoc());
+
+            // Copy fields
+            cls.getFields().forEach(field -> classData.createField(field.getName(), field.getDescriptor()).addJavadoc(field.getJavadoc()));
+
+            // Copy methods
+            cls.getMethods().forEach(method -> {
+                MappingDataBuilder.MutableMethodData methodData = classData.createMethod(method.getName(), method.getDescriptor()).addJavadoc(method.getJavadoc());
+
+                // Copy parameters
+                method.getParameters().forEach(param -> methodData.createParameter(param.getIndex()).setName(param.getName()).setJavadoc(param.getJavadoc()));
+            });
+        });
+    }
 }
