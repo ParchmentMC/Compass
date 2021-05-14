@@ -1,6 +1,6 @@
 package org.parchmentmc.compass.storage.io;
 
-import org.parchmentmc.compass.storage.MappingDataContainer;
+import org.parchmentmc.feather.mapping.MappingDataContainer;
 
 import java.io.File;
 import java.io.IOException;

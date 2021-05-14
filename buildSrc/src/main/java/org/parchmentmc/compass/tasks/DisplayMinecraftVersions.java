@@ -5,7 +5,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
-import org.parchmentmc.compass.manifest.LauncherManifest;
+import org.parchmentmc.feather.manifests.LauncherManifest;
 
 public abstract class DisplayMinecraftVersions extends DefaultTask {
     @Input
@@ -17,10 +17,10 @@ public abstract class DisplayMinecraftVersions extends DefaultTask {
 
         LauncherManifest manifest = getManifest().get();
 
-        logger.lifecycle("Latest release: {}", manifest.latest.release);
-        logger.lifecycle("Latest snapshot: {}", manifest.latest.snapshot);
+        logger.lifecycle("Latest release: {}", manifest.getLatest().getRelease());
+        logger.lifecycle("Latest snapshot: {}", manifest.getLatest().getSnapshot());
 
-        logger.lifecycle("All versions ({}): {}", manifest.versions.size(),
-                manifest.versions.stream().map(d -> d.id).toArray());
+        logger.lifecycle("All versions ({}): {}", manifest.getVersions().size(),
+                manifest.getVersions().stream().map(LauncherManifest.VersionData::getId).toArray());
     }
 }

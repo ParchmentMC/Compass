@@ -1,6 +1,6 @@
 package org.parchmentmc.compass.storage.input;
 
-import org.parchmentmc.compass.storage.MappingDataBuilder;
+import org.parchmentmc.feather.mapping.MappingDataBuilder;
 
 import java.io.IOException;
 import java.util.List;
@@ -39,14 +39,14 @@ public class SimpleInputFileReader {
                         if (split.length != 2)
                             throw new IOException("Invalid package line at #" + i + "; incorrect no. of tokens: " + line);
                         String name = split[1];
-                        javadoc = builder.addPackage(name);
+                        javadoc = builder.createPackage(name);
                         break;
                     }
                     case "class": {
                         if (split.length != 2)
                             throw new IOException("Invalid class line at #" + i + "; incorrect no. of tokens: " + line);
                         String name = split[1];
-                        classData = builder.addClass(name);
+                        classData = builder.createClass(name);
                         javadoc = classData;
                         break;
                     }
@@ -57,7 +57,7 @@ public class SimpleInputFileReader {
                             throw new IOException("Invalid field line at #" + i + "; No enclosing class: " + line);
                         String name = split[1];
                         String descriptor = split[2];
-                        javadoc = classData.addField(name).setDescriptor(descriptor);
+                        javadoc = classData.createField(name, descriptor);
                         break;
                     }
                     case "method": {
@@ -67,7 +67,7 @@ public class SimpleInputFileReader {
                             throw new IOException("Invalid method line at #" + i + "; No enclosing class: " + line);
                         String name = split[1];
                         String descriptor = split[2];
-                        methodData = classData.addMethod(name, descriptor);
+                        methodData = classData.createMethod(name, descriptor);
                         javadoc = methodData;
                         break;
                     }
@@ -78,7 +78,7 @@ public class SimpleInputFileReader {
                             throw new IOException("Invalid param line at #" + i + "; No enclosing method: " + line);
                         byte index = Byte.parseByte(split[1]);
                         String name = split.length == 3 ? split[2] : null;
-                        javadoc = methodData.addParameter(index).setName(name);
+                        javadoc = methodData.createParameter(index).setName(name);
                         break;
                     }
                     default: {

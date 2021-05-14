@@ -7,9 +7,9 @@ import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
-import org.parchmentmc.compass.manifest.LauncherManifest;
-import org.parchmentmc.compass.manifest.VersionManifest;
 import org.parchmentmc.compass.util.JSONUtil;
+import org.parchmentmc.feather.manifests.LauncherManifest;
+import org.parchmentmc.feather.manifests.VersionManifest;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -90,8 +90,8 @@ public class ManifestsDownloader {
         try {
             String version = this.version.get();
             LauncherManifest launcherManifest = downloadLauncherManifest();
-            LauncherManifest.VersionData versionData = launcherManifest.versions.stream()
-                    .filter(str -> str.id.equals(version))
+            LauncherManifest.VersionData versionData = launcherManifest.getVersions().stream()
+                    .filter(str -> str.getId().equals(version))
                     .findFirst()
                     .orElseThrow(() -> new InvalidUserDataException("No version data found for " + version));
 
@@ -99,9 +99,9 @@ public class ManifestsDownloader {
             File outputFile = outputDir.file(version + ".json").getAsFile();
 
             // Only download if our expected hash (from the launcher manifest) is different from our on-disk file
-            if (!outputFile.exists() || areNotChecksumsEqual(outputFile, versionData.sha1)) {
-                createAndExecuteAction(project, versionData.url, outputFile, "version manifest");
-                verifyChecksum(outputFile, versionData.sha1, "version manifest");
+            if (!outputFile.exists() || areNotChecksumsEqual(outputFile, versionData.getSHA1())) {
+                createAndExecuteAction(project, versionData.getUrl(), outputFile, "version manifest");
+                verifyChecksum(outputFile, versionData.getSHA1(), "version manifest");
             }
 
             versionManifestData = JSONUtil.parseVersionManifest(outputFile.toPath());

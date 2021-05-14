@@ -8,8 +8,8 @@ import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
-import org.parchmentmc.compass.manifest.VersionManifest;
 import org.parchmentmc.compass.util.MappingUtil;
+import org.parchmentmc.feather.manifests.VersionManifest;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -36,7 +36,7 @@ public class ObfuscationMapsDownloader {
         clientDownloadKey = objects.property(String.class).convention("client_mappings");
         serverDownloadKey = objects.property(String.class).convention("server_mappings");
         outputDirectory = objects.directoryProperty()
-                .convention(project.getLayout().getBuildDirectory().dir("obfuscationMaps").zip(versionManifest, (d, manifest) -> d.dir(manifest.id)));
+                .convention(project.getLayout().getBuildDirectory().dir("obfuscationMaps").zip(versionManifest, (d, manifest) -> d.dir(manifest.getId())));
 
         versionManifest.finalizeValueOnRead();
         clientDownloadKey.finalizeValueOnRead();
@@ -44,14 +44,14 @@ public class ObfuscationMapsDownloader {
         outputDirectory.finalizeValueOnRead();
 
         clientDownload = versionManifest.zip(clientDownloadKey, (manifest, key) -> {
-            VersionManifest.DownloadInfo info = manifest.downloads.get(key);
+            VersionManifest.DownloadInfo info = manifest.getDownloads().get(key);
             if (info == null) {
                 throw new InvalidUserDataException("No client obfuscation mapping download info for key " + key);
             }
             return info;
         });
         serverDownload = versionManifest.zip(serverDownloadKey, (manifest, key) -> {
-            VersionManifest.DownloadInfo info = manifest.downloads.get(key);
+            VersionManifest.DownloadInfo info = manifest.getDownloads().get(key);
             if (info == null) {
                 throw new InvalidUserDataException("No server obfuscation mapping download info for key " + key);
             }
@@ -83,8 +83,8 @@ public class ObfuscationMapsDownloader {
 
     private void downloadFile(VersionManifest.DownloadInfo download, File output, String info) {
         try {
-            createAndExecuteAction(project, download.url, output, info);
-            verifyChecksum(output, download.sha1, info);
+            createAndExecuteAction(project, download.getUrl(), output, info);
+            verifyChecksum(output, download.getSHA1(), info);
         } catch (Exception e) {
             throw new RuntimeException("Failed to download " + info, e);
         }
@@ -97,18 +97,18 @@ public class ObfuscationMapsDownloader {
         if (obfuscationMap != null) {
             return obfuscationMap; // We've already executed and downloaded; return cached.
         }
-        String version = this.versionManifest.get().id;
+        String version = this.versionManifest.get().getId();
         Directory outputDir = this.outputDirectory.get();
 
         File clientMappings = outputDir.file("client.txt").getAsFile();
         VersionManifest.DownloadInfo clientInfo = clientDownload.get();
-        if (!clientMappings.exists() || areNotChecksumsEqual(clientMappings, clientInfo.sha1)) {
+        if (!clientMappings.exists() || areNotChecksumsEqual(clientMappings, clientInfo.getSHA1())) {
             downloadFile(clientInfo, clientMappings, "client obfuscation map for " + version);
         }
 
         File serverMappings = outputDir.file("server.txt").getAsFile();
         VersionManifest.DownloadInfo serverInfo = serverDownload.get();
-        if (!serverMappings.exists() || areNotChecksumsEqual(serverMappings, serverInfo.sha1)) {
+        if (!serverMappings.exists() || areNotChecksumsEqual(serverMappings, serverInfo.getSHA1())) {
             downloadFile(serverInfo, serverMappings, "server obfuscation map for " + version);
         }
 

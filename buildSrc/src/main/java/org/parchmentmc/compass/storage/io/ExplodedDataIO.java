@@ -5,10 +5,10 @@ import com.squareup.moshi.Moshi;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
-import org.parchmentmc.compass.storage.ImmutableMappingDataContainer;
-import org.parchmentmc.compass.storage.MappingDataContainer;
 import org.parchmentmc.compass.util.JSONUtil;
-import org.parchmentmc.compass.util.SimpleVersion;
+import org.parchmentmc.feather.mapping.ImmutableMappingDataContainer;
+import org.parchmentmc.feather.mapping.MappingDataContainer;
+import org.parchmentmc.feather.util.SimpleVersion;
 
 import java.io.File;
 import java.io.IOException;

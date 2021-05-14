@@ -4,9 +4,9 @@ import net.minecraftforge.srgutils.IMappingFile;
 import org.gradle.api.NamedDomainObjectCollection;
 import org.gradle.internal.Pair;
 import org.parchmentmc.compass.providers.IntermediateProvider;
-import org.parchmentmc.compass.storage.ImmutableMappingDataContainer;
-import org.parchmentmc.compass.storage.MappingDataBuilder;
-import org.parchmentmc.compass.storage.MappingDataContainer;
+import org.parchmentmc.feather.mapping.ImmutableMappingDataContainer;
+import org.parchmentmc.feather.mapping.MappingDataBuilder;
+import org.parchmentmc.feather.mapping.MappingDataContainer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,7 +33,7 @@ public class InputsReader {
             return new ImmutableMappingDataContainer(Collections.emptyList(), Collections.emptyList());
         }
 
-        MappingDataBuilder builder = new MappingDataBuilder();
+        MappingDataBuilder builder = new MappingDataBuilder(MappingDataContainer.CURRENT_FORMAT);
 
         List<Pair<IntermediateProvider, Path>> directories = new ArrayList<>();
 
@@ -73,7 +73,7 @@ public class InputsReader {
     }
 
     // Reused data builder, to avoid excessive allocations
-    private final MappingDataBuilder temp = new MappingDataBuilder();
+    private final MappingDataBuilder temp = new MappingDataBuilder(MappingDataContainer.CURRENT_FORMAT);
 
     // Mapping should be [? -> obf] 
     private void insertEntries(Path file, IMappingFile mapping, MappingDataBuilder builder) throws IOException {
@@ -113,7 +113,7 @@ public class InputsReader {
                     }
                 }
 
-                classBuilder.getOrCreateField(fieldName).setDescriptor(fieldDescriptor).addJavadoc(field.getJavadoc());
+                classBuilder.getOrCreateField(fieldName, fieldDescriptor).addJavadoc(field.getJavadoc());
             }
 
             // Copy methods of classes

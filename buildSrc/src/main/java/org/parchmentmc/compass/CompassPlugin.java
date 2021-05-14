@@ -15,16 +15,17 @@ import org.gradle.api.tasks.TaskProvider;
 import org.parchmentmc.compass.providers.DelegatingProvider;
 import org.parchmentmc.compass.providers.IntermediateProvider;
 import org.parchmentmc.compass.providers.mcpconfig.SRGProvider;
-import org.parchmentmc.compass.storage.MappingDataBuilder;
-import org.parchmentmc.compass.storage.MappingDataContainer;
 import org.parchmentmc.compass.storage.input.InputsReader;
 import org.parchmentmc.compass.storage.io.ExplodedDataIO;
 import org.parchmentmc.compass.tasks.DisplayMinecraftVersions;
 import org.parchmentmc.compass.tasks.GenerateExport;
 import org.parchmentmc.compass.util.JSONUtil;
-import org.parchmentmc.compass.util.MappingUtil;
+import org.parchmentmc.feather.mapping.MappingUtil;
 import org.parchmentmc.compass.util.download.ManifestsDownloader;
 import org.parchmentmc.compass.util.download.ObfuscationMapsDownloader;
+import org.parchmentmc.feather.mapping.MappingDataBuilder;
+import org.parchmentmc.feather.mapping.MappingDataContainer;
+import static org.parchmentmc.compass.util.MappingUtil.*;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -72,7 +73,7 @@ public class CompassPlugin implements Plugin<Project> {
             t.doLast(_t -> {
                 IMappingFile obfMap = obfuscationMaps.getObfuscationMap().get();
                 // reversed because normally, obf map is [Moj -> Obf] (because it's a ProGuard log of the obf)
-                MappingDataBuilder data = MappingUtil.constructPackageData(MappingUtil.createBuilderFrom(obfMap, true));
+                MappingDataBuilder data = constructPackageData(createBuilderFrom(obfMap, true));
 
                 File stagingDataDir = extension.getStagingData().get().getAsFile();
 
@@ -158,7 +159,7 @@ public class CompassPlugin implements Plugin<Project> {
                     MappingDataContainer inputData = inputsReader.parse(extension.getInputs().get().getAsFile().toPath());
                     MappingDataContainer baseData = ExplodedDataIO.INSTANCE.read(extension.getProductionData().get().getAsFile());
 
-                    MappingDataContainer combinedData = MappingUtil.combine(baseData, inputData);
+                    MappingDataContainer combinedData = MappingUtil.apply(baseData, inputData);
 
                     ExplodedDataIO.INSTANCE.write(combinedData, extension.getStagingData().get().getAsFile());
                 } catch (IOException e) {
@@ -176,8 +177,8 @@ public class CompassPlugin implements Plugin<Project> {
                 IMappingFile mojToObf = obfMapProvider.get();
 
                 // getMapped() == obfuscated, getOriginal() == mojmap
-                MappingDataContainer obf = MappingUtil.constructPackageData(MappingUtil.createBuilderFrom(mojToObf, true));
-                MappingDataContainer moj = MappingUtil.constructPackageData(MappingUtil.createBuilderFrom(mojToObf, false));
+                MappingDataContainer obf = constructPackageData(createBuilderFrom(mojToObf, true));
+                MappingDataContainer moj = constructPackageData(createBuilderFrom(mojToObf, false));
 
                 Path obfPath = output.resolve("obf");
                 Path mojPath = output.resolve("moj");

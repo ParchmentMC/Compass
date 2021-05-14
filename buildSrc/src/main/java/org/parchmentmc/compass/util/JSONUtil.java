@@ -4,9 +4,10 @@ import com.squareup.moshi.*;
 import okio.BufferedSource;
 import okio.Okio;
 import org.jetbrains.annotations.Nullable;
-import org.parchmentmc.compass.manifest.LauncherManifest;
-import org.parchmentmc.compass.manifest.VersionManifest;
-import org.parchmentmc.compass.storage.io.MappingDataContainerAdapter;
+import org.parchmentmc.feather.io.moshi.MDCMoshiAdapter;
+import org.parchmentmc.feather.io.moshi.SimpleVersionAdapter;
+import org.parchmentmc.feather.manifests.LauncherManifest;
+import org.parchmentmc.feather.manifests.VersionManifest;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -19,8 +20,8 @@ import java.time.format.DateTimeFormatter;
 public final class JSONUtil {
     public static final Moshi MOSHI = new Moshi.Builder()
             .add(OffsetDateTime.class, new OffsetDateTimeAdapter())
-            .add(new MappingDataContainerAdapter())
-            .add(new SimpleVersion.Adapter())
+            .add(new MDCMoshiAdapter())
+            .add(new SimpleVersionAdapter())
             .build();
 
     private JSONUtil() {
