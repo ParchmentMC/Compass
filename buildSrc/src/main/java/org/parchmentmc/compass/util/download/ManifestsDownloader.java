@@ -1,5 +1,6 @@
 package org.parchmentmc.compass.util.download;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Project;
 import org.gradle.api.file.Directory;
@@ -11,7 +12,6 @@ import org.parchmentmc.compass.util.JSONUtil;
 import org.parchmentmc.feather.manifests.LauncherManifest;
 import org.parchmentmc.feather.manifests.VersionManifest;
 
-import javax.annotation.Nullable;
 import java.io.File;
 
 import static org.parchmentmc.compass.util.download.DownloadUtil.*;

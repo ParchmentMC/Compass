@@ -3,7 +3,7 @@ package org.parchmentmc.compass.util;
 import com.squareup.moshi.*;
 import okio.BufferedSource;
 import okio.Okio;
-import org.jetbrains.annotations.Nullable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.parchmentmc.feather.io.moshi.MDCMoshiAdapter;
 import org.parchmentmc.feather.io.moshi.SimpleVersionAdapter;
 import org.parchmentmc.feather.manifests.LauncherManifest;

@@ -1,6 +1,7 @@
 package org.parchmentmc.compass.util.download;
 
 import net.minecraftforge.srgutils.IMappingFile;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Project;
 import org.gradle.api.file.Directory;
@@ -11,7 +12,6 @@ import org.gradle.api.provider.Provider;
 import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.feather.manifests.VersionManifest;
 
-import javax.annotation.Nullable;
 import java.io.File;
 
 import static org.parchmentmc.compass.util.download.DownloadUtil.*;
