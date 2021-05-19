@@ -7,8 +7,8 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.NamedDomainObjectSet;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.logging.Logger;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
@@ -40,6 +40,8 @@ public class CompassPlugin implements Plugin<Project> {
     public static final String COMPASS_GROUP = "compass";
 
     private final NamedDomainObjectSet<IntermediateProvider> intermediates;
+    private ManifestsDownloader manifestsDownloader;
+    private ObfuscationMapsDownloader obfuscationMapsDownloader;
 
     @Inject
     public CompassPlugin(ObjectFactory objectFactory) {
@@ -52,18 +54,19 @@ public class CompassPlugin implements Plugin<Project> {
         final CompassExtension extension = project.getExtensions().create("compass", CompassExtension.class, project);
         final TaskContainer tasks = project.getTasks();
 
-        final ManifestsDownloader manifests = new ManifestsDownloader(project);
-        manifests.getLauncherManifestURL().set(extension.getLauncherManifestURL());
-        manifests.getVersion().set(extension.getVersion());
+        manifestsDownloader = new ManifestsDownloader(project);
+        obfuscationMapsDownloader = new ObfuscationMapsDownloader(project);
 
-        ObfuscationMapsDownloader obfuscationMaps = new ObfuscationMapsDownloader(project);
-        obfuscationMaps.getVersionManifest().set(manifests.getVersionManifest());
+        manifestsDownloader.getLauncherManifestURL().set(extension.getLauncherManifestURL());
+        manifestsDownloader.getVersion().set(extension.getVersion());
+
+        obfuscationMapsDownloader.getVersionManifest().set(manifestsDownloader.getVersionManifest());
 
         final TaskProvider<DisplayMinecraftVersions> displayMinecraftVersions = tasks.register("displayMinecraftVersions", DisplayMinecraftVersions.class);
         displayMinecraftVersions.configure(t -> {
             t.setGroup(COMPASS_GROUP);
             t.setDescription("Displays all known Minecraft versions.");
-            t.getManifest().set(manifests.getLauncherManifest());
+            t.getManifest().set(manifestsDownloader.getLauncherManifest());
         });
 
         TaskProvider<DefaultTask> generateVersionBase = tasks.register("generateVersionBase", DefaultTask.class);
@@ -71,7 +74,7 @@ public class CompassPlugin implements Plugin<Project> {
             t.setGroup(COMPASS_GROUP);
             t.setDescription("Generates the base data for the active version to the staging directory.");
             t.doLast(_t -> {
-                IMappingFile obfMap = obfuscationMaps.getObfuscationMap().get();
+                IMappingFile obfMap = obfuscationMapsDownloader.getObfuscationMap().get();
                 // reversed because normally, obf map is [Moj -> Obf] (because it's a ProGuard log of the obf)
                 MappingDataBuilder data = constructPackageData(createBuilderFrom(obfMap, true));
 
@@ -124,7 +127,7 @@ public class CompassPlugin implements Plugin<Project> {
             });
         });
 
-        Provider<IMappingFile> obfMapProvider = obfuscationMaps.getObfuscationMap();
+        Provider<IMappingFile> obfMapProvider = obfuscationMapsDownloader.getObfuscationMap();
         // noinspection NullableProblems
         Provider<IMappingFile> officialMapProvider = obfMapProvider.map(IMappingFile::reverse);
 
@@ -222,5 +225,13 @@ public class CompassPlugin implements Plugin<Project> {
 
     public NamedDomainObjectSet<IntermediateProvider> getIntermediates() {
         return intermediates;
+    }
+
+    public ManifestsDownloader getManifestsDownloader() {
+        return manifestsDownloader;
+    }
+
+    public ObfuscationMapsDownloader getObfuscationMapsDownloader() {
+        return obfuscationMapsDownloader;
     }
 }
