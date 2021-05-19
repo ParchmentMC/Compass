@@ -38,7 +38,7 @@ import java.util.Locale;
 import static org.parchmentmc.compass.util.MappingUtil.*;
 
 public class CompassPlugin implements Plugin<Project> {
-    public static final String COMPASS_GROUP = "org/parchmentmc/compass";
+    public static final String COMPASS_GROUP = "compass";
 
     private final NamedDomainObjectSet<IntermediateProvider> intermediates;
     private ManifestsDownloader manifestsDownloader;
