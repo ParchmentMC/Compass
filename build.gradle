@@ -1,60 +1,56 @@
-import org.parchmentmc.compass.tasks.GenerateExport
-
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
-
 plugins {
-    id 'org.parchmentmc.compass'
+    id 'org.parchmentmc.writtenbooks' version '0.+'
+    id 'java-gradle-plugin'
     id 'maven-publish'
 }
 
-repositories {
-    mavenCentral()
-    maven { url = "https://maven.minecraftforge.net/" }
-}
+project.group = 'org.parchmentmc'
 
-compass {
-    version = '1.16.5'
+repositories {
+    maven {
+        name = 'ParchmentMC'
+        url = 'https://ldtteam.jfrog.io/artifactory/parchmentmc/'
+    }
+    maven {
+        name = 'MinecraftForge'
+        url = 'https://maven.minecraftforge.net/'
+    }
+    gradlePluginPortal()
 }
 
 dependencies {
-    mcpconfig 'de.oceanlabs.mcp:mcp_config:1.16.5-20210115.111550'
+    implementation gradleApi()
+    implementation 'de.undercouch:gradle-download-task:4.1.1'
+    implementation 'com.squareup.moshi:moshi:1.12.0'
+    implementation 'net.minecraftforge:srgutils:0.4.1'
+    implementation 'org.parchmentmc:feather:0.2.+'
+    implementation 'org.parchmentmc.feather:io-moshi:0.2.+'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
 }
 
-def now = OffsetDateTime.now(ZoneOffset.UTC)
-def dateTime = now.format("yyyyMMdd-HHmmss")
+test {
+    useJUnitPlatform()
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(8)
+}
+
+//gradlePlugin {
+//     Define the plugin
+//    plugins.register("org.parchmentmc.compass") {
+//        id = 'org.parchmentmc.org.parchmentmc.compass'
+//        implementationClass = 'org.parchmentmc.org.parchmentmc.compass.CompassPlugin'
+//    }
+//}
 
 publishing {
-    publications.create('datedExport', MavenPublication) { p ->
-        p.artifact(tasks.named("generateOfficialExport", GenerateExport).flatMap { it.output }) {
-            classifier = null
-        }
-        p.artifact(tasks.named("generateSrgExport", GenerateExport).flatMap { it.output }) {
-            classifier = "srg"
-        }
-        p.groupId = "org.parchmentmc.mappings"
-        afterEvaluate {
-            p.artifactId = compass.version.get()
-            p.version = dateTime
-        }
-    }
-    publications.create('datedStagingExport', MavenPublication) { p ->
-        p.artifact(tasks.named("generateOfficialStagingExport", GenerateExport).flatMap { it.output }) {
-            classifier = null
-        }
-        p.artifact(tasks.named("generateSrgStagingExport", GenerateExport).flatMap { it.output }) {
-            classifier = "srg"
-        }
-        p.groupId = "org.parchmentmc.mappings"
-        afterEvaluate {
-            p.artifactId = compass.version.get()
-            p.version = "staging-SNAPSHOT"
-        }
-    }
     repositories {
         maven {
-            name "projectLocal"
-            url "file://${project.file('repo').absolutePath}"
+            name = 'projectLocal'
+            url = "file://${rootProject.file('repo').absolutePath}"
         }
     }
 }

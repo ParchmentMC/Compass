@@ -3,8 +3,6 @@ package org.parchmentmc.compass.providers;
 import net.minecraftforge.srgutils.IMappingFile;
 import org.gradle.api.provider.Provider;
 
-import java.io.IOException;
-
 /**
  * Provides the delegated mapping file as an intermediate format.
  */

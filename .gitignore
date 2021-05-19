@@ -15,8 +15,4 @@ build
 .gradle
 
 run
-
-data
-staging
-input
 repo

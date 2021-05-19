@@ -7,8 +7,8 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.NamedDomainObjectSet;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
@@ -20,12 +20,11 @@ import org.parchmentmc.compass.storage.io.ExplodedDataIO;
 import org.parchmentmc.compass.tasks.DisplayMinecraftVersions;
 import org.parchmentmc.compass.tasks.GenerateExport;
 import org.parchmentmc.compass.util.JSONUtil;
-import org.parchmentmc.feather.mapping.MappingUtil;
 import org.parchmentmc.compass.util.download.ManifestsDownloader;
 import org.parchmentmc.compass.util.download.ObfuscationMapsDownloader;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
-import static org.parchmentmc.compass.util.MappingUtil.*;
+import org.parchmentmc.feather.mapping.MappingUtil;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -36,8 +35,10 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Locale;
 
+import static org.parchmentmc.compass.util.MappingUtil.*;
+
 public class CompassPlugin implements Plugin<Project> {
-    public static final String COMPASS_GROUP = "compass";
+    public static final String COMPASS_GROUP = "org/parchmentmc/compass";
 
     private final NamedDomainObjectSet<IntermediateProvider> intermediates;
     private ManifestsDownloader manifestsDownloader;
@@ -51,7 +52,7 @@ public class CompassPlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         project.getPlugins().apply("de.undercouch.download");
-        final CompassExtension extension = project.getExtensions().create("compass", CompassExtension.class, project);
+        final CompassExtension extension = project.getExtensions().create("org/parchmentmc/compass", CompassExtension.class, project);
         final TaskContainer tasks = project.getTasks();
 
         manifestsDownloader = new ManifestsDownloader(project);
