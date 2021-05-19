@@ -8,6 +8,8 @@ import okio.Okio;
 import org.parchmentmc.compass.util.JSONUtil;
 import org.parchmentmc.feather.mapping.ImmutableMappingDataContainer;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
+import org.parchmentmc.feather.mapping.VersionedMDCDelegate;
+import org.parchmentmc.feather.mapping.VersionedMappingDataContainer;
 import org.parchmentmc.feather.util.SimpleVersion;
 
 import java.io.File;
@@ -39,7 +41,7 @@ public class ExplodedDataIO implements MappingDataIO {
             newParameterizedType(Collection.class, subtypeOf(MappingDataContainer.PackageData.class));
     private static final String EXTENSION = ".json";
 
-    public void write(MappingDataContainer data, Path base) throws IOException {
+    public void write(VersionedMappingDataContainer data, Path base) throws IOException {
         if (Files.exists(base)) {
             // noinspection ResultOfMethodCallIgnored
             Files.walk(base)
@@ -81,7 +83,7 @@ public class ExplodedDataIO implements MappingDataIO {
         }
     }
 
-    public ImmutableMappingDataContainer read(Path base) throws IOException {
+    public VersionedMappingDataContainer read(Path base) throws IOException {
 
         DataInfo info;
         try (BufferedSource source = Okio.buffer(Okio.source(base.resolve("info.json")))) {
@@ -111,7 +113,8 @@ public class ExplodedDataIO implements MappingDataIO {
             }
         });
 
-        return new ImmutableMappingDataContainer(info.version, packages, classes);
+
+        return new VersionedMDCDelegate<>(info.version, new ImmutableMappingDataContainer(packages, classes));
     }
 
     static class DataInfo {

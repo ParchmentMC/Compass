@@ -64,7 +64,7 @@ public class MappingUtil {
     }
 
     public static MappingDataBuilder createBuilderFrom(IMappingFile mappingFile, boolean reversed) {
-        MappingDataBuilder builder = new MappingDataBuilder(MappingDataContainer.CURRENT_FORMAT);
+        MappingDataBuilder builder = new MappingDataBuilder();
 
         // Copy packages
         mappingFile.getPackages().forEach(pkg -> builder.createPackage(reversed ? pkg.getMapped() : pkg.getOriginal()));
@@ -165,7 +165,7 @@ public class MappingUtil {
 
     // Mapping should be names from data -> target names
     public static MappingDataContainer remapData(MappingDataContainer data, IMappingFile mapping) {
-        MappingDataBuilder builder = new MappingDataBuilder(data.getFormatVersion());
+        MappingDataBuilder builder = new MappingDataBuilder();
 
         data.getPackages().forEach(pkg -> builder.createPackage(mapping.remapPackage(pkg.getName())).addJavadoc(pkg.getJavadoc()));
 

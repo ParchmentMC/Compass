@@ -35,7 +35,7 @@ public class InputsReader {
             return new ImmutableMappingDataContainer(Collections.emptyList(), Collections.emptyList());
         }
 
-        MappingDataBuilder builder = new MappingDataBuilder(MappingDataContainer.CURRENT_FORMAT);
+        MappingDataBuilder builder = new MappingDataBuilder();
 
         List<Pair<IntermediateProvider, Path>> directories = new ArrayList<>();
 
@@ -75,7 +75,7 @@ public class InputsReader {
     }
 
     // Reused data builder, to avoid excessive allocations
-    private final MappingDataBuilder temp = new MappingDataBuilder(MappingDataContainer.CURRENT_FORMAT);
+    private final MappingDataBuilder temp = new MappingDataBuilder();
 
     // Mapping should be [? -> obf] 
     private void insertEntries(Path file, IMappingFile mapping, MappingDataBuilder builder) throws IOException {
