@@ -38,13 +38,13 @@ java {
     toolchain.languageVersion = JavaLanguageVersion.of(8)
 }
 
-//gradlePlugin {
-//     Define the plugin
-//    plugins.register("org.parchmentmc.compass") {
-//        id = 'org.parchmentmc.org.parchmentmc.compass'
-//        implementationClass = 'org.parchmentmc.org.parchmentmc.compass.CompassPlugin'
-//    }
-//}
+gradlePlugin {
+    // Define the plugin
+    plugins.register("compass") {
+        id = 'org.parchmentmc.compass'
+        implementationClass = 'org.parchmentmc.compass.CompassPlugin'
+    }
+}
 
 publishing {
     repositories {
