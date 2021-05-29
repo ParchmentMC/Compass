@@ -36,10 +36,18 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Locale;
 
-import static org.parchmentmc.compass.util.MappingUtil.*;
+import static org.parchmentmc.compass.util.MappingUtil.constructPackageData;
+import static org.parchmentmc.compass.util.MappingUtil.createBuilderFrom;
 
 public class CompassPlugin implements Plugin<Project> {
     public static final String COMPASS_GROUP = "compass";
+    public static final String COMPASS_EXTENSION = "compass";
+
+    public static final String DISPLAY_MINECRAFT_VERSIONS_TASK_NAME = "displayMinecraftVersions";
+    public static final String GENERATE_VERSION_BASE_TASK_NAME = "generateVersionBase";
+    public static final String CLEAR_STAGING_DATA_TASK_NAME = "clearStaging";
+    public static final String PROMOTE_STAGING_DATA_TASK_NAME = "promoteStagingToProduction";
+    public static final String CREATE_STAGING_DATA_TASK_NAME = "createStagingFromInputs";
 
     private final NamedDomainObjectSet<IntermediateProvider> intermediates;
     private ManifestsDownloader manifestsDownloader;
@@ -53,7 +61,7 @@ public class CompassPlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         project.getPlugins().apply("de.undercouch.download");
-        final CompassExtension extension = project.getExtensions().create("compass", CompassExtension.class, project);
+        final CompassExtension extension = project.getExtensions().create(COMPASS_EXTENSION, CompassExtension.class, project);
         final TaskContainer tasks = project.getTasks();
 
         manifestsDownloader = new ManifestsDownloader(project);
@@ -64,14 +72,14 @@ public class CompassPlugin implements Plugin<Project> {
 
         obfuscationMapsDownloader.getVersionManifest().set(manifestsDownloader.getVersionManifest());
 
-        final TaskProvider<DisplayMinecraftVersions> displayMinecraftVersions = tasks.register("displayMinecraftVersions", DisplayMinecraftVersions.class);
+        final TaskProvider<DisplayMinecraftVersions> displayMinecraftVersions = tasks.register(DISPLAY_MINECRAFT_VERSIONS_TASK_NAME, DisplayMinecraftVersions.class);
         displayMinecraftVersions.configure(t -> {
             t.setGroup(COMPASS_GROUP);
             t.setDescription("Displays all known Minecraft versions.");
             t.getManifest().set(manifestsDownloader.getLauncherManifest());
         });
 
-        TaskProvider<DefaultTask> generateVersionBase = tasks.register("generateVersionBase", DefaultTask.class);
+        TaskProvider<DefaultTask> generateVersionBase = tasks.register(GENERATE_VERSION_BASE_TASK_NAME, DefaultTask.class);
         generateVersionBase.configure(t -> {
             t.setGroup(COMPASS_GROUP);
             t.setDescription("Generates the base data for the active version to the staging directory.");
@@ -169,9 +177,9 @@ public class CompassPlugin implements Plugin<Project> {
     }
 
     private void createStagingTasks(CompassExtension extension, TaskContainer tasks) {
-        TaskProvider<Delete> clearStaging = tasks.register("clearStaging", Delete.class);
-        TaskProvider<DefaultTask> promoteStagingToProduction = tasks.register("promoteStagingToProduction", DefaultTask.class);
-        TaskProvider<DefaultTask> combineInputData = tasks.register("createStagingFromInputs", DefaultTask.class);
+        TaskProvider<Delete> clearStaging = tasks.register(CLEAR_STAGING_DATA_TASK_NAME, Delete.class);
+        TaskProvider<DefaultTask> promoteStagingToProduction = tasks.register(PROMOTE_STAGING_DATA_TASK_NAME, DefaultTask.class);
+        TaskProvider<DefaultTask> combineInputData = tasks.register(CREATE_STAGING_DATA_TASK_NAME, DefaultTask.class);
 
         clearStaging.configure(t -> {
             t.setGroup(COMPASS_GROUP);
