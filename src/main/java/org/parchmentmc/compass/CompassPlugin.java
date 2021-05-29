@@ -10,6 +10,7 @@ import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.parchmentmc.compass.providers.DelegatingProvider;
@@ -150,6 +151,13 @@ public class CompassPlugin implements Plugin<Project> {
                 t.getIntermediate().set(prov.getName());
                 t.getInput().set(extension.getStagingData());
             });
+        });
+
+        TaskProvider<Delete> clearStaging = tasks.register("clearStaging", Delete.class);
+        clearStaging.configure(t -> {
+            t.setGroup(COMPASS_GROUP);
+            t.setDescription("Clears the staging data.");
+            t.delete(extension.getStagingData());
         });
 
         TaskProvider<DefaultTask> combineInputData = tasks.register("createStagingFromInputs", DefaultTask.class);
