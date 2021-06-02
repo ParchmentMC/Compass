@@ -44,6 +44,10 @@ public class ResultContainer<T> {
         return classes.values();
     }
 
+    public boolean isEmpty() {
+        return getPackages().isEmpty() && getClasses().isEmpty();
+    }
+
     abstract static class AbstractResult<T> {
         private final String name;
         final T data;
@@ -102,6 +106,10 @@ public class ResultContainer<T> {
             return methods.values();
         }
 
+        public boolean isEmpty() {
+            return getFields().isEmpty() && getMethods().isEmpty();
+        }
+
         private String key(String name, String descriptor) {
             return name + ":" + descriptor;
         }
@@ -133,6 +141,10 @@ public class ResultContainer<T> {
         @Nullable
         public ParameterResult<T> getParameter(byte index) {
             return parameters.get(index);
+        }
+
+        public boolean isEmpty() {
+            return getParameters().isEmpty();
         }
 
         public Collection<? extends ParameterResult<T>> getParameters() {

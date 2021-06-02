@@ -1,5 +1,6 @@
 package org.parchmentmc.compass.validation.action;
 
+import com.google.common.collect.ImmutableList;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.parchmentmc.compass.util.ResultContainer;
 import org.parchmentmc.compass.validation.ValidationIssue;
@@ -33,13 +34,24 @@ public class DataValidator {
     public ResultContainer<List<? extends ValidationIssue>> validate(MappingDataContainer data, @Nullable SourceMetadata metadata) {
         ResultContainer<List<? extends ValidationIssue>> results = new ResultContainer<>();
 
+        // reusable lists
+        List<ValidationIssue> packageIssues = new ArrayList<>();
+        List<ValidationIssue> classIssues = new ArrayList<>();
+        List<ValidationIssue> fieldIssues = new ArrayList<>();
+        List<ValidationIssue> methodIssues = new ArrayList<>();
+        List<ValidationIssue> paramIssues = new ArrayList<>();
+
         // Packages
         for (MappingDataContainer.PackageData pkgData : data.getPackages()) {
-            List<ValidationIssue> issues = new ArrayList<>();
+            packageIssues.clear();
             for (Validator validator : validators) {
-                issues.addAll(validator.validate(pkgData));
+                packageIssues.addAll(validator.validate(pkgData));
             }
-            results.addPackage(new ResultContainer.PackageResult<>(pkgData.getName(), issues));
+
+            if (!packageIssues.isEmpty()) {
+                results.addPackage(new ResultContainer.PackageResult<>(pkgData.getName(),
+                        ImmutableList.copyOf(packageIssues)));
+            }
         }
 
         // Classes
@@ -48,13 +60,12 @@ public class DataValidator {
                     .filter(s -> s.getName().getMojangName().orElse("").contentEquals(clsData.getName()))
                     .findFirst().orElse(null) : null;
 
-            List<ValidationIssue> classIssues = new ArrayList<>();
+            classIssues.clear();
             for (Validator validator : validators) {
                 classIssues.addAll(validator.validate(clsData, clsMeta));
             }
             ResultContainer.ClassResult<List<? extends ValidationIssue>> classResult =
-                    new ResultContainer.ClassResult<>(clsData.getName(), classIssues);
-            results.addClass(classResult);
+                    new ResultContainer.ClassResult<>(clsData.getName(), ImmutableList.copyOf(classIssues));
 
             // Fields
             for (MappingDataContainer.FieldData fieldData : clsData.getFields()) {
@@ -62,11 +73,15 @@ public class DataValidator {
                         .filter(s -> s.getName().getMojangName().orElse("").contentEquals(fieldData.getName()))
                         .findFirst().orElse(null) : null;
 
-                List<ValidationIssue> fieldIssues = new ArrayList<>();
+                fieldIssues.clear();
                 for (Validator validator : validators) {
                     fieldIssues.addAll(validator.validate(clsData, fieldData, clsMeta, fieldMeta));
                 }
-                classResult.addField(new ResultContainer.FieldResult<>(fieldData.getName(), fieldIssues));
+
+                if (!fieldIssues.isEmpty()) {
+                    classResult.addField(new ResultContainer.FieldResult<>(fieldData.getName(),
+                            ImmutableList.copyOf(fieldIssues)));
+                }
             }
 
             // Methods
@@ -76,24 +91,34 @@ public class DataValidator {
                                 && s.getDescriptor().getMojangName().orElse("").contentEquals(methodData.getDescriptor()))
                         .findFirst().orElse(null) : null;
 
-                List<ValidationIssue> methodIssues = new ArrayList<>();
+                methodIssues.clear();
                 for (Validator validator : validators) {
                     methodIssues.addAll(validator.validate(clsData, methodData, clsMeta, methodMeta));
                 }
                 ResultContainer.MethodResult<List<? extends ValidationIssue>> methodResult =
-                        new ResultContainer.MethodResult<>(methodData.getName(), methodData.getDescriptor(), methodIssues);
-                classResult.addMethod(methodResult);
+                        new ResultContainer.MethodResult<>(methodData.getName(), methodData.getDescriptor(),
+                                ImmutableList.copyOf(methodIssues));
 
                 // Method Parameters
-
                 for (MappingDataContainer.ParameterData paramData : methodData.getParameters()) {
-                    List<ValidationIssue> paramIssues = new ArrayList<>();
+                    paramIssues.clear();
                     for (Validator validator : validators) {
                         paramIssues.addAll(validator.validate(clsData, methodData, paramData, clsMeta, methodMeta));
                     }
-                    methodResult.addParameter(new ResultContainer.ParameterResult<>(paramData.getIndex(), paramIssues));
+
+                    if (!paramIssues.isEmpty()) {
+                        methodResult.addParameter(new ResultContainer.ParameterResult<>(paramData.getIndex(),
+                                ImmutableList.copyOf(paramIssues)));
+                    }
                 }
 
+                if (!methodResult.isEmpty()) {
+                    classResult.addMethod(methodResult);
+                }
+            }
+
+            if (!classResult.isEmpty()) {
+                results.addClass(classResult);
             }
         }
 

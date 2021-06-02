@@ -13,6 +13,7 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
+import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.parchmentmc.compass.providers.DelegatingProvider;
 import org.parchmentmc.compass.providers.IntermediateProvider;
 import org.parchmentmc.compass.providers.mcpconfig.SRGProvider;
@@ -20,6 +21,7 @@ import org.parchmentmc.compass.storage.input.InputsReader;
 import org.parchmentmc.compass.storage.io.ExplodedDataIO;
 import org.parchmentmc.compass.tasks.DisplayMinecraftVersions;
 import org.parchmentmc.compass.tasks.GenerateExport;
+import org.parchmentmc.compass.tasks.ValidateMappingData;
 import org.parchmentmc.compass.util.JSONUtil;
 import org.parchmentmc.compass.util.download.ManifestsDownloader;
 import org.parchmentmc.compass.util.download.ObfuscationMapsDownloader;
@@ -122,6 +124,7 @@ public class CompassPlugin implements Plugin<Project> {
             });
         });
 
+        createValidationTask(extension, tasks);
         createStagingTasks(extension, tasks);
 
         DefaultTask writeExploded = tasks.create("writeExploded", DefaultTask.class);
@@ -173,6 +176,22 @@ public class CompassPlugin implements Plugin<Project> {
             } catch (IOException e) {
                 throw new AssertionError(e);
             }
+        });
+    }
+
+    private void createValidationTask(CompassExtension extension, TaskContainer tasks) {
+        final TaskProvider<ValidateMappingData> validateData = tasks.register("validateData", ValidateMappingData.class);
+        final TaskProvider<ValidateMappingData> validateStagingData = tasks.register("validateStagingData", ValidateMappingData.class);
+
+        validateData.configure(t -> {
+            t.setGroup(LifecycleBasePlugin.VERIFICATION_GROUP);
+            t.setDescription("Validates the production data.");
+            t.getInput().set(extension.getProductionData());
+        });
+        validateStagingData.configure(t -> {
+            t.setGroup(LifecycleBasePlugin.VERIFICATION_GROUP);
+            t.setDescription("Validates the staging data.");
+            t.getInput().set(extension.getStagingData());
         });
     }
 
