@@ -49,11 +49,11 @@ public class ParameterStandardsValidator extends AbstractValidator {
         String paramName = paramData.getName();
         if (paramName != null) {
             if (!STANDARDS_REGEX_PATTERN.matcher(paramName).matches()) {
-                return singletonList(error("Parameter name does not match regex " + STANDARDS_REGEX_PATTERN.pattern()));
+                return singletonList(error("Parameter name '" + paramName + "' does not match regex " + STANDARDS_REGEX_PATTERN.pattern()));
             }
             // No use in checking for keyword if it doesn't match the regex
             if (isReserved(paramName.substring(1).toLowerCase(Locale.ROOT))) {
-                return singletonList(error("Parameter name (case-insensitively) matches a reserved keyword: " + paramName.substring(1)));
+                return singletonList(error("Parameter name (case-insensitively) without prefix matches a reserved keyword: " + paramName));
             } else if (isReserved(paramName.toLowerCase(Locale.ROOT))) {
                 return singletonList(error("Parameter name (case-insensitively) matches a reserved keyword: " + paramName));
             }
