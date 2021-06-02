@@ -57,14 +57,14 @@ public abstract class ValidateMappingData extends DefaultTask implements Verific
 
         final Logger logger = getProject().getLogger();
 
-        logger.info(VALIDATION, "Validators in use: {}", validator.getValidators().stream().map(Named::getName).collect(Collectors.toSet()));
-        logger.info(VALIDATION, "Validating mapping data from '{}'", input.getAbsolutePath());
+        logger.lifecycle("Validators in use: {}", validator.getValidators().stream().map(Named::getName).collect(Collectors.toSet()));
+        logger.lifecycle("Validating mapping data from '{}'", input.getAbsolutePath());
 
         // TODO: metadata
         final ResultContainer<List<? extends ValidationIssue>> results = validator.validate(data, null);
 
         if (results.isEmpty()) {
-            logger.info(VALIDATION, "No validation issues found.");
+            logger.lifecycle("No validation issues found.");
             return;
         }
 
@@ -75,30 +75,30 @@ public abstract class ValidateMappingData extends DefaultTask implements Verific
 
         for (ResultContainer.PackageResult<List<? extends ValidationIssue>> packageResult : results.getPackages()) {
             final List<? extends ValidationIssue> issues = packageResult.getData();
-            logger.info(VALIDATION, "{} validation issue(s) for package {}", issues.size(), packageResult.getName());
+            logger.warn(VALIDATION, "{} validation issue(s) for package {}", issues.size(), packageResult.getName());
             logIssue(logger, issues, count, "");
         }
 
         for (ResultContainer.ClassResult<List<? extends ValidationIssue>> classResult : results.getClasses()) {
             final List<? extends ValidationIssue> issues = classResult.getData();
-            logger.info(VALIDATION, "{} validation issue(s) for class {}", issues.size(), classResult.getName());
+            logger.warn(VALIDATION, "{} validation issue(s) for class {}", issues.size(), classResult.getName());
             logIssue(logger, issues, count, "");
 
             for (ResultContainer.FieldResult<List<? extends ValidationIssue>> fieldResult : classResult.getFields()) {
                 final List<? extends ValidationIssue> fieldIssues = fieldResult.getData();
-                logger.info(VALIDATION, "    {} validation issue(s) for field {}", fieldIssues.size(), fieldResult.getName());
+                logger.warn(VALIDATION, "    {} validation issue(s) for field {}", fieldIssues.size(), fieldResult.getName());
                 logIssue(logger, fieldIssues, count, "    ");
             }
 
             for (ResultContainer.MethodResult<List<? extends ValidationIssue>> methodResult : classResult.getMethods()) {
                 final List<? extends ValidationIssue> methodIssues = methodResult.getData();
-                logger.info(VALIDATION, "    {} validation issue(s) for method {}{}", methodIssues.size(), methodResult.getName(),
+                logger.warn(VALIDATION, "    {} validation issue(s) for method {}{}", methodIssues.size(), methodResult.getName(),
                         methodResult.getDescriptor());
                 logIssue(logger, methodIssues, count, "    ");
 
                 for (ResultContainer.ParameterResult<List<? extends ValidationIssue>> paramResult : methodResult.getParameters()) {
                     final List<? extends ValidationIssue> paramIssues = paramResult.getData();
-                    logger.info(VALIDATION, "        {} validation issue(s) for parameter at index {}", paramIssues.size(), paramResult.getIndex());
+                    logger.warn(VALIDATION, "        {} validation issue(s) for parameter at index {}", paramIssues.size(), paramResult.getIndex());
                     logIssue(logger, paramIssues, count, "        ");
                 }
             }
