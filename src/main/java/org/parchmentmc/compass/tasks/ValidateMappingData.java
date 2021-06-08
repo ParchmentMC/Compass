@@ -54,6 +54,7 @@ public abstract class ValidateMappingData extends DefaultTask implements Verific
         validator.addValidator(new LambdaValidator());
         validator.addValidator(new ParameterStandardsValidator());
         validator.addValidator(new SyntheticValidator());
+        validator.addValidator(new MethodStandardsValidator());
 
         final Logger logger = getProject().getLogger();
 
