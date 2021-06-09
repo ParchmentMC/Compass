@@ -21,6 +21,7 @@ import org.parchmentmc.compass.storage.input.InputsReader;
 import org.parchmentmc.compass.storage.io.ExplodedDataIO;
 import org.parchmentmc.compass.tasks.DisplayMinecraftVersions;
 import org.parchmentmc.compass.tasks.GenerateExport;
+import org.parchmentmc.compass.tasks.SanitizeStagingData;
 import org.parchmentmc.compass.tasks.ValidateMappingData;
 import org.parchmentmc.compass.util.JSONUtil;
 import org.parchmentmc.compass.util.download.BlackstoneDownloader;
@@ -51,6 +52,7 @@ public class CompassPlugin implements Plugin<Project> {
     public static final String CLEAR_STAGING_DATA_TASK_NAME = "clearStaging";
     public static final String PROMOTE_STAGING_DATA_TASK_NAME = "promoteStagingToProduction";
     public static final String CREATE_STAGING_DATA_TASK_NAME = "createStagingFromInputs";
+    public static final String SANITIZE_STAGING_DATA_TASK_NAME = "sanitizeStagingData";
 
     private final NamedDomainObjectSet<IntermediateProvider> intermediates;
     private ManifestsDownloader manifestsDownloader;
@@ -129,6 +131,7 @@ public class CompassPlugin implements Plugin<Project> {
 
         createValidationTask(extension, tasks);
         createStagingTasks(extension, tasks);
+        createSanitizeTask(extension, tasks);
 
         DefaultTask writeExploded = tasks.create("writeExploded", DefaultTask.class);
         writeExploded.setGroup(COMPASS_GROUP);
@@ -264,6 +267,15 @@ public class CompassPlugin implements Plugin<Project> {
                     throw new RuntimeException("Failed to produce new staging data from inputs and production data", e);
                 }
             });
+        });
+    }
+
+    private void createSanitizeTask(CompassExtension extension, TaskContainer tasks) {
+        final TaskProvider<SanitizeStagingData> sanitizeStagingData = tasks.register(SANITIZE_STAGING_DATA_TASK_NAME, SanitizeStagingData.class);
+        sanitizeStagingData.configure(t -> {
+            t.setGroup(COMPASS_GROUP);
+            t.setDescription("Sanitizes the staging data by removing unnecessary data.");
+            t.getInput().set(extension.getStagingData());
         });
     }
 
