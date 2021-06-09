@@ -23,6 +23,7 @@ import org.parchmentmc.compass.tasks.DisplayMinecraftVersions;
 import org.parchmentmc.compass.tasks.GenerateExport;
 import org.parchmentmc.compass.tasks.ValidateMappingData;
 import org.parchmentmc.compass.util.JSONUtil;
+import org.parchmentmc.compass.util.download.BlackstoneDownloader;
 import org.parchmentmc.compass.util.download.ManifestsDownloader;
 import org.parchmentmc.compass.util.download.ObfuscationMapsDownloader;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
@@ -54,6 +55,7 @@ public class CompassPlugin implements Plugin<Project> {
     private final NamedDomainObjectSet<IntermediateProvider> intermediates;
     private ManifestsDownloader manifestsDownloader;
     private ObfuscationMapsDownloader obfuscationMapsDownloader;
+    private BlackstoneDownloader blackstoneDownloader;
 
     @Inject
     public CompassPlugin(ObjectFactory objectFactory) {
@@ -68,6 +70,7 @@ public class CompassPlugin implements Plugin<Project> {
 
         manifestsDownloader = new ManifestsDownloader(project);
         obfuscationMapsDownloader = new ObfuscationMapsDownloader(project);
+        blackstoneDownloader = new BlackstoneDownloader(project);
 
         manifestsDownloader.getLauncherManifestURL().set(extension.getLauncherManifestURL());
         manifestsDownloader.getVersion().set(extension.getVersion());
@@ -274,5 +277,9 @@ public class CompassPlugin implements Plugin<Project> {
 
     public ObfuscationMapsDownloader getObfuscationMapsDownloader() {
         return obfuscationMapsDownloader;
+    }
+
+    public BlackstoneDownloader getBlackstoneDownloader() {
+        return blackstoneDownloader;
     }
 }

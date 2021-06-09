@@ -4,7 +4,9 @@ import com.squareup.moshi.*;
 import okio.BufferedSource;
 import okio.Okio;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.parchmentmc.feather.io.moshi.LinkedHashSetMoshiAdapter;
 import org.parchmentmc.feather.io.moshi.MDCMoshiAdapter;
+import org.parchmentmc.feather.io.moshi.MetadataMoshiAdapter;
 import org.parchmentmc.feather.io.moshi.SimpleVersionAdapter;
 import org.parchmentmc.feather.manifests.LauncherManifest;
 import org.parchmentmc.feather.manifests.VersionManifest;
@@ -22,6 +24,8 @@ public final class JSONUtil {
             .add(OffsetDateTime.class, new OffsetDateTimeAdapter())
             .add(new MDCMoshiAdapter())
             .add(new SimpleVersionAdapter())
+            .add(LinkedHashSetMoshiAdapter.FACTORY)
+            .add(new MetadataMoshiAdapter())
             .build();
 
     private JSONUtil() {

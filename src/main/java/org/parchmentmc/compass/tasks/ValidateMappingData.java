@@ -14,10 +14,12 @@ import org.parchmentmc.compass.providers.IntermediateProvider;
 import org.parchmentmc.compass.storage.io.ExplodedDataIO;
 import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.compass.util.ResultContainer;
+import org.parchmentmc.compass.util.download.BlackstoneDownloader;
 import org.parchmentmc.compass.validation.ValidationIssue;
 import org.parchmentmc.compass.validation.action.DataValidator;
 import org.parchmentmc.compass.validation.impl.*;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
+import org.parchmentmc.feather.metadata.SourceMetadata;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
@@ -39,6 +41,9 @@ public abstract class ValidateMappingData extends DefaultTask implements Verific
         File input = getInput().get().getAsFile();
 
         CompassPlugin plugin = getProject().getPlugins().getPlugin(CompassPlugin.class);
+        BlackstoneDownloader blackstoneDownloader = plugin.getBlackstoneDownloader();
+
+        final SourceMetadata metadata = blackstoneDownloader.retrieveMetadata();
 
         IntermediateProvider intermediate = plugin.getIntermediates().getByName("official");
         IMappingFile mapping = intermediate.getMapping();
@@ -59,10 +64,12 @@ public abstract class ValidateMappingData extends DefaultTask implements Verific
         final Logger logger = getProject().getLogger();
 
         logger.lifecycle("Validators in use: {}", validator.getValidators().stream().map(Named::getName).collect(Collectors.toSet()));
+        if (metadata != null) {
+            logger.lifecycle("Blackstone metadata is loaded");
+        }
         logger.lifecycle("Validating mapping data from '{}'", input.getAbsolutePath());
 
-        // TODO: metadata
-        final ResultContainer<List<? extends ValidationIssue>> results = validator.validate(data, null);
+        final ResultContainer<List<? extends ValidationIssue>> results = validator.validate(data, metadata);
 
         if (results.isEmpty()) {
             logger.lifecycle("No validation issues found.");
