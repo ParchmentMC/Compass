@@ -23,7 +23,7 @@ dependencies {
     implementation 'de.undercouch:gradle-download-task:4.1.1'
     implementation 'com.squareup.moshi:moshi:1.12.0'
     implementation 'net.minecraftforge:srgutils:0.4.1'
-    implementation 'org.parchmentmc.feather:io-moshi:0.6.0'
+    implementation 'org.parchmentmc.feather:io-moshi:0.6.1'
     implementation 'com.google.guava:guava:30.1.1-jre'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
