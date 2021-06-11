@@ -17,19 +17,14 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.parchmentmc.compass.providers.DelegatingProvider;
 import org.parchmentmc.compass.providers.IntermediateProvider;
 import org.parchmentmc.compass.providers.mcpconfig.SRGProvider;
-import org.parchmentmc.compass.storage.input.InputsReader;
 import org.parchmentmc.compass.storage.io.ExplodedDataIO;
-import org.parchmentmc.compass.tasks.DisplayMinecraftVersions;
-import org.parchmentmc.compass.tasks.GenerateExport;
-import org.parchmentmc.compass.tasks.SanitizeStagingData;
-import org.parchmentmc.compass.tasks.ValidateMappingData;
+import org.parchmentmc.compass.tasks.*;
 import org.parchmentmc.compass.util.JSONUtil;
 import org.parchmentmc.compass.util.download.BlackstoneDownloader;
 import org.parchmentmc.compass.util.download.ManifestsDownloader;
 import org.parchmentmc.compass.util.download.ObfuscationMapsDownloader;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
-import org.parchmentmc.feather.mapping.MappingUtil;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -204,7 +199,7 @@ public class CompassPlugin implements Plugin<Project> {
     private void createStagingTasks(CompassExtension extension, TaskContainer tasks) {
         TaskProvider<Delete> clearStaging = tasks.register(CLEAR_STAGING_DATA_TASK_NAME, Delete.class);
         TaskProvider<DefaultTask> promoteStagingToProduction = tasks.register(PROMOTE_STAGING_DATA_TASK_NAME, DefaultTask.class);
-        TaskProvider<DefaultTask> combineInputData = tasks.register(CREATE_STAGING_DATA_TASK_NAME, DefaultTask.class);
+        TaskProvider<CreateStagingData> createStagingData = tasks.register(CREATE_STAGING_DATA_TASK_NAME, CreateStagingData.class);
 
         clearStaging.configure(t -> {
             t.setGroup(COMPASS_GROUP);
@@ -250,23 +245,9 @@ public class CompassPlugin implements Plugin<Project> {
             });
         });
 
-        combineInputData.configure(t -> {
+        createStagingData.configure(t -> {
             t.setGroup(COMPASS_GROUP);
             t.setDescription("Combines the input files with the current production data to create the staging data.");
-            t.doLast(_t -> {
-                try {
-                    InputsReader inputsReader = new InputsReader(intermediates);
-
-                    MappingDataContainer inputData = inputsReader.parse(extension.getInputs().get().getAsFile().toPath());
-                    MappingDataContainer baseData = ExplodedDataIO.INSTANCE.read(extension.getProductionData().get().getAsFile());
-
-                    MappingDataContainer combinedData = MappingUtil.apply(baseData, inputData);
-
-                    ExplodedDataIO.INSTANCE.write(combinedData, extension.getStagingData().get().getAsFile());
-                } catch (IOException e) {
-                    throw new RuntimeException("Failed to produce new staging data from inputs and production data", e);
-                }
-            });
         });
     }
 
