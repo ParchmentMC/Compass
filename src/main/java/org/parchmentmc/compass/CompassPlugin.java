@@ -108,25 +108,27 @@ public class CompassPlugin implements Plugin<Project> {
         intermediates.add(new DelegatingProvider("official", officialMapProvider));
         intermediates.add(new SRGProvider("srg", project));
 
+        createValidationTask(extension, tasks);
+        createStagingTasks(extension, tasks);
+        createSanitizeTask(extension, tasks);
+
         intermediates.all(prov -> {
             String capitalized = prov.getName().substring(0, 1).toUpperCase(Locale.ROOT) + prov.getName().substring(1);
             tasks.register("generate" + capitalized + "Export", GenerateExport.class, t -> {
                 t.setGroup(COMPASS_GROUP);
                 t.setDescription("Generates an export file using the '" + prov.getName() + "' intermediate provider and production data.");
+                t.mustRunAfter(tasks.named(PROMOTE_STAGING_DATA_TASK_NAME));
                 t.getIntermediate().set(prov.getName());
                 t.getInput().set(extension.getProductionData());
             });
             tasks.register("generate" + capitalized + "StagingExport", GenerateExport.class, t -> {
                 t.setGroup(COMPASS_GROUP);
                 t.setDescription("Generates an export file using the '" + prov.getName() + "' intermediate provider and staging data.");
+                t.mustRunAfter(tasks.named(CREATE_STAGING_DATA_TASK_NAME));
                 t.getIntermediate().set(prov.getName());
                 t.getInput().set(extension.getStagingData());
             });
         });
-
-        createValidationTask(extension, tasks);
-        createStagingTasks(extension, tasks);
-        createSanitizeTask(extension, tasks);
 
         DefaultTask writeExploded = tasks.create("writeExploded", DefaultTask.class);
         writeExploded.setGroup(COMPASS_GROUP);
@@ -187,11 +189,13 @@ public class CompassPlugin implements Plugin<Project> {
         validateData.configure(t -> {
             t.setGroup(LifecycleBasePlugin.VERIFICATION_GROUP);
             t.setDescription("Validates the production data.");
+            t.mustRunAfter(tasks.named(PROMOTE_STAGING_DATA_TASK_NAME));
             t.getInput().set(extension.getProductionData());
         });
         validateStagingData.configure(t -> {
             t.setGroup(LifecycleBasePlugin.VERIFICATION_GROUP);
             t.setDescription("Validates the staging data.");
+            t.mustRunAfter(tasks.named(CREATE_STAGING_DATA_TASK_NAME));
             t.getInput().set(extension.getStagingData());
         });
     }
@@ -211,6 +215,7 @@ public class CompassPlugin implements Plugin<Project> {
             t.setGroup(COMPASS_GROUP);
             t.setDescription("Promotes the staging data to production.");
             t.onlyIf(_t -> extension.getStagingData().get().getAsFile().exists());
+            t.mustRunAfter(tasks.named(CREATE_STAGING_DATA_TASK_NAME));
             t.doLast(_t -> {
                 File stagingDataDir = extension.getStagingData().get().getAsFile();
                 if (stagingDataDir.exists()) {
@@ -247,6 +252,7 @@ public class CompassPlugin implements Plugin<Project> {
 
         createStagingData.configure(t -> {
             t.setGroup(COMPASS_GROUP);
+            t.mustRunAfter(CLEAR_STAGING_DATA_TASK_NAME);
             t.setDescription("Combines the input files with the current production data to create the staging data.");
         });
     }
@@ -255,6 +261,7 @@ public class CompassPlugin implements Plugin<Project> {
         final TaskProvider<SanitizeStagingData> sanitizeStagingData = tasks.register(SANITIZE_STAGING_DATA_TASK_NAME, SanitizeStagingData.class);
         sanitizeStagingData.configure(t -> {
             t.setGroup(COMPASS_GROUP);
+            t.mustRunAfter(tasks.named(CREATE_STAGING_DATA_TASK_NAME));
             t.setDescription("Sanitizes the staging data by removing unnecessary data.");
             t.getInput().set(extension.getStagingData());
         });
