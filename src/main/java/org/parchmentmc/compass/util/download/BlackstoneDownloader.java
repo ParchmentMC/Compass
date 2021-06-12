@@ -48,8 +48,15 @@ public class BlackstoneDownloader {
         final Logger logger = project.getLogger();
 
         Configuration mcpConfig = project.getConfigurations().getByName(BLACKSTONE_CONFIGURATION_NAME);
-        Set<File> files = mcpConfig.resolve();
-        if (files.isEmpty()) {
+        Set<File> files = null;
+        try {
+            files = mcpConfig.resolve();
+        } catch (Exception e) {
+            logger.warn("Unable to resolve '{}' configuration", BLACKSTONE_CONFIGURATION_NAME);
+            logger.debug("Exception while trying to resolve the '{}' configuration", BLACKSTONE_CONFIGURATION_NAME, e);
+        }
+
+        if (files == null || files.isEmpty()) {
             return null;
         }
 
