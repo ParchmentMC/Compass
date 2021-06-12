@@ -77,7 +77,7 @@ public abstract class CreateStagingData extends DefaultTask {
             if (inputPkg != null && ((mode == InputMode.OVERWRITE)
                     || (mode == InputMode.OVERRIDE && !inputPkg.getJavadoc().isEmpty())
                     || (mode == InputMode.ADDITIVE && pkg.getJavadoc().isEmpty()))) {
-                pkg.addJavadoc(inputPkg.getJavadoc());
+                pkg.clearJavadoc().addJavadoc(inputPkg.getJavadoc());
             }
         });
 
@@ -88,7 +88,7 @@ public abstract class CreateStagingData extends DefaultTask {
                 if ((mode == InputMode.OVERWRITE)
                         || (mode == InputMode.OVERRIDE && !inputCls.getJavadoc().isEmpty())
                         || (mode == InputMode.ADDITIVE && cls.getJavadoc().isEmpty())) {
-                    cls.addJavadoc(inputCls.getJavadoc());
+                    cls.clearJavadoc().addJavadoc(inputCls.getJavadoc());
                 }
 
                 cls.getFields().forEach(field -> {
@@ -97,7 +97,7 @@ public abstract class CreateStagingData extends DefaultTask {
                     if (inputField != null && ((mode == InputMode.OVERWRITE)
                             || (mode == InputMode.OVERRIDE && !inputField.getJavadoc().isEmpty())
                             || (mode == InputMode.ADDITIVE && field.getJavadoc().isEmpty()))) {
-                        field.addJavadoc(inputField.getJavadoc());
+                        field.clearJavadoc().addJavadoc(inputField.getJavadoc());
                     }
                 });
 
@@ -108,7 +108,7 @@ public abstract class CreateStagingData extends DefaultTask {
                         if ((mode == InputMode.OVERWRITE)
                                 || (mode == InputMode.OVERRIDE && !inputMethod.getJavadoc().isEmpty())
                                 || (mode == InputMode.ADDITIVE && method.getJavadoc().isEmpty())) {
-                            method.addJavadoc(inputMethod.getJavadoc());
+                            method.clearJavadoc().addJavadoc(inputMethod.getJavadoc());
                         }
 
                         method.getParameters().forEach(param -> {
