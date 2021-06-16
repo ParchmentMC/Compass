@@ -111,23 +111,38 @@ public abstract class CreateStagingData extends DefaultTask {
                             method.clearJavadoc().addJavadoc(inputMethod.getJavadoc());
                         }
 
-                        method.getParameters().forEach(param -> {
-                            final ParameterData inputParam = inputMethod.getParameter(param.getIndex());
+                        if (mode == InputMode.OVERWRITE) {
+                            inputMethod.getParameters().forEach(param ->
+                                    method.getOrCreateParameter(param.getIndex())
+                                            .setName(param.getName())
+                                            .setJavadoc(param.getJavadoc()));
+                        } else {
+                            method.getParameters().forEach(param -> {
+                                final ParameterData inputParam = inputMethod.getParameter(param.getIndex());
 
-                            if (inputParam != null) {
-                                if ((mode == InputMode.OVERWRITE)
-                                        || (mode == InputMode.OVERRIDE && (inputParam.getName() != null))
-                                        || (mode == InputMode.ADDITIVE && (param.getName() != null))) {
-                                    param.setName(inputParam.getName());
-                                }
+                                if (inputParam != null) {
+                                    if ((mode == InputMode.OVERRIDE && inputParam.getName() != null)
+                                            || (mode == InputMode.ADDITIVE && param.getName() != null)) {
+                                        param.setName(inputParam.getName());
+                                    }
 
-                                if ((mode == InputMode.OVERWRITE)
-                                        || (mode == InputMode.OVERRIDE && (inputParam.getJavadoc() != null))
-                                        || (mode == InputMode.ADDITIVE && (param.getJavadoc() == null))) {
-                                    param.setJavadoc(inputParam.getJavadoc());
+                                    if ((mode == InputMode.OVERRIDE && inputParam.getJavadoc() != null)
+                                            || (mode == InputMode.ADDITIVE && param.getJavadoc() != null)) {
+                                        param.setJavadoc(inputParam.getJavadoc());
+                                    }
                                 }
-                            }
-                        });
+                            });
+
+                            inputMethod.getParameters().forEach(inputParam -> {
+                                final MutableParameterData param = method.getParameter(inputParam.getIndex());
+
+                                if (param == null) { // New parameter
+                                    method.createParameter(inputParam.getIndex())
+                                            .setName(inputParam.getName())
+                                            .setJavadoc(inputParam.getJavadoc());
+                                }
+                            });
+                        }
                     }
                 });
             }
