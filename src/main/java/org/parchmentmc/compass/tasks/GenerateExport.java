@@ -5,7 +5,6 @@ import net.minecraftforge.srgutils.IMappingFile;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
@@ -22,52 +21,37 @@ import org.parchmentmc.feather.mapping.MappingDataContainer;
 
 import java.io.IOException;
 
-public class GenerateExport extends DefaultTask {
+public abstract class GenerateExport extends DefaultTask {
     private static final SingleFileDataIO IO = new SingleFileDataIO(new Moshi.Builder()
             .add(new MDCMoshiAdapter(true))
             .add(new SimpleVersionAdapter()).build(), "  ");
-    
-    private final DirectoryProperty input;
-    private final Property<String> intermediate;
-    private final RegularFileProperty output;
 
     public GenerateExport() {
-        ObjectFactory objects = getProject().getObjects();
+        getOutput().convention(getProject().getLayout().getBuildDirectory().dir(getName()).map(d -> d.file("export.json")));
 
-        input = objects.directoryProperty();
-        intermediate = objects.property(String.class);
-        output = objects.fileProperty()
-                .convention(getProject().getLayout().getBuildDirectory().dir(getName()).map(d -> d.file("export.json")));
-
-        onlyIf(_t -> input.get().getAsFile().exists());
+        onlyIf(_t -> getInput().get().getAsFile().exists());
     }
 
     @TaskAction
     public void export() throws IOException {
         CompassPlugin plugin = getProject().getPlugins().getPlugin(CompassPlugin.class);
 
-        IntermediateProvider intermediate = plugin.getIntermediates().getByName(this.intermediate.get());
+        IntermediateProvider intermediate = plugin.getIntermediates().getByName(getIntermediate().get());
         IMappingFile mapping = intermediate.getMapping();
 
-        MappingDataContainer data = ExplodedDataIO.INSTANCE.read(input.get().getAsFile());
+        MappingDataContainer data = ExplodedDataIO.INSTANCE.read(getInput().get().getAsFile());
 
         MappingDataContainer remappedData = MappingUtil.remapData(data, mapping);
 
-        IO.write(remappedData, output.get().getAsFile());
+        IO.write(remappedData, getOutput().get().getAsFile());
     }
 
     @InputDirectory
-    public DirectoryProperty getInput() {
-        return input;
-    }
+    public abstract DirectoryProperty getInput();
 
     @Input
-    public Property<String> getIntermediate() {
-        return intermediate;
-    }
+    public abstract Property<String> getIntermediate();
 
     @OutputFile
-    public RegularFileProperty getOutput() {
-        return output;
-    }
+    public abstract RegularFileProperty getOutput();
 }
