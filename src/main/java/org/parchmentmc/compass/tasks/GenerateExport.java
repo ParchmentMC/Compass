@@ -43,7 +43,13 @@ public abstract class GenerateExport extends DefaultTask {
 
         MappingDataContainer remappedData = MappingUtil.remapData(data, mapping);
 
-        IO.write(remappedData, getOutput().get().getAsFile());
+        MappingDataContainer output = modifyData(remappedData);
+
+        IO.write(output, getOutput().get().getAsFile());
+    }
+
+    protected MappingDataContainer modifyData(MappingDataContainer container) throws IOException {
+        return container;
     }
 
     @InputDirectory
