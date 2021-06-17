@@ -1,13 +1,11 @@
 package org.parchmentmc.compass.tasks;
 
-import net.minecraftforge.srgutils.IMappingFile;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.parchmentmc.compass.CompassPlugin;
-import org.parchmentmc.compass.providers.IntermediateProvider;
 import org.parchmentmc.compass.storage.io.ExplodedDataIO;
 import org.parchmentmc.compass.util.download.BlackstoneDownloader;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
@@ -40,9 +38,6 @@ public abstract class SanitizeStagingData extends DefaultTask {
             logger.warn("No Blackstone metadata loaded, sanitization may not have any effects");
         }
 
-        final IntermediateProvider intermediate = plugin.getIntermediates().getByName("official");
-        final IMappingFile mapping = intermediate.getMapping();
-
         final MappingDataContainer data = ExplodedDataIO.INSTANCE.read(input);
 
         final MappingDataBuilder builder = new MappingDataBuilder();
@@ -53,24 +48,23 @@ public abstract class SanitizeStagingData extends DefaultTask {
         // Classes
         for (MappingDataContainer.ClassData clsData : data.getClasses()) {
             final ClassMetadata clsMeta = metadata != null ? metadata.getClasses().stream()
-                    .filter(s -> s.getName().getObfuscatedName().orElse("").contentEquals(clsData.getName()))
+                    .filter(s -> s.getName().getMojangName().orElse("").contentEquals(clsData.getName()))
                     .findFirst().orElse(null) : null;
 
             final MutableClassData newClsData = builder.getOrCreateClass(clsData.getName())
                     .addJavadoc(clsData.getJavadoc());
-            final IMappingFile.IClass mappedClass = mapping.getClass(clsData.getName());
 
             // Fields
             for (MappingDataContainer.FieldData fieldData : clsData.getFields()) {
                 final FieldMetadata fieldMeta = clsMeta != null ? clsMeta.getFields().stream()
-                        .filter(s -> s.getName().getObfuscatedName().orElse("").contentEquals(fieldData.getName()))
+                        .filter(s -> s.getName().getMojangName().orElse("").contentEquals(fieldData.getName()))
                         .findFirst().orElse(null) : null;
 
                 final MutableFieldData newFieldData = newClsData.getOrCreateField(fieldData.getName(), fieldData.getDescriptor());
 
                 if (!fieldData.getJavadoc().isEmpty() && fieldMeta != null && fieldMeta.hasAccessFlag(AccessFlag.SYNTHETIC)) {
-                    logger.lifecycle("Removing javadoc for synthetic field {}.{}", mappedClass.getMapped(),
-                            mappedClass.remapField(fieldData.getName()));
+                    logger.lifecycle("Removing javadoc for synthetic field {}.{}", clsData.getName(),
+                            fieldData.getName());
                 } else {
                     newFieldData.addJavadoc(fieldData.getJavadoc());
                 }
@@ -86,13 +80,9 @@ public abstract class SanitizeStagingData extends DefaultTask {
 
                 final MutableMethodData newMethodData = newClsData.getOrCreateMethod(methodData.getName(), methodData.getDescriptor());
 
-                final IMappingFile.IMethod mappedMethod = mappedClass.getMethod(methodData.getName(), methodData.getDescriptor());
-                assert mappedMethod != null;
-                final String mappedMethodDesc = mappedMethod.getMappedDescriptor();
-
                 if (isSynthetic && !methodData.getJavadoc().isEmpty()) {
-                    logger.lifecycle("Removing javadoc for synthetic method {}.{}{}", mappedClass.getMapped(),
-                            mappedMethod.getMapped(), mappedMethodDesc);
+                    logger.lifecycle("Removing javadoc for synthetic method {}.{}{}", clsData.getName(),
+                            methodData.getName(), methodData.getDescriptor());
                 } else {
                     newMethodData.addJavadoc(methodData.getJavadoc());
                 }
@@ -103,7 +93,7 @@ public abstract class SanitizeStagingData extends DefaultTask {
 
                     if (isSynthetic && (paramData.getName() != null || paramData.getJavadoc() != null)) {
                         logger.lifecycle("Dropping data for param #{} of synthetic method {}.{}{}", paramData.getIndex(),
-                                mappedClass.getMapped(), mappedMethod.getMapped(), mappedMethodDesc);
+                                clsData.getName(), methodData.getName(), methodData.getDescriptor());
                     } else {
                         newParamData.setName(paramData.getName()).setJavadoc(paramData.getJavadoc());
                     }

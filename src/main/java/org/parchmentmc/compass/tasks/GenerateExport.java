@@ -35,13 +35,15 @@ public abstract class GenerateExport extends DefaultTask {
     @TaskAction
     public void export() throws IOException {
         CompassPlugin plugin = getProject().getPlugins().getPlugin(CompassPlugin.class);
+        IMappingFile officialMap = plugin.getObfuscationMapsDownloader().getObfuscationMap().get(); // moj -> obf
 
         IntermediateProvider intermediate = plugin.getIntermediates().getByName(getIntermediate().get());
-        IMappingFile mapping = intermediate.getMapping();
+        IMappingFile mapping = intermediate.getMapping(); // obf -> ?
+        IMappingFile officialToIntermediate = officialMap.chain(mapping); // [moj -> obf] -> [obf -> ?] => moj -> ?
 
         MappingDataContainer data = ExplodedDataIO.INSTANCE.read(getInput().get().getAsFile());
 
-        MappingDataContainer remappedData = MappingUtil.remapData(data, mapping);
+        MappingDataContainer remappedData = MappingUtil.remapData(data, officialToIntermediate);
 
         MappingDataContainer output = modifyData(remappedData);
 

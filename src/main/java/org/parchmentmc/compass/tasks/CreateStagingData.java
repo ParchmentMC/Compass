@@ -1,5 +1,6 @@
 package org.parchmentmc.compass.tasks;
 
+import net.minecraftforge.srgutils.IMappingFile;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.provider.Property;
@@ -12,6 +13,7 @@ import org.parchmentmc.compass.CompassExtension;
 import org.parchmentmc.compass.CompassPlugin;
 import org.parchmentmc.compass.storage.input.InputsReader;
 import org.parchmentmc.compass.storage.io.ExplodedDataIO;
+import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
 
@@ -33,13 +35,26 @@ public abstract class CreateStagingData extends DefaultTask {
     public void create() throws IOException {
         CompassPlugin plugin = getProject().getPlugins().getPlugin(CompassPlugin.class);
         InputsReader inputsReader = new InputsReader(plugin.getIntermediates());
+        final IMappingFile officialMap = plugin.getObfuscationMapsDownloader().getObfuscationMap().get();
+        /*
+         * Three parts:
+         *  - the base official data (`data`)
+         *  - the base task data (`baseTaskData`)
+         *  - the input data (`inputData`)
+         *
+         * First, apply the base task data to the base official data
+         * Second, apply the input data to the combined data from the last step
+         * Third, write out the data from the last step, ignoring undocumented
+         */
 
+        MappingDataBuilder data = MappingUtil.loadOfficialData(officialMap);
+        MappingDataContainer baseTaskData = ExplodedDataIO.INSTANCE.read(getBaseDataDirectory().get().getAsFile());
         MappingDataContainer inputData = inputsReader.parse(getInputsDirectory().get().getAsFile().toPath());
-        MappingDataContainer baseData = ExplodedDataIO.INSTANCE.read(getBaseDataDirectory().get().getAsFile());
 
-        MappingDataContainer combinedData = apply(baseData, inputData, getInputMode().get());
+        apply(data, baseTaskData, InputMode.OVERWRITE);
+        apply(data, inputData, getInputMode().get());
 
-        ExplodedDataIO.INSTANCE.write(combinedData, getOutputDirectory().get().getAsFile());
+        ExplodedDataIO.INSTANCE.write(data, getOutputDirectory().get().getAsFile());
     }
 
     @InputDirectory
@@ -66,12 +81,10 @@ public abstract class CreateStagingData extends DefaultTask {
     }
 
     // Copy of MappingUtil#apply but with input mode
-    static MappingDataContainer apply(MappingDataContainer baseData, MappingDataContainer newData, InputMode mode) {
-        if (newData.getClasses().isEmpty() && newData.getPackages().isEmpty()) return baseData;
+    static void apply(MappingDataBuilder baseData, MappingDataContainer newData, InputMode mode) {
+        if (newData.getClasses().isEmpty() && newData.getPackages().isEmpty()) return;
 
-        MappingDataBuilder builder = MappingDataBuilder.copyOf(baseData);
-
-        builder.getPackages().forEach(pkg -> {
+        baseData.getPackages().forEach(pkg -> {
             final PackageData inputPkg = newData.getPackage(pkg.getName());
 
             if (inputPkg != null && ((mode == InputMode.OVERWRITE)
@@ -81,7 +94,7 @@ public abstract class CreateStagingData extends DefaultTask {
             }
         });
 
-        builder.getClasses().forEach(cls -> {
+        baseData.getClasses().forEach(cls -> {
             final ClassData inputCls = newData.getClass(cls.getName());
 
             if (inputCls != null) {
@@ -147,7 +160,5 @@ public abstract class CreateStagingData extends DefaultTask {
                 });
             }
         });
-
-        return builder;
     }
 }

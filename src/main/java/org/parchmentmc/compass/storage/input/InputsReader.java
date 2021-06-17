@@ -39,6 +39,9 @@ public class InputsReader {
 
         List<Pair<IntermediateProvider, Path>> directories = new ArrayList<>();
 
+        final IntermediateProvider officialProvider = intermediates.getByName("official");
+        final IMappingFile obfToOfficial = officialProvider.getMapping();
+
         for (Path subdir : subdirs) {
             String dirName = subdir.getFileName().toString();
 
@@ -64,10 +67,10 @@ public class InputsReader {
 
             IntermediateProvider provider = Objects.requireNonNull(dir.getLeft());
             IMappingFile mapping = provider.getMapping();
-            IMappingFile toObf = mapping.reverse();
+            IMappingFile toOfficial = mapping.reverse().chain(obfToOfficial);
 
             for (Path path : files) {
-                insertEntries(path, toObf, builder);
+                insertEntries(path, toOfficial, builder);
             }
         }
 
@@ -77,7 +80,7 @@ public class InputsReader {
     // Reused data builder, to avoid excessive allocations
     private final MappingDataBuilder temp = new MappingDataBuilder();
 
-    // Mapping should be [? -> obf] 
+    // Mapping should be [? -> official]
     private void insertEntries(Path file, IMappingFile mapping, MappingDataBuilder builder) throws IOException {
         temp.clearPackages().clearClasses();
 

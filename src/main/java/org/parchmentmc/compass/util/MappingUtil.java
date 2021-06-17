@@ -2,6 +2,7 @@ package org.parchmentmc.compass.util;
 
 import net.minecraftforge.srgutils.IMappingBuilder;
 import net.minecraftforge.srgutils.IMappingFile;
+import org.parchmentmc.compass.util.download.ObfuscationMapsDownloader;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
 
@@ -236,5 +237,14 @@ public class MappingUtil {
                 method.getParameters().forEach(param -> methodData.createParameter(param.getIndex()).setName(param.getName()).setJavadoc(param.getJavadoc()));
             });
         });
+    }
+
+    public static MappingDataBuilder loadOfficialData(ObfuscationMapsDownloader obfuscationMapsDownloader) {
+        IMappingFile obfMap = obfuscationMapsDownloader.getObfuscationMap().get();
+        return loadOfficialData(obfMap);
+    }
+
+    public static MappingDataBuilder loadOfficialData(IMappingFile obfToMoj) {
+        return constructPackageData(createBuilderFrom(obfToMoj, false));
     }
 }

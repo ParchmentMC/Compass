@@ -22,7 +22,7 @@ import java.time.format.DateTimeFormatter;
 public final class JSONUtil {
     public static final Moshi MOSHI = new Moshi.Builder()
             .add(OffsetDateTime.class, new OffsetDateTimeAdapter())
-            .add(new MDCMoshiAdapter())
+            .add(new MDCMoshiAdapter(true))
             .add(new SimpleVersionAdapter())
             .add(LinkedHashSetMoshiAdapter.FACTORY)
             .add(new MetadataMoshiAdapter())

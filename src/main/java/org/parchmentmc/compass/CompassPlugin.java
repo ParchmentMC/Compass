@@ -20,6 +20,7 @@ import org.parchmentmc.compass.providers.mcpconfig.SRGProvider;
 import org.parchmentmc.compass.storage.io.ExplodedDataIO;
 import org.parchmentmc.compass.tasks.*;
 import org.parchmentmc.compass.util.JSONUtil;
+import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.compass.util.download.BlackstoneDownloader;
 import org.parchmentmc.compass.util.download.ManifestsDownloader;
 import org.parchmentmc.compass.util.download.ObfuscationMapsDownloader;
@@ -86,9 +87,7 @@ public class CompassPlugin implements Plugin<Project> {
             t.setGroup(COMPASS_GROUP);
             t.setDescription("Generates the base data for the active version to the staging directory.");
             t.doLast(_t -> {
-                IMappingFile obfMap = obfuscationMapsDownloader.getObfuscationMap().get();
-                // reversed because normally, obf map is [Moj -> Obf] (because it's a ProGuard log of the obf)
-                MappingDataBuilder data = constructPackageData(createBuilderFrom(obfMap, true));
+                MappingDataBuilder data = MappingUtil.loadOfficialData(obfuscationMapsDownloader);
 
                 File stagingDataDir = extension.getStagingData().get().getAsFile();
 

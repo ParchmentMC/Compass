@@ -1,6 +1,5 @@
 package org.parchmentmc.compass.tasks;
 
-import net.minecraftforge.srgutils.IMappingFile;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Named;
 import org.gradle.api.file.DirectoryProperty;
@@ -10,9 +9,7 @@ import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.VerificationTask;
 import org.parchmentmc.compass.CompassPlugin;
-import org.parchmentmc.compass.providers.IntermediateProvider;
 import org.parchmentmc.compass.storage.io.ExplodedDataIO;
-import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.compass.util.ResultContainer;
 import org.parchmentmc.compass.util.download.BlackstoneDownloader;
 import org.parchmentmc.compass.validation.ValidationIssue;
@@ -45,12 +42,7 @@ public abstract class ValidateMappingData extends DefaultTask implements Verific
 
         final SourceMetadata metadata = blackstoneDownloader.retrieveMetadata();
 
-        IntermediateProvider intermediate = plugin.getIntermediates().getByName("official");
-        IMappingFile mapping = intermediate.getMapping();
-
-        MappingDataContainer rawData = ExplodedDataIO.INSTANCE.read(input);
-
-        MappingDataContainer data = MappingUtil.remapData(rawData, mapping);
+        MappingDataContainer data = ExplodedDataIO.INSTANCE.read(input);
 
         final DataValidator validator = new DataValidator();
         validator.addValidator(new BridgeValidator());
