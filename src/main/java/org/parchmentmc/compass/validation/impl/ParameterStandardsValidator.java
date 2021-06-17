@@ -35,7 +35,7 @@ import static org.parchmentmc.feather.mapping.MappingDataContainer.*;
  */
 public class ParameterStandardsValidator extends AbstractValidator {
     // TODO: move to extension
-    public static final String STANDARDS_REGEX = "p[A-Z][A-Za-z0-9]*";
+    public static final String STANDARDS_REGEX = "[a-z][A-Za-z0-9]*";
     private static final Pattern STANDARDS_REGEX_PATTERN = Pattern.compile(STANDARDS_REGEX);
 
     public ParameterStandardsValidator() {
