@@ -1,60 +1,31 @@
 package org.parchmentmc.compass;
 
-import org.gradle.api.Project;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.provider.Property;
 import org.parchmentmc.compass.storage.io.MappingIOFormat;
 
-public class CompassExtension {
-    private final Property<String> manifestURL;
-    private final DirectoryProperty productionData;
-    private final Property<MappingIOFormat> productionDataFormat;
-    private final Property<String> version;
-    private final DirectoryProperty stagingData;
-    private final Property<MappingIOFormat> stagingDataFormat;
-    private final DirectoryProperty inputs;
-
-    public CompassExtension(final Project project) {
-        manifestURL = project.getObjects().property(String.class)
-                .convention("https://launchermeta.mojang.com/mc/game/version_manifest_v2.json");
-        productionData = project.getObjects().directoryProperty()
-                .convention(project.getLayout().getProjectDirectory().dir("data"));
-        productionDataFormat = project.getObjects().property(MappingIOFormat.class)
-                .convention(MappingIOFormat.MDC_EXPLODED);
-        version = project.getObjects().property(String.class);
-        stagingData = project.getObjects().directoryProperty()
-                .convention(project.getLayout().getProjectDirectory().dir("staging"));
-        stagingDataFormat = project.getObjects().property(MappingIOFormat.class)
-                .convention(MappingIOFormat.MDC_EXPLODED);
-        inputs = project.getObjects().directoryProperty()
-                .convention(project.getLayout().getProjectDirectory().dir("input"));
+public abstract class CompassExtension {
+    public CompassExtension(final ProjectLayout layout) {
+        getLauncherManifestURL().convention("https://launchermeta.mojang.com/mc/game/version_manifest_v2.json");
+        getProductionData().convention(layout.getProjectDirectory().dir("data"));
+        getProductionDataFormat().convention(MappingIOFormat.MDC_EXPLODED);
+        getStagingData().convention(layout.getProjectDirectory().dir("staging"));
+        getStagingDataFormat().convention(MappingIOFormat.MDC_EXPLODED);
+        getInputs().convention(layout.getProjectDirectory().dir("input"));
     }
 
-    public Property<String> getLauncherManifestURL() {
-        return manifestURL;
-    }
+    public abstract Property<String> getLauncherManifestURL();
 
-    public DirectoryProperty getProductionData() {
-        return productionData;
-    }
+    public abstract DirectoryProperty getProductionData();
 
-    public Property<MappingIOFormat> getProductionDataFormat() {
-        return productionDataFormat;
-    }
+    public abstract Property<MappingIOFormat> getProductionDataFormat();
 
-    public Property<String> getVersion() {
-        return version;
-    }
+    public abstract Property<String> getVersion();
 
-    public DirectoryProperty getStagingData() {
-        return stagingData;
-    }
+    public abstract DirectoryProperty getStagingData();
 
-    public Property<MappingIOFormat> getStagingDataFormat() {
-        return stagingDataFormat;
-    }
+    public abstract Property<MappingIOFormat> getStagingDataFormat();
 
-    public DirectoryProperty getInputs() {
-        return inputs;
-    }
+    public abstract DirectoryProperty getInputs();
 }
