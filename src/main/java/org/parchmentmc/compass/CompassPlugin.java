@@ -92,7 +92,7 @@ public class CompassPlugin implements Plugin<Project> {
                 File stagingDataDir = extension.getStagingData().get().getAsFile();
 
                 try {
-                    ExplodedDataIO.INSTANCE.write(data, stagingDataDir);
+                    extension.getStagingDataFormat().get().write(data, stagingDataDir);
                 } catch (IOException e) {
                     throw new UncheckedIOException("Failed to write base data for active version to staging directory", e);
                 }
@@ -119,6 +119,7 @@ public class CompassPlugin implements Plugin<Project> {
                 t.mustRunAfter(tasks.named(PROMOTE_STAGING_DATA_TASK_NAME));
                 t.getIntermediate().set(prov.getName());
                 t.getInput().set(extension.getProductionData());
+                t.getInputFormat().set(extension.getStagingDataFormat());
             });
             tasks.register("generate" + capitalized + "StagingExport", GenerateExport.class, t -> {
                 t.setGroup(COMPASS_GROUP);
@@ -126,6 +127,7 @@ public class CompassPlugin implements Plugin<Project> {
                 t.mustRunAfter(tasks.named(CREATE_STAGING_DATA_TASK_NAME));
                 t.getIntermediate().set(prov.getName());
                 t.getInput().set(extension.getStagingData());
+                t.getInputFormat().set(extension.getStagingDataFormat());
             });
         });
 
@@ -190,12 +192,14 @@ public class CompassPlugin implements Plugin<Project> {
             t.setDescription("Validates the production data.");
             t.mustRunAfter(tasks.named(PROMOTE_STAGING_DATA_TASK_NAME));
             t.getInput().set(extension.getProductionData());
+            t.getInputFormat().set(extension.getProductionDataFormat());
         });
         validateStagingData.configure(t -> {
             t.setGroup(LifecycleBasePlugin.VERIFICATION_GROUP);
             t.setDescription("Validates the staging data.");
             t.mustRunAfter(tasks.named(CREATE_STAGING_DATA_TASK_NAME));
             t.getInput().set(extension.getStagingData());
+            t.getInputFormat().set(extension.getStagingDataFormat());
         });
     }
 
@@ -226,7 +230,7 @@ public class CompassPlugin implements Plugin<Project> {
 
                 MappingDataContainer staging;
                 try {
-                    staging = ExplodedDataIO.INSTANCE.read(stagingDataDir.toPath());
+                    staging = extension.getStagingDataFormat().get().read(stagingDataDir.toPath());
                 } catch (IOException e) {
                     throw new UncheckedIOException("Failed to read staging data for promotion", e);
                 }
@@ -242,7 +246,7 @@ public class CompassPlugin implements Plugin<Project> {
 
                 File prodDataDir = extension.getProductionData().get().getAsFile();
                 try {
-                    ExplodedDataIO.INSTANCE.write(staging, prodDataDir.toPath());
+                    extension.getProductionDataFormat().get().write(staging, prodDataDir.toPath());
                 } catch (IOException e) {
                     throw new UncheckedIOException("Failed to write promoted staging->production data", e);
                 }
@@ -263,6 +267,7 @@ public class CompassPlugin implements Plugin<Project> {
             t.mustRunAfter(tasks.named(CREATE_STAGING_DATA_TASK_NAME));
             t.setDescription("Sanitizes the staging data by removing unnecessary data.");
             t.getInput().set(extension.getStagingData());
+            t.getInputFormat().set(extension.getStagingDataFormat());
         });
     }
 

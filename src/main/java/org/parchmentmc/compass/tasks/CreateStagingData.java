@@ -12,7 +12,7 @@ import org.gradle.api.tasks.options.Option;
 import org.parchmentmc.compass.CompassExtension;
 import org.parchmentmc.compass.CompassPlugin;
 import org.parchmentmc.compass.storage.input.InputsReader;
-import org.parchmentmc.compass.storage.io.ExplodedDataIO;
+import org.parchmentmc.compass.storage.io.MappingIOFormat;
 import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
@@ -27,8 +27,10 @@ public abstract class CreateStagingData extends DefaultTask {
 
         getInputsDirectory().convention(extension.getInputs());
         getBaseDataDirectory().convention(extension.getProductionData());
+        getBaseDataFormat().convention(extension.getProductionDataFormat());
         getInputMode().convention(InputMode.OVERRIDE);
         getOutputDirectory().convention(extension.getStagingData());
+        getOutputFormat().convention(extension.getStagingDataFormat());
     }
 
     @TaskAction
@@ -48,13 +50,13 @@ public abstract class CreateStagingData extends DefaultTask {
          */
 
         MappingDataBuilder data = MappingUtil.loadOfficialData(officialMap);
-        MappingDataContainer baseTaskData = ExplodedDataIO.INSTANCE.read(getBaseDataDirectory().get().getAsFile());
+        MappingDataContainer baseTaskData = getBaseDataFormat().get().read(getBaseDataDirectory().get().getAsFile());
         MappingDataContainer inputData = inputsReader.parse(getInputsDirectory().get().getAsFile().toPath());
 
         apply(data, baseTaskData, InputMode.OVERWRITE);
         apply(data, inputData, getInputMode().get());
 
-        ExplodedDataIO.INSTANCE.write(data, getOutputDirectory().get().getAsFile());
+        getOutputFormat().get().write(data, getOutputDirectory().get().getAsFile());
     }
 
     @InputDirectory
@@ -63,8 +65,14 @@ public abstract class CreateStagingData extends DefaultTask {
     @InputDirectory
     public abstract DirectoryProperty getBaseDataDirectory();
 
+    @Input
+    public abstract Property<MappingIOFormat> getBaseDataFormat();
+
     @OutputDirectory
     public abstract DirectoryProperty getOutputDirectory();
+
+    @Input
+    public abstract Property<MappingIOFormat> getOutputFormat();
 
     @Input
     public abstract Property<InputMode> getInputMode();

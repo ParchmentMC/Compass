@@ -4,12 +4,13 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.Named;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.VerificationTask;
 import org.parchmentmc.compass.CompassPlugin;
-import org.parchmentmc.compass.storage.io.ExplodedDataIO;
+import org.parchmentmc.compass.storage.io.MappingIOFormat;
 import org.parchmentmc.compass.util.ResultContainer;
 import org.parchmentmc.compass.util.download.BlackstoneDownloader;
 import org.parchmentmc.compass.validation.ValidationIssue;
@@ -33,6 +34,9 @@ public abstract class ValidateMappingData extends DefaultTask implements Verific
     @InputDirectory
     public abstract DirectoryProperty getInput();
 
+    @Input
+    public abstract Property<MappingIOFormat> getInputFormat();
+
     @TaskAction
     public void validate() throws IOException {
         File input = getInput().get().getAsFile();
@@ -42,7 +46,7 @@ public abstract class ValidateMappingData extends DefaultTask implements Verific
 
         final SourceMetadata metadata = blackstoneDownloader.retrieveMetadata();
 
-        MappingDataContainer data = ExplodedDataIO.INSTANCE.read(input);
+        MappingDataContainer data = getInputFormat().get().read(input);
 
         final DataValidator validator = new DataValidator();
         validator.addValidator(new BridgeValidator());

@@ -3,10 +3,12 @@ package org.parchmentmc.compass.tasks;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.parchmentmc.compass.CompassPlugin;
-import org.parchmentmc.compass.storage.io.ExplodedDataIO;
+import org.parchmentmc.compass.storage.io.MappingIOFormat;
 import org.parchmentmc.compass.util.download.BlackstoneDownloader;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
@@ -25,6 +27,9 @@ public abstract class SanitizeStagingData extends DefaultTask {
     @InputDirectory
     public abstract DirectoryProperty getInput();
 
+    @Input
+    public abstract Property<MappingIOFormat> getInputFormat();
+
     @TaskAction
     public void sanitize() throws IOException {
         final File input = getInput().get().getAsFile();
@@ -38,7 +43,7 @@ public abstract class SanitizeStagingData extends DefaultTask {
             logger.warn("No Blackstone metadata loaded, sanitization may not have any effects");
         }
 
-        final MappingDataContainer data = ExplodedDataIO.INSTANCE.read(input);
+        final MappingDataContainer data = getInputFormat().get().read(input);
 
         final MappingDataBuilder builder = new MappingDataBuilder();
 
@@ -101,6 +106,6 @@ public abstract class SanitizeStagingData extends DefaultTask {
             }
         }
 
-        ExplodedDataIO.INSTANCE.write(builder, input);
+        getInputFormat().get().write(builder, input);
     }
 }

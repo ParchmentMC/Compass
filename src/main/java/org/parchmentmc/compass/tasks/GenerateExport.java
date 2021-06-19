@@ -12,7 +12,7 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.parchmentmc.compass.CompassPlugin;
 import org.parchmentmc.compass.providers.IntermediateProvider;
-import org.parchmentmc.compass.storage.io.ExplodedDataIO;
+import org.parchmentmc.compass.storage.io.MappingIOFormat;
 import org.parchmentmc.compass.storage.io.SingleFileDataIO;
 import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.feather.io.moshi.MDCMoshiAdapter;
@@ -41,7 +41,7 @@ public abstract class GenerateExport extends DefaultTask {
         IMappingFile mapping = intermediate.getMapping(); // obf -> ?
         IMappingFile officialToIntermediate = officialMap.chain(mapping); // [moj -> obf] -> [obf -> ?] => moj -> ?
 
-        MappingDataContainer data = ExplodedDataIO.INSTANCE.read(getInput().get().getAsFile());
+        MappingDataContainer data = getInputFormat().get().read(getInput().get().getAsFile());
 
         MappingDataContainer remappedData = MappingUtil.remapData(data, officialToIntermediate);
 
@@ -56,6 +56,9 @@ public abstract class GenerateExport extends DefaultTask {
 
     @InputDirectory
     public abstract DirectoryProperty getInput();
+
+    @Input
+    public abstract Property<MappingIOFormat> getInputFormat();
 
     @Input
     public abstract Property<String> getIntermediate();
