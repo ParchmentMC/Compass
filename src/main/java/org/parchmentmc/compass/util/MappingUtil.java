@@ -13,6 +13,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.parchmentmc.feather.mapping.MappingDataBuilder.*;
+
 public class MappingUtil {
 
     public static IMappingFile loadAndEnsureSuperset(Path client, Path server) {
@@ -72,7 +74,7 @@ public class MappingUtil {
 
         // Copy classes
         mappingFile.getClasses().forEach(cls -> {
-            MappingDataBuilder.MutableClassData classBuilder = builder.createClass(reversed ? cls.getMapped() : cls.getOriginal());
+            MutableClassData classBuilder = builder.createClass(reversed ? cls.getMapped() : cls.getOriginal());
 
             // Copy fields of classes
             cls.getFields().forEach(field ->
@@ -81,7 +83,7 @@ public class MappingUtil {
 
             // Copy methods of classes
             cls.getMethods().forEach(method -> {
-                MappingDataBuilder.MutableMethodData methodBuilder = classBuilder.createMethod(
+                MutableMethodData methodBuilder = classBuilder.createMethod(
                         reversed ? method.getMapped() : method.getOriginal(),
                         reversed ? method.getMappedDescriptor() : method.getDescriptor());
 
@@ -99,12 +101,12 @@ public class MappingUtil {
         if (container instanceof MappingDataBuilder) {
             return constructPackageData((MappingDataBuilder) container);
         }
-        return constructPackageData(MappingDataBuilder.copyOf(container));
+        return constructPackageData(copyOf(container));
     }
 
     // Creates packages based on the classes
     public static MappingDataBuilder constructPackageData(MappingDataBuilder builder) {
-        for (MappingDataBuilder.MutableClassData cls : builder.getClasses()) {
+        for (MutableClassData cls : builder.getClasses()) {
             int lastIndex = cls.getName().lastIndexOf('/');
             if (lastIndex != -1) { // has a package
                 String pkgName = cls.getName().substring(0, lastIndex);
@@ -176,7 +178,7 @@ public class MappingUtil {
             if (mappedClass != null) {
                 clsName = mappedClass.getMapped();
             }
-            MappingDataBuilder.MutableClassData classData = builder.createClass(clsName).addJavadoc(cls.getJavadoc());
+            MutableClassData classData = builder.createClass(clsName).addJavadoc(cls.getJavadoc());
 
             cls.getFields().forEach(field -> {
                 String fieldName = field.getName();
@@ -207,7 +209,7 @@ public class MappingUtil {
                     }
                 }
 
-                MappingDataBuilder.MutableMethodData methodData = classData.createMethod(methodName, methodDescriptor)
+                MutableMethodData methodData = classData.createMethod(methodName, methodDescriptor)
                         .addJavadoc(method.getJavadoc());
 
                 // TODO: determine better logic for handling parameters
@@ -224,14 +226,14 @@ public class MappingUtil {
 
         // Copy classes
         base.getClasses().forEach(cls -> {
-            MappingDataBuilder.MutableClassData classData = builder.createClass(cls.getName()).addJavadoc(cls.getJavadoc());
+            MutableClassData classData = builder.createClass(cls.getName()).addJavadoc(cls.getJavadoc());
 
             // Copy fields
             cls.getFields().forEach(field -> classData.createField(field.getName(), field.getDescriptor()).addJavadoc(field.getJavadoc()));
 
             // Copy methods
             cls.getMethods().forEach(method -> {
-                MappingDataBuilder.MutableMethodData methodData = classData.createMethod(method.getName(), method.getDescriptor()).addJavadoc(method.getJavadoc());
+                MutableMethodData methodData = classData.createMethod(method.getName(), method.getDescriptor()).addJavadoc(method.getJavadoc());
 
                 // Copy parameters
                 method.getParameters().forEach(param -> methodData.createParameter(param.getIndex()).setName(param.getName()).setJavadoc(param.getJavadoc()));
@@ -246,5 +248,34 @@ public class MappingUtil {
 
     public static MappingDataBuilder loadOfficialData(IMappingFile obfToMoj) {
         return constructPackageData(createBuilderFrom(obfToMoj, false));
+    }
+
+    public static void removeUndocumented(MappingDataBuilder builder) {
+        builder.getPackages().stream()
+                .filter(s -> s.getJavadoc().isEmpty())
+                .map(MutablePackageData::getName)
+                .collect(Collectors.toSet())
+                .forEach(builder::removePackage);
+
+        //noinspection Convert2MethodRef damn you javac
+        builder.getClasses().stream()
+                .peek(cls -> cls.getFields().stream()
+                        .filter(field -> field.getJavadoc().isEmpty())
+                        .map(MutableFieldData::getName)
+                        .collect(Collectors.toSet())
+                        .forEach(field -> cls.removeField(field)))
+                .peek(cls -> cls.getMethods().stream()
+                        .peek(method -> method.getParameters().stream()
+                                .filter(param -> param.getName() == null && param.getJavadoc() == null)
+                                .map(MutableParameterData::getIndex)
+                                .collect(Collectors.toSet())
+                                .forEach(method::removeParameter))
+                        .filter(method -> method.getJavadoc().isEmpty() && method.getParameters().isEmpty())
+                        .collect(Collectors.toSet())
+                        .forEach(method -> cls.removeMethod(method.getName(), method.getDescriptor())))
+                .filter(cls -> cls.getJavadoc().isEmpty() && cls.getFields().isEmpty() && cls.getMethods().isEmpty())
+                .map(MutableClassData::getName)
+                .collect(Collectors.toSet())
+                .forEach(builder::removeClass);
     }
 }

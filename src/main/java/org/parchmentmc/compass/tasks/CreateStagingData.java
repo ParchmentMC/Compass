@@ -55,6 +55,7 @@ public abstract class CreateStagingData extends DefaultTask {
 
         apply(data, baseTaskData, InputMode.OVERWRITE);
         apply(data, inputData, getInputMode().get());
+        MappingUtil.removeUndocumented(data);
 
         getOutputFormat().get().write(data, getOutputDirectory().get().getAsFile());
     }
