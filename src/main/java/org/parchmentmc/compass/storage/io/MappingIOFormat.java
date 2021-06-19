@@ -1,5 +1,6 @@
 package org.parchmentmc.compass.storage.io;
 
+import org.parchmentmc.compass.storage.io.enigma.EnigmaFormattedExplodedIO;
 import org.parchmentmc.feather.mapping.VersionedMappingDataContainer;
 
 import java.io.IOException;
@@ -7,7 +8,8 @@ import java.nio.file.Path;
 
 public enum MappingIOFormat implements MappingDataIO {
     MDC_SINGLE(true, SingleFileDataIO.INSTANCE),
-    MDC_EXPLODED(false, ExplodedDataIO.INSTANCE);
+    MDC_EXPLODED(false, ExplodedDataIO.INSTANCE),
+    ENIGMA_EXPLODED(false, EnigmaFormattedExplodedIO.INSTANCE);
 
     private final boolean fileBased;
     private final MappingDataIO dataIO;
