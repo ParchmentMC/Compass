@@ -112,12 +112,12 @@ public class DataValidator {
                     }
                 }
 
-                if (!methodResult.isEmpty()) {
+                if (!methodResult.getData().isEmpty() || !methodResult.isEmpty()) {
                     classResult.addMethod(methodResult);
                 }
             }
 
-            if (!classResult.isEmpty()) {
+            if (!classResult.getData().isEmpty() || !classResult.isEmpty()) {
                 results.addClass(classResult);
             }
         }
