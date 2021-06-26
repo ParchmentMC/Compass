@@ -6,10 +6,8 @@ import org.parchmentmc.compass.validation.ValidationIssue;
 import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;
 
-import java.util.List;
+import java.util.function.Consumer;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 import static org.parchmentmc.feather.mapping.MappingDataContainer.*;
 
 /**
@@ -26,26 +24,21 @@ public class ClassInitValidator extends AbstractValidator {
     }
 
     @Override
-    public List<? extends ValidationIssue> validate(ClassData classData, MethodData methodData,
-                                                    @Nullable ClassMetadata classMetadata,
-                                                    @Nullable MethodMetadata methodMetadata) {
+    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+                         @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         if (methodData.getName().equals(CLASS_INITIALIZATION_METHOD_NAME)) {
             if (!methodData.getJavadoc().isEmpty()) {
-                return singletonList(error("Class/interface initialization method must not be documented"));
+                issues.accept(error("Class/interface initialization method must not be documented"));
             }
         }
-
-        return emptyList();
     }
 
     @Override
-    public List<? extends ValidationIssue> validate(ClassData classData, MethodData methodData, ParameterData paramData,
-                                                    @Nullable ClassMetadata classMetadata,
-                                                    @Nullable MethodMetadata methodMetadata) {
+    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+                         ParameterData paramData, @Nullable ClassMetadata classMetadata,
+                         @Nullable MethodMetadata methodMetadata) {
         if (methodData.getName().equals(CLASS_INITIALIZATION_METHOD_NAME)) {
-            return singletonList(error("There should be no parameters for the class/interface initialization method"));
+            issues.accept(error("There should be no parameters for the class/interface initialization method"));
         }
-
-        return emptyList();
     }
 }

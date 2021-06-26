@@ -6,8 +6,7 @@ import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.FieldMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.function.Consumer;
 
 import static org.parchmentmc.feather.mapping.MappingDataContainer.*;
 
@@ -22,30 +21,23 @@ import static org.parchmentmc.feather.mapping.MappingDataContainer.*;
  * @see org.parchmentmc.feather.mapping.MappingDataContainer
  */
 public interface Validator extends Named {
-    default List<? extends ValidationIssue> validate(PackageData packageData) {
-        return Collections.emptyList();
+    default void validate(Consumer<? super ValidationIssue> issues, PackageData packageData) {
     }
 
-    default List<? extends ValidationIssue> validate(ClassData classData,
-                                                     @Nullable ClassMetadata classMetadata) {
-        return Collections.emptyList();
+    default void validate(Consumer<? super ValidationIssue> issues, ClassData classData,
+                          @Nullable ClassMetadata classMetadata) {
     }
 
-    default List<? extends ValidationIssue> validate(ClassData classData, FieldData fieldData,
-                                                     @Nullable ClassMetadata classMetadata,
-                                                     @Nullable FieldMetadata fieldMetadata) {
-        return Collections.emptyList();
+    default void validate(Consumer<? super ValidationIssue> issues, ClassData classData, FieldData fieldData,
+                          @Nullable ClassMetadata classMetadata, @Nullable FieldMetadata fieldMetadata) {
     }
 
-    default List<? extends ValidationIssue> validate(ClassData classData, MethodData methodData,
-                                                     @Nullable ClassMetadata classMetadata,
-                                                     @Nullable MethodMetadata methodMetadata) {
-        return Collections.emptyList();
+    default void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+                          @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
     }
 
-    default List<? extends ValidationIssue> validate(ClassData classData, MethodData methodData, ParameterData paramData,
-                                                     @Nullable ClassMetadata classMetadata,
-                                                     @Nullable MethodMetadata methodMetadata) {
-        return Collections.emptyList();
+    default void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+                          ParameterData paramData, @Nullable ClassMetadata classMetadata,
+                          @Nullable MethodMetadata methodMetadata) {
     }
 }

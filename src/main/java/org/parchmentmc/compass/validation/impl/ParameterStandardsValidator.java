@@ -7,12 +7,10 @@ import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;
 
 import javax.lang.model.SourceVersion;
-import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 import static org.parchmentmc.feather.mapping.MappingDataContainer.*;
 
 /**
@@ -42,20 +40,18 @@ public class ParameterStandardsValidator extends AbstractValidator {
     }
 
     @Override
-    public List<? extends ValidationIssue> validate(ClassData classData, MethodData methodData, ParameterData paramData,
-                                                    @Nullable ClassMetadata classMetadata,
-                                                    @Nullable MethodMetadata methodMetadata) {
+    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+                         ParameterData paramData, @Nullable ClassMetadata classMetadata,
+                         @Nullable MethodMetadata methodMetadata) {
         String paramName = paramData.getName();
         if (paramName != null) {
             if (!STANDARDS_REGEX_PATTERN.matcher(paramName).matches()) {
-                return singletonList(error("Parameter name '" + paramName + "' does not match regex " + STANDARDS_REGEX_PATTERN.pattern()));
+                issues.accept(error("Parameter name '" + paramName + "' does not match regex " + STANDARDS_REGEX_PATTERN.pattern()));
             }
             if (isReserved(paramName.toLowerCase(Locale.ROOT))) {
-                return singletonList(error("Parameter name (case-insensitively) matches a reserved keyword: " + paramName));
+                issues.accept(error("Parameter name (case-insensitively) matches a reserved keyword: " + paramName));
             }
         }
-
-        return emptyList();
     }
 
     private static boolean isReserved(CharSequence word) {

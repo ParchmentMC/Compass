@@ -45,7 +45,7 @@ public class DataValidator {
         for (MappingDataContainer.PackageData pkgData : data.getPackages()) {
             packageIssues.clear();
             for (Validator validator : validators) {
-                packageIssues.addAll(validator.validate(pkgData));
+                validator.validate(packageIssues::add, pkgData);
             }
 
             if (!packageIssues.isEmpty()) {
@@ -62,7 +62,7 @@ public class DataValidator {
 
             classIssues.clear();
             for (Validator validator : validators) {
-                classIssues.addAll(validator.validate(clsData, clsMeta));
+                validator.validate(classIssues::add, clsData, clsMeta);
             }
             ResultContainer.ClassResult<List<? extends ValidationIssue>> classResult =
                     new ResultContainer.ClassResult<>(clsData.getName(), ImmutableList.copyOf(classIssues));
@@ -75,7 +75,7 @@ public class DataValidator {
 
                 fieldIssues.clear();
                 for (Validator validator : validators) {
-                    fieldIssues.addAll(validator.validate(clsData, fieldData, clsMeta, fieldMeta));
+                    validator.validate(fieldIssues::add, clsData, fieldData, clsMeta, fieldMeta);
                 }
 
                 if (!fieldIssues.isEmpty()) {
@@ -93,7 +93,7 @@ public class DataValidator {
 
                 methodIssues.clear();
                 for (Validator validator : validators) {
-                    methodIssues.addAll(validator.validate(clsData, methodData, clsMeta, methodMeta));
+                    validator.validate(methodIssues::add, clsData, methodData, clsMeta, methodMeta);
                 }
                 ResultContainer.MethodResult<List<? extends ValidationIssue>> methodResult =
                         new ResultContainer.MethodResult<>(methodData.getName(), methodData.getDescriptor(),
@@ -103,7 +103,7 @@ public class DataValidator {
                 for (MappingDataContainer.ParameterData paramData : methodData.getParameters()) {
                     paramIssues.clear();
                     for (Validator validator : validators) {
-                        paramIssues.addAll(validator.validate(clsData, methodData, paramData, clsMeta, methodMeta));
+                        validator.validate(paramIssues::add, clsData, methodData, paramData, clsMeta, methodMeta);
                     }
 
                     if (!paramIssues.isEmpty()) {
