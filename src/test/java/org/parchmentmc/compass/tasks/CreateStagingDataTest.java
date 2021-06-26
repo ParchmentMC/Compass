@@ -1,9 +1,10 @@
 package org.parchmentmc.compass.tasks;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.parchmentmc.compass.tasks.CreateStagingData.InputMode;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CreateStagingDataTest {
     public static final MappingDataBuilder base = new MappingDataBuilder();
@@ -21,6 +22,12 @@ public class CreateStagingDataTest {
                 .createParameter((byte) 0).setName("args");
     }
 
+    MappingDataBuilder applyInput(MappingDataBuilder input, InputMode mode) {
+        final MappingDataBuilder baseCopy = MappingDataBuilder.copyOf(CreateStagingDataTest.base);
+        CreateStagingData.apply(baseCopy, input, mode);
+        return baseCopy;
+    }
+
     @Test
     public void apply_method_does_not_copy_members_not_present_in_base() {
         MappingDataBuilder input = new MappingDataBuilder();
@@ -35,9 +42,9 @@ public class CreateStagingDataTest {
                 .createMethod("method", "(J)V")
                 .createParameter((byte) 0).setName("arg");
 
-        Assertions.assertEquals(base, CreateStagingData.apply(base, input, InputMode.OVERWRITE));
-        Assertions.assertEquals(base, CreateStagingData.apply(base, input, InputMode.OVERRIDE));
-        Assertions.assertEquals(base, CreateStagingData.apply(base, input, InputMode.ADDITIVE));
+        assertEquals(base, applyInput(input, InputMode.OVERWRITE));
+        assertEquals(base, applyInput(input, InputMode.OVERRIDE));
+        assertEquals(base, applyInput(input, InputMode.ADDITIVE));
     }
 
     @Test
@@ -51,10 +58,7 @@ public class CreateStagingDataTest {
                 .setName("args")
                 .addJavadoc("The arguments"); // Remained from base
 
-        Assertions.assertEquals(
-                expected,
-                CreateStagingData.apply(base, input, InputMode.ADDITIVE)
-        );
+        assertEquals(expected, applyInput(input, InputMode.ADDITIVE));
     }
 
     @Test
@@ -68,19 +72,13 @@ public class CreateStagingDataTest {
                 .setName("args")
                 .addJavadoc("The arguments"); // Remained from base
 
-        Assertions.assertEquals(
-                expected,
-                CreateStagingData.apply(base, input, InputMode.OVERRIDE)
-        );
+        assertEquals(expected, applyInput(input, InputMode.OVERRIDE));
     }
 
     @Test
     public void overwrite_input_mode() {
         // Since both have the same elements (1 class -> 1 method -> 1 param), and OVERWRITE means 'the data from the
         // inputs if there's an element, even if data is empty), then we can pass in the input tree as the expected data
-        Assertions.assertEquals(
-                input,
-                CreateStagingData.apply(base, input, InputMode.OVERWRITE)
-        );
+        assertEquals(input, applyInput(input, InputMode.OVERWRITE));
     }
 }
