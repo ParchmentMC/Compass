@@ -21,9 +21,8 @@ import static org.parchmentmc.feather.mapping.MappingDataContainer.*;
  * <p>There are currently two standards checked by this validator:</p>
  * <ol>
  *     <li>Parameter names must match the regex <code>{@value #STANDARDS_REGEX}</code>.</li>
- *     <li>Either stripped or not of the {@code p} prefix, parameter names must neither match any reserved keyword, as
- *     defined by &sect;3.9 "Keywords" of the JLS 16, nor match the boolean literals {@code true} and {@code false},
- *     and the {@code null} literal.</li>
+ *     <li>Parameter names must neither match any reserved keyword, as defined by &sect;3.9 "Keywords" of the JLS 16,
+ *     nor match the boolean literals {@code true} and {@code false}, and the {@code null} literal.</li>
  * </ol>
  *
  * @see <a href="https://docs.oracle.com/javase/specs/jls/se16/html/jls-3.html#jls-3.9">The Java&reg; Language
@@ -51,10 +50,7 @@ public class ParameterStandardsValidator extends AbstractValidator {
             if (!STANDARDS_REGEX_PATTERN.matcher(paramName).matches()) {
                 return singletonList(error("Parameter name '" + paramName + "' does not match regex " + STANDARDS_REGEX_PATTERN.pattern()));
             }
-            // No use in checking for keyword if it doesn't match the regex
-            if (isReserved(paramName.substring(1).toLowerCase(Locale.ROOT))) {
-                return singletonList(error("Parameter name (case-insensitively) without prefix matches a reserved keyword: " + paramName));
-            } else if (isReserved(paramName.toLowerCase(Locale.ROOT))) {
+            if (isReserved(paramName.toLowerCase(Locale.ROOT))) {
                 return singletonList(error("Parameter name (case-insensitively) matches a reserved keyword: " + paramName));
             }
         }
