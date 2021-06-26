@@ -38,7 +38,7 @@ public class SyntheticValidator extends AbstractValidator {
     public List<? extends ValidationIssue> validate(ClassData classData, MethodData methodData,
                                                     @Nullable ClassMetadata classMetadata,
                                                     @Nullable MethodMetadata methodMetadata) {
-        if (methodMetadata != null && methodMetadata.hasAccessFlag(AccessFlag.SYNTHETIC)) {
+        if (methodMetadata != null && methodMetadata.hasAccessFlag(AccessFlag.SYNTHETIC) && !methodMetadata.isLambda()) {
             if (!methodData.getJavadoc().isEmpty()) {
                 return singletonList(error("Synthetic method must not be documented"));
             }
@@ -51,7 +51,7 @@ public class SyntheticValidator extends AbstractValidator {
     public List<? extends ValidationIssue> validate(ClassData classData, MethodData methodData, ParameterData paramData,
                                                     @Nullable ClassMetadata classMetadata,
                                                     @Nullable MethodMetadata methodMetadata) {
-        if (methodMetadata != null && methodMetadata.hasAccessFlag(AccessFlag.SYNTHETIC)) {
+        if (methodMetadata != null && methodMetadata.hasAccessFlag(AccessFlag.SYNTHETIC) && !methodMetadata.isLambda()) {
             List<ValidationIssue.ValidationError> errors = new ArrayList<>();
             if (paramData.getName() != null) {
                 errors.add(error("Synthetic method parameter must not be named"));
