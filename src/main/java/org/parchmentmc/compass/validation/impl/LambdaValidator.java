@@ -28,7 +28,7 @@ public class LambdaValidator extends AbstractValidator {
                                                     @Nullable MethodMetadata methodMetadata) {
         if (methodData.getName().startsWith(LAMBDA_METHOD_NAME_PREFIX)
                 && (methodMetadata == null || methodMetadata.isLambda())) {
-            if (methodData.getJavadoc().isEmpty()) {
+            if (!methodData.getJavadoc().isEmpty()) {
                 return singletonList(error("Lambda method must not be documented"));
             }
         }
