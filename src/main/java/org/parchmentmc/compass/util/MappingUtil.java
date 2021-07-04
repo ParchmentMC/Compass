@@ -2,15 +2,18 @@ package org.parchmentmc.compass.util;
 
 import net.minecraftforge.srgutils.IMappingBuilder;
 import net.minecraftforge.srgutils.IMappingFile;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.parchmentmc.compass.util.download.ObfuscationMapsDownloader;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
+import org.parchmentmc.feather.metadata.ClassMetadata;
+import org.parchmentmc.feather.metadata.SourceMetadata;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.parchmentmc.feather.mapping.MappingDataBuilder.*;
@@ -277,5 +280,20 @@ public class MappingUtil {
                 .map(MutableClassData::getName)
                 .collect(Collectors.toSet())
                 .forEach(builder::removeClass);
+    }
+
+    public static Map<String, ClassMetadata> buildClassMetadataMap(@Nullable SourceMetadata metadata) {
+        if (metadata == null) return Collections.emptyMap();
+
+        final HashMap<String, ClassMetadata> classMetadataMap = new HashMap<>();
+        final ArrayDeque<ClassMetadata> toTraverse = new ArrayDeque<>(metadata.getClasses());
+
+        ClassMetadata current;
+        while ((current = toTraverse.poll()) != null) {
+            classMetadataMap.put(current.getName().getMojangName().orElse(""), current);
+            toTraverse.addAll(current.getInnerClasses());
+        }
+
+        return classMetadataMap;
     }
 }

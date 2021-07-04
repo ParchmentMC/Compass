@@ -9,6 +9,7 @@ import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.parchmentmc.compass.CompassPlugin;
 import org.parchmentmc.compass.storage.io.MappingIOFormat;
+import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.compass.util.download.BlackstoneDownloader;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
@@ -20,6 +21,7 @@ import org.parchmentmc.feather.util.AccessFlag;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import static org.parchmentmc.feather.mapping.MappingDataBuilder.*;
 
@@ -50,11 +52,11 @@ public abstract class SanitizeStagingData extends DefaultTask {
         // Packages
         data.getPackages().forEach(t -> builder.createPackage(t.getName()).addJavadoc(t.getJavadoc()));
 
+        final Map<String, ClassMetadata> classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
+
         // Classes
         for (MappingDataContainer.ClassData clsData : data.getClasses()) {
-            final ClassMetadata clsMeta = metadata != null ? metadata.getClasses().stream()
-                    .filter(s -> s.getName().getMojangName().orElse("").contentEquals(clsData.getName()))
-                    .findFirst().orElse(null) : null;
+            final ClassMetadata clsMeta = classMetadataMap.get(clsData.getName());
 
             final MutableClassData newClsData = builder.getOrCreateClass(clsData.getName())
                     .addJavadoc(clsData.getJavadoc());

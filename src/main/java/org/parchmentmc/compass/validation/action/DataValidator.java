@@ -2,6 +2,7 @@ package org.parchmentmc.compass.validation.action;
 
 import com.google.common.collect.ImmutableList;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.compass.util.ResultContainer;
 import org.parchmentmc.compass.validation.ValidationIssue;
 import org.parchmentmc.compass.validation.Validator;
@@ -54,11 +55,11 @@ public class DataValidator {
             }
         }
 
+        final Map<String, ClassMetadata> classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
+
         // Classes
         for (MappingDataContainer.ClassData clsData : data.getClasses()) {
-            ClassMetadata clsMeta = metadata != null ? metadata.getClasses().stream()
-                    .filter(s -> s.getName().getMojangName().orElse("").contentEquals(clsData.getName()))
-                    .findFirst().orElse(null) : null;
+            ClassMetadata clsMeta = classMetadataMap.get(clsData.getName());
 
             classIssues.clear();
             for (Validator validator : validators) {

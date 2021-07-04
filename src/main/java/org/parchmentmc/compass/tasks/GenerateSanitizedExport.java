@@ -3,6 +3,7 @@ package org.parchmentmc.compass.tasks;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.parchmentmc.compass.CompassPlugin;
+import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.compass.util.download.BlackstoneDownloader;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
@@ -11,6 +12,7 @@ import org.parchmentmc.feather.metadata.MethodMetadata;
 import org.parchmentmc.feather.metadata.SourceMetadata;
 
 import java.io.IOException;
+import java.util.Map;
 
 public abstract class GenerateSanitizedExport extends GenerateExport {
     public GenerateSanitizedExport() {
@@ -38,10 +40,10 @@ public abstract class GenerateSanitizedExport extends GenerateExport {
         final boolean skipLambdas = getSkipLambdaParameters().get();
         final boolean skipAnonClasses = getSkipAnonymousClassParameters().get();
 
+        final Map<String, ClassMetadata> classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
+
         builder.getClasses().forEach(clsData -> {
-            final ClassMetadata clsMeta = metadata != null ? metadata.getClasses().stream()
-                    .filter(s -> s.getName().getMojangName().orElse("").contentEquals(clsData.getName()))
-                    .findFirst().orElse(null) : null;
+            final ClassMetadata clsMeta = classMetadataMap.get(clsData.getName());
 
             boolean anonClass = withinAnonymousClass(clsData.getName());
 
