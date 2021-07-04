@@ -78,8 +78,8 @@ public abstract class SanitizeStagingData extends DefaultTask {
             // Methods
             for (MappingDataContainer.MethodData methodData : clsData.getMethods()) {
                 final MethodMetadata methodMeta = clsMeta != null ? clsMeta.getMethods().stream()
-                        .filter(s -> s.getName().getObfuscatedName().orElse("").contentEquals(methodData.getName())
-                                && s.getDescriptor().getObfuscatedName().orElse("").contentEquals(methodData.getDescriptor()))
+                        .filter(s -> s.getName().getMojangName().orElse("").contentEquals(methodData.getName())
+                                && s.getDescriptor().getMojangName().orElse("").contentEquals(methodData.getDescriptor()))
                         .findFirst().orElse(null) : null;
                 final boolean isSynthetic = methodMeta != null && methodMeta.hasAccessFlag(AccessFlag.SYNTHETIC);
 
