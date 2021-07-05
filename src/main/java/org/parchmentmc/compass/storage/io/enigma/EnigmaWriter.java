@@ -61,6 +61,10 @@ final class EnigmaWriter {
         int memberIndent = indent + 1;
         int javadocIndent = indent + 2;
 
+        for (String javadoc : data.getJavadoc()) {
+            writeComment(writer, memberIndent, javadoc);
+        }
+
         for (MappingDataContainer.FieldData field : data.getFields()) {
             indent(writer, memberIndent).append(FIELD).append(' ')
                     .append(field.getName()).append(' ').append(field.getDescriptor()).append('\n');
