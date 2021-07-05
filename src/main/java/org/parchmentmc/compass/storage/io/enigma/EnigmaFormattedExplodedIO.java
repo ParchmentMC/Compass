@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.parchmentmc.compass.storage.io.enigma.EnigmaWriter.stripToMostInner;
@@ -33,6 +34,9 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
             "    ", "mapping");
 
     static final CharMatcher DOLLAR_SIGN = CharMatcher.is('$');
+    static final Comparator<String> CLASS_NAME_LENGTH_THEN_LEXICOGRAPHICALLY = Comparator
+            .comparingInt(String::length)
+            .thenComparing(Function.identity());
 
     static final String CLASS = "CLASS";
     static final String FIELD = "FIELD";
@@ -80,7 +84,9 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
         // Group classes by their outermost classes (via `$` matching)
         final Map<String, Set<String>> outerClassesToClasses = data.getClasses().stream()
                 .map(ClassData::getName)
-                .collect(Collectors.groupingBy(EnigmaWriter::stripToOuter, Collectors.toCollection(TreeSet::new)));
+                .sorted()
+                .collect(Collectors.groupingBy(EnigmaWriter::stripToOuter,
+                        Collectors.toCollection(() -> new TreeSet<>(EnigmaFormattedExplodedIO::compareClassNames))));
 
         Set<String> visited = new HashSet<>();
 
@@ -170,5 +176,25 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
 
     static class DataInfo {
         public SimpleVersion version;
+    }
+
+    static int compareClassNames(String a, String b) {
+        final String[] aComponents = a.split(DOLLAR_SIGN.toString());
+        final String[] bComponents = b.split(DOLLAR_SIGN.toString());
+
+        int ret = 0;
+        int minimum = Math.min(aComponents.length, bComponents.length);
+        for (int i = 0; i < minimum; i++) {
+            String aComp = aComponents[i];
+            String bComp = bComponents[i];
+            ret = CLASS_NAME_LENGTH_THEN_LEXICOGRAPHICALLY.compare(aComp, bComp);
+            if (ret != 0) break;
+        }
+
+        if (ret == 0) {
+            ret = CLASS_NAME_LENGTH_THEN_LEXICOGRAPHICALLY.compare(a, b);
+        }
+
+        return ret;
     }
 }
