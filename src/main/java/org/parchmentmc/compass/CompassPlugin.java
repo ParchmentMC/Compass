@@ -18,6 +18,7 @@ import org.parchmentmc.compass.providers.DelegatingProvider;
 import org.parchmentmc.compass.providers.IntermediateProvider;
 import org.parchmentmc.compass.providers.mcpconfig.SRGProvider;
 import org.parchmentmc.compass.storage.io.ExplodedDataIO;
+import org.parchmentmc.compass.storage.io.enigma.EnigmaFormattedExplodedIO;
 import org.parchmentmc.compass.tasks.*;
 import org.parchmentmc.compass.util.JSONUtil;
 import org.parchmentmc.compass.util.MappingUtil;
@@ -35,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Locale;
+import java.util.Objects;
 
 import static org.parchmentmc.compass.util.MappingUtil.constructPackageData;
 import static org.parchmentmc.compass.util.MappingUtil.createBuilderFrom;
@@ -60,11 +62,15 @@ public class CompassPlugin implements Plugin<Project> {
         this.intermediates = objectFactory.namedDomainObjectSet(IntermediateProvider.class);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void apply(Project project) {
         project.getPlugins().apply("de.undercouch.download");
         final CompassExtension extension = project.getExtensions().create(COMPASS_EXTENSION, CompassExtension.class);
         final TaskContainer tasks = project.getTasks();
+
+        EnigmaFormattedExplodedIO.duplicateDocumentedClassNames = () ->
+                Boolean.parseBoolean(Objects.toString(project.findProperty("compass.duplicateDocumentedClassNames")));
 
         manifestsDownloader = new ManifestsDownloader(project);
         obfuscationMapsDownloader = new ObfuscationMapsDownloader(project);

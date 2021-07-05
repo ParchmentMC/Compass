@@ -55,8 +55,14 @@ final class EnigmaWriter {
         return writer;
     }
 
+    @SuppressWarnings("deprecation")
     public static void writeClass(Writer writer, int indent, String name, MappingDataContainer.ClassData data) throws IOException {
-        indent(writer, indent).append(CLASS).append(' ').append(name).append('\n');
+        indent(writer, indent).append(CLASS).append(' ').append(name);
+
+        if (!data.getJavadoc().isEmpty() && duplicateDocumentedClassNames.getAsBoolean()) {
+            writer.append(' ').append(name);
+        }
+        writer.append('\n');
 
         int memberIndent = indent + 1;
         int javadocIndent = indent + 2;
