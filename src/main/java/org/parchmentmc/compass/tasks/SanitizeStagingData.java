@@ -89,6 +89,13 @@ public abstract class SanitizeStagingData extends DefaultTask {
                             methodData.getName(), methodData.getDescriptor());
                     methodsToRemove.add(methodData);
                     hasRemoved = true;
+                } else if (classMeta != null && classMeta.hasAccessFlag(AccessFlag.ENUM)
+                        && methodData.getName().equals("valueOf")
+                        && methodData.getDescriptor().equals("(Ljava/lang/String;)L" + classData.getName() + ';')) {
+                    logger.lifecycle("Dropping enum `valueOf` method for {}", classData.getName(),
+                            methodData.getName(), methodData.getDescriptor());
+                    methodsToRemove.add(methodData);
+                    hasRemoved = true;
                 }
             }
             methodsToRemove.forEach(method -> classData.removeMethod(method.getName(), method.getDescriptor()));

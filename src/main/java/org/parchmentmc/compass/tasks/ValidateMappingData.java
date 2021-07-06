@@ -51,7 +51,7 @@ public abstract class ValidateMappingData extends DefaultTask implements Verific
         final DataValidator validator = new DataValidator();
         validator.addValidator(new BridgeValidator());
         validator.addValidator(new ClassInitValidator());
-        validator.addValidator(new EnumValuesValidator());
+        validator.addValidator(new EnumValidator());
         validator.addValidator(new LambdaValidator());
         validator.addValidator(new ParameterStandardsValidator());
         validator.addValidator(new SyntheticValidator());
