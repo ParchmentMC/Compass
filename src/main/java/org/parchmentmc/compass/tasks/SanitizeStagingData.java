@@ -21,7 +21,9 @@ import org.parchmentmc.feather.util.AccessFlag;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.parchmentmc.feather.mapping.MappingDataBuilder.*;
 
@@ -47,66 +49,58 @@ public abstract class SanitizeStagingData extends DefaultTask {
 
         final MappingDataContainer data = getInputFormat().get().read(input);
 
-        final MappingDataBuilder builder = new MappingDataBuilder();
+        final Set<String> classesToRemove = new HashSet<>();
+        final Set<MutableFieldData> fieldsToRemove = new HashSet<>();
+        final Set<MutableMethodData> methodsToRemove = new HashSet<>();
 
-        // Packages
-        data.getPackages().forEach(t -> builder.createPackage(t.getName()).addJavadoc(t.getJavadoc()));
+        final MappingDataBuilder builder = MappingDataBuilder.copyOf(data);
 
         final Map<String, ClassMetadata> classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
 
-        // Classes
-        for (MappingDataContainer.ClassData clsData : data.getClasses()) {
-            final ClassMetadata clsMeta = classMetadataMap.get(clsData.getName());
+        for (final MutableClassData classData : builder.getClasses()) {
+            final ClassMetadata classMeta = classMetadataMap.get(classData.getName());
+            boolean hasRemoved = false;
 
-            final MutableClassData newClsData = builder.getOrCreateClass(clsData.getName())
-                    .addJavadoc(clsData.getJavadoc());
-
-            // Fields
-            for (MappingDataContainer.FieldData fieldData : clsData.getFields()) {
-                final FieldMetadata fieldMeta = clsMeta != null ? clsMeta.getFields().stream()
+            for (final MutableFieldData fieldData : classData.getFields()) {
+                final FieldMetadata fieldMeta = classMeta != null ? classMeta.getFields().stream()
                         .filter(s -> s.getName().getMojangName().orElse("").contentEquals(fieldData.getName()))
                         .findFirst().orElse(null) : null;
 
-                final MutableFieldData newFieldData = newClsData.getOrCreateField(fieldData.getName(), fieldData.getDescriptor());
-
-                if (!fieldData.getJavadoc().isEmpty() && fieldMeta != null && fieldMeta.hasAccessFlag(AccessFlag.SYNTHETIC)) {
-                    logger.lifecycle("Removing javadoc for synthetic field {}.{}", clsData.getName(),
+                // Remove javadocs from synthetic fields
+                if (fieldMeta != null && fieldMeta.hasAccessFlag(AccessFlag.SYNTHETIC) && !fieldData.getJavadoc().isEmpty()) {
+                    logger.lifecycle("Dropping synthetic field {}#{}", classData.getName(),
                             fieldData.getName());
-                } else {
-                    newFieldData.addJavadoc(fieldData.getJavadoc());
+                    fieldsToRemove.add(fieldData);
+                    hasRemoved = true;
                 }
             }
+            fieldsToRemove.forEach(field -> classData.removeField(field.getName()));
+            fieldsToRemove.clear();
 
-            // Methods
-            for (MappingDataContainer.MethodData methodData : clsData.getMethods()) {
-                final MethodMetadata methodMeta = clsMeta != null ? clsMeta.getMethods().stream()
+            for (final MutableMethodData methodData : classData.getMethods()) {
+                final MethodMetadata methodMeta = classMeta != null ? classMeta.getMethods().stream()
                         .filter(s -> s.getName().getMojangName().orElse("").contentEquals(methodData.getName())
                                 && s.getDescriptor().getMojangName().orElse("").contentEquals(methodData.getDescriptor()))
                         .findFirst().orElse(null) : null;
-                final boolean isSynthetic = methodMeta != null && methodMeta.hasAccessFlag(AccessFlag.SYNTHETIC);
 
-                final MutableMethodData newMethodData = newClsData.getOrCreateMethod(methodData.getName(), methodData.getDescriptor());
-
-                if (isSynthetic && !methodData.getJavadoc().isEmpty()) {
-                    logger.lifecycle("Removing javadoc for synthetic method {}.{}{}", clsData.getName(),
+                // Only target non-lambda synthetic methods
+                if (methodMeta != null && methodMeta.hasAccessFlag(AccessFlag.SYNTHETIC) && !methodMeta.isLambda()) {
+                    logger.lifecycle("Dropping synthetic method {}#{}{}", classData.getName(),
                             methodData.getName(), methodData.getDescriptor());
-                } else {
-                    newMethodData.addJavadoc(methodData.getJavadoc());
-                }
-
-                // Method Parameters
-                for (MappingDataContainer.ParameterData paramData : methodData.getParameters()) {
-                    final MutableParameterData newParamData = newMethodData.getOrCreateParameter(paramData.getIndex());
-
-                    if (isSynthetic && (paramData.getName() != null || paramData.getJavadoc() != null)) {
-                        logger.lifecycle("Dropping data for param #{} of synthetic method {}.{}{}", paramData.getIndex(),
-                                clsData.getName(), methodData.getName(), methodData.getDescriptor());
-                    } else {
-                        newParamData.setName(paramData.getName()).setJavadoc(paramData.getJavadoc());
-                    }
+                    methodsToRemove.add(methodData);
+                    hasRemoved = true;
                 }
             }
+            methodsToRemove.forEach(method -> classData.removeMethod(method.getName(), method.getDescriptor()));
+            methodsToRemove.clear();
+
+            if (hasRemoved && classData.getJavadoc().isEmpty()
+                    && classData.getFields().isEmpty() && classData.getMethods().isEmpty()) {
+                logger.lifecycle("Empty class, dropping {}", classData.getName());
+                classesToRemove.add(classData.getName());
+            }
         }
+        classesToRemove.forEach(builder::removeClass);
 
         getInputFormat().get().write(builder, input);
     }
