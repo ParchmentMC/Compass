@@ -32,26 +32,6 @@ import static org.parchmentmc.feather.mapping.MappingDataContainer.ClassData;
 public class EnigmaFormattedExplodedIO implements MappingDataIO {
     public static final EnigmaFormattedExplodedIO INSTANCE = new EnigmaFormattedExplodedIO(JSONUtil.MOSHI,
             "    ", "mapping");
-    /**
-     * Controls whether to duplicate the class name as both obfuscated and deobfuscated names when writing documented
-     * class entries.
-     *
-     * <p>As of writing, when Enigma writes out class entries which have javadocs attached, it will write out
-     * the class name twice: once as the obfuscated name, and once as the deobfuscated name. </p>
-     *
-     * <p>While Compass itself ignores to the deobfuscated name when reading, to maintain compatibility with the
-     * current format as written by Enigma itself (to avoid unnecessary changes in the tracked data), this option
-     * provides for the writing to duplicate the class name.</p>
-     *
-     * <p>The {@link org.parchmentmc.compass.CompassPlugin} sets this value to be controlled by the project property
-     * {@code compass.duplicateDocumentedClassNames}.</p>
-     *
-     * @deprecated This field will be removed in the future once Enigma changes to not duplicate names for documented
-     *             class entries.
-     */
-    @SuppressWarnings("DeprecatedIsStillUsed")
-    @Deprecated
-    public static java.util.function.BooleanSupplier duplicateDocumentedClassNames = () -> false;
 
     static final CharMatcher DOLLAR_SIGN = CharMatcher.is('$');
     static final Comparator<String> CLASS_NAME_LENGTH_THEN_LEXICOGRAPHICALLY = Comparator
