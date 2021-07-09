@@ -112,8 +112,12 @@ public abstract class ValidateMappingData extends DefaultTask implements Verific
         }
 
         logger.warn("Found {} validation warnings and {} validation errors", count.warnings, count.errors);
-        throw new ValidationFailedException("Found " + count.warnings + " validation warnings and "
-                + count.errors + " validation errors");
+        if (!ignoreFailures) {
+            throw new ValidationFailedException("Found " + count.warnings + " validation warnings and "
+                    + count.errors + " validation errors");
+        } else {
+            logger.warn("Ignoring failures.");
+        }
     }
 
     private void logIssue(Logger logger, List<? extends ValidationIssue> issues, IssueCount count, String prefix) {
