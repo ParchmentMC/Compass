@@ -78,27 +78,28 @@ public abstract class ValidateMappingData extends DefaultTask implements Verific
 
         logger.warn(VALIDATION, "Found validation issues in {} packages and {} classes", results.getPackages().size(),
                 results.getClasses().size());
+        logger.warn(VALIDATION, "( <!> means validation warning, (X) means validation error )");
 
         for (ResultContainer.PackageResult<List<? extends ValidationIssue>> packageResult : results.getPackages()) {
             final List<? extends ValidationIssue> issues = packageResult.getData();
-            logger.warn(VALIDATION, "Package: {}", packageResult.getName());
+            logger.error(VALIDATION, "Package: {}", packageResult.getName());
             logIssue(logger, issues, count, "");
         }
 
         for (ResultContainer.ClassResult<List<? extends ValidationIssue>> classResult : results.getClasses()) {
             final List<? extends ValidationIssue> issues = classResult.getData();
-            logger.warn(VALIDATION, "Class: {}", classResult.getName());
+            logger.error(VALIDATION, "Class: {}", classResult.getName());
             logIssue(logger, issues, count, "");
 
             for (ResultContainer.FieldResult<List<? extends ValidationIssue>> fieldResult : classResult.getFields()) {
                 final List<? extends ValidationIssue> fieldIssues = fieldResult.getData();
-                logger.warn(VALIDATION, "    Field: {}", fieldResult.getName());
+                logger.error(VALIDATION, "    Field: {}", fieldResult.getName());
                 logIssue(logger, fieldIssues, count, "    ");
             }
 
             for (ResultContainer.MethodResult<List<? extends ValidationIssue>> methodResult : classResult.getMethods()) {
                 final List<? extends ValidationIssue> methodIssues = methodResult.getData();
-                logger.warn(VALIDATION, "    Method: {}{}", methodResult.getName(),
+                logger.error(VALIDATION, "    Method: {}{}", methodResult.getName(),
                         methodResult.getDescriptor());
                 logIssue(logger, methodIssues, count, "    ");
 
@@ -118,7 +119,7 @@ public abstract class ValidateMappingData extends DefaultTask implements Verific
     private void logIssue(Logger logger, List<? extends ValidationIssue> issues, IssueCount count, String prefix) {
         for (ValidationIssue issue : issues) {
             if (issue instanceof ValidationIssue.ValidationWarning) {
-                logger.warn(prefix + " - <!> {}: {}", issue.getValidatorName(), issue.getMessage());
+                logger.error(prefix + " - <!> {}: {}", issue.getValidatorName(), issue.getMessage());
                 count.warnings++;
             } else if (issue instanceof ValidationIssue.ValidationError) {
                 logger.error(prefix + " - (X) {}: {}", issue.getValidatorName(), issue.getMessage());
