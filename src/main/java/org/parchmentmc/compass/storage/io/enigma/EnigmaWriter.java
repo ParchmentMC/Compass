@@ -4,9 +4,7 @@ import org.parchmentmc.feather.mapping.MappingDataContainer;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.parchmentmc.compass.storage.io.enigma.EnigmaFormattedExplodedIO.*;
 
@@ -65,7 +63,11 @@ final class EnigmaWriter {
             writeComment(writer, memberIndent, javadoc);
         }
 
-        for (MappingDataContainer.FieldData field : data.getFields()) {
+        final Comparator<MappingDataContainer.FieldData> fieldDataComparator = Comparator
+                .comparing(s -> s.getName() + s.getDescriptor());
+        final TreeSet<MappingDataContainer.FieldData> fields = new TreeSet<>(fieldDataComparator);
+        fields.addAll(data.getFields());
+        for (MappingDataContainer.FieldData field : fields) {
             indent(writer, memberIndent).append(FIELD).append(' ')
                     .append(field.getName()).append(' ').append(field.getDescriptor()).append('\n');
 
