@@ -9,6 +9,7 @@ import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.parchmentmc.compass.CompassPlugin;
 import org.parchmentmc.compass.storage.io.MappingIOFormat;
+import org.parchmentmc.compass.util.DescriptorIndexer;
 import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.compass.util.download.BlackstoneDownloader;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
@@ -21,6 +22,7 @@ import org.parchmentmc.feather.util.AccessFlag;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -52,10 +54,12 @@ public abstract class SanitizeStagingData extends DefaultTask {
         final Set<String> classesToRemove = new HashSet<>();
         final Set<MutableFieldData> fieldsToRemove = new HashSet<>();
         final Set<MutableMethodData> methodsToRemove = new HashSet<>();
+        final Set<Byte> paramsToRemove = new HashSet<>();
 
         final MappingDataBuilder builder = MappingDataBuilder.copyOf(data);
 
         final Map<String, ClassMetadata> classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
+        final DescriptorIndexer indexer = new DescriptorIndexer();
 
         for (final MutableClassData classData : builder.getClasses()) {
             final ClassMetadata classMeta = classMetadataMap.get(classData.getName());
@@ -96,6 +100,33 @@ public abstract class SanitizeStagingData extends DefaultTask {
                             methodData.getName(), methodData.getDescriptor());
                     methodsToRemove.add(methodData);
                     hasRemoved = true;
+                } else {
+                    // Ignore metadata for now, see ParchmentMC/Blackstone#3
+                    final BitSet indexes = indexer.getIndexes(methodData, null);
+
+                    for (MutableParameterData paramData : methodData.getParameters()) {
+                        byte index = paramData.getIndex();
+
+                        if (!indexes.get(index)) {
+                            paramsToRemove.add(index);
+                        }
+                    }
+
+                    if (!paramsToRemove.isEmpty()) {
+                        logger.lifecycle("Removing parameters {} from method {}{}#{}", paramsToRemove,
+                                classData.getName(), methodData.getName(), methodData.getDescriptor());
+
+                        paramsToRemove.forEach(methodData::removeParameter);
+                        paramsToRemove.clear();
+
+                        if (methodData.getJavadoc().isEmpty() && methodData.getParameters().isEmpty()) {
+                            logger.lifecycle("Dropping empty method {}{}#{}", classData.getName(),
+                                    methodData.getName(), methodData.getDescriptor());
+
+                            methodsToRemove.add(methodData);
+                            hasRemoved = true;
+                        }
+                    }
                 }
             }
             methodsToRemove.forEach(method -> classData.removeMethod(method.getName(), method.getDescriptor()));
