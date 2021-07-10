@@ -50,6 +50,8 @@ public class CompassPlugin implements Plugin<Project> {
     public static final String CREATE_STAGING_DATA_TASK_NAME = "createStagingFromInputs";
     public static final String SANITIZE_DATA_TASK_NAME = "sanitizeData";
     public static final String SANITIZE_STAGING_DATA_TASK_NAME = "sanitizeStagingData";
+    public static final String VALIDATE_DATA_TASK_NAME = "validateData";
+    public static final String VALIDATE_STAGING_DATA_TASK_NAME = "validateStagingData";
 
     private final NamedDomainObjectSet<IntermediateProvider> intermediates;
     private ManifestsDownloader manifestsDownloader;
@@ -185,8 +187,8 @@ public class CompassPlugin implements Plugin<Project> {
     }
 
     private void createValidationTask(CompassExtension extension, TaskContainer tasks) {
-        final TaskProvider<ValidateData> validateData = tasks.register("validateData", ValidateData.class);
-        final TaskProvider<ValidateData> validateStagingData = tasks.register("validateStagingData", ValidateData.class);
+        final TaskProvider<ValidateData> validateData = tasks.register(VALIDATE_DATA_TASK_NAME, ValidateData.class);
+        final TaskProvider<ValidateData> validateStagingData = tasks.register(VALIDATE_STAGING_DATA_TASK_NAME, ValidateData.class);
 
         validateData.configure(t -> {
             t.setGroup(LifecycleBasePlugin.VERIFICATION_GROUP);
