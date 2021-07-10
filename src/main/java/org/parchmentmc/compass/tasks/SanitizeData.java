@@ -29,7 +29,7 @@ import java.util.Set;
 
 import static org.parchmentmc.feather.mapping.MappingDataBuilder.*;
 
-public abstract class SanitizeStagingData extends DefaultTask {
+public abstract class SanitizeData extends DefaultTask {
     @InputDirectory
     public abstract DirectoryProperty getInput();
 

@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public abstract class ValidateMappingData extends DefaultTask implements VerificationTask {
+public abstract class ValidateData extends DefaultTask implements VerificationTask {
     private static final Marker VALIDATION = MarkerFactory.getMarker("compass/task/validation");
 
     private boolean ignoreFailures = false;
