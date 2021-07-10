@@ -133,57 +133,6 @@ public class CompassPlugin implements Plugin<Project> {
                 t.getInputFormat().set(extension.getStagingDataFormat());
             });
         });
-
-        DefaultTask writeExploded = tasks.create("writeExploded", DefaultTask.class);
-        writeExploded.setGroup(COMPASS_GROUP);
-        writeExploded.setDescription("temporary task; Writes out the combined obfuscation maps into exploded directories.");
-        writeExploded.doLast(t -> {
-            try {
-                Path output = extension.getProductionData().get().getAsFile().toPath();
-                IMappingFile mojToObf = obfMapProvider.get();
-
-                // getMapped() == obfuscated, getOriginal() == mojmap
-                MappingDataContainer obf = constructPackageData(createBuilderFrom(mojToObf, true));
-                MappingDataContainer moj = constructPackageData(createBuilderFrom(mojToObf, false));
-
-                Path obfPath = output.resolve("obf");
-                Path mojPath = output.resolve("moj");
-
-                ExplodedDataIO.INSTANCE.write(obf, obfPath);
-                ExplodedDataIO.INSTANCE.write(moj, mojPath);
-
-                MappingDataContainer readObf = ExplodedDataIO.INSTANCE.read(obfPath);
-                MappingDataContainer readMoj = ExplodedDataIO.INSTANCE.read(mojPath);
-
-                try (BufferedSink sink = Okio.buffer(Okio.sink(output.resolve("input_obf.json")))) {
-                    JSONUtil.MOSHI.adapter(MappingDataContainer.class).indent("  ").toJson(sink, obf);
-                }
-                try (BufferedSink sink = Okio.buffer(Okio.sink(output.resolve("input_moj.json")))) {
-                    JSONUtil.MOSHI.adapter(MappingDataContainer.class).indent("  ").toJson(sink, moj);
-                }
-
-                try (BufferedSink sink = Okio.buffer(Okio.sink(output.resolve("output_obf.json")))) {
-                    JSONUtil.MOSHI.adapter(MappingDataContainer.class).indent("  ").toJson(sink, readObf);
-                }
-                try (BufferedSink sink = Okio.buffer(Okio.sink(output.resolve("output_moj.json")))) {
-                    JSONUtil.MOSHI.adapter(MappingDataContainer.class).indent("  ").toJson(sink, readMoj);
-                }
-
-                Logger logger = t.getLogger();
-                if (obf.equals(readObf)) {
-                    logger.lifecycle("Obfuscation: Input mapping data matches read mapping data output");
-                } else {
-                    logger.warn("Obfuscation: Input mapping data DOES NOT match read mapping data output");
-                }
-                if (moj.equals(readMoj)) {
-                    logger.lifecycle("Mojmaps: Input mapping data matches read mapping data output");
-                } else {
-                    logger.warn("Mojmaps: Input mapping data DOES NOT match read mapping data output");
-                }
-            } catch (IOException e) {
-                throw new AssertionError(e);
-            }
-        });
     }
 
     private void createValidationTask(CompassExtension extension, TaskContainer tasks) {
