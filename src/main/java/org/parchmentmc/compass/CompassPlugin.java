@@ -48,6 +48,7 @@ public class CompassPlugin implements Plugin<Project> {
     public static final String CLEAR_STAGING_DATA_TASK_NAME = "clearStaging";
     public static final String PROMOTE_STAGING_DATA_TASK_NAME = "promoteStagingToProduction";
     public static final String CREATE_STAGING_DATA_TASK_NAME = "createStagingFromInputs";
+    public static final String SANITIZE_DATA_TASK_NAME = "sanitizeData";
     public static final String SANITIZE_STAGING_DATA_TASK_NAME = "sanitizeStagingData";
 
     private final NamedDomainObjectSet<IntermediateProvider> intermediates;
@@ -261,7 +262,16 @@ public class CompassPlugin implements Plugin<Project> {
     }
 
     private void createSanitizeTask(CompassExtension extension, TaskContainer tasks) {
+        final TaskProvider<SanitizeData> sanitizeData = tasks.register(SANITIZE_DATA_TASK_NAME, SanitizeData.class);
         final TaskProvider<SanitizeData> sanitizeStagingData = tasks.register(SANITIZE_STAGING_DATA_TASK_NAME, SanitizeData.class);
+
+        sanitizeData.configure(t -> {
+            t.setGroup(COMPASS_GROUP);
+            t.mustRunAfter(tasks.named(PROMOTE_STAGING_DATA_TASK_NAME));
+            t.setDescription("Sanitizes the production data.");
+            t.getInput().set(extension.getProductionData());
+            t.getInputFormat().set(extension.getProductionDataFormat());
+        });
         sanitizeStagingData.configure(t -> {
             t.setGroup(COMPASS_GROUP);
             t.mustRunAfter(tasks.named(CREATE_STAGING_DATA_TASK_NAME));
