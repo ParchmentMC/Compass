@@ -9,7 +9,7 @@ project.group = 'org.parchmentmc'
 repositories {
     maven {
         name = 'ParchmentMC'
-        url = 'https://maven.parchmentmc.org/'
+        url = 'https://ldtteam.jfrog.io/artifactory/parchmentmc/'
     }
     maven {
         name = 'MinecraftForge'
