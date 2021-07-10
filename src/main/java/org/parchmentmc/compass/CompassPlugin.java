@@ -1,13 +1,10 @@
 package org.parchmentmc.compass;
 
 import net.minecraftforge.srgutils.IMappingFile;
-import okio.BufferedSink;
-import okio.Okio;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.NamedDomainObjectSet;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.logging.Logger;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Delete;
@@ -17,27 +14,18 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.parchmentmc.compass.providers.DelegatingProvider;
 import org.parchmentmc.compass.providers.IntermediateProvider;
 import org.parchmentmc.compass.providers.mcpconfig.SRGProvider;
-import org.parchmentmc.compass.storage.io.ExplodedDataIO;
 import org.parchmentmc.compass.tasks.*;
-import org.parchmentmc.compass.util.JSONUtil;
 import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.compass.util.download.BlackstoneDownloader;
 import org.parchmentmc.compass.util.download.ManifestsDownloader;
 import org.parchmentmc.compass.util.download.ObfuscationMapsDownloader;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
-import org.parchmentmc.feather.mapping.MappingDataContainer;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.Locale;
-
-import static org.parchmentmc.compass.util.MappingUtil.constructPackageData;
-import static org.parchmentmc.compass.util.MappingUtil.createBuilderFrom;
 
 public class CompassPlugin implements Plugin<Project> {
     public static final String COMPASS_GROUP = "compass";
@@ -157,7 +145,7 @@ public class CompassPlugin implements Plugin<Project> {
 
     private void createStagingTasks(CompassExtension extension, TaskContainer tasks) {
         TaskProvider<Delete> clearStaging = tasks.register(CLEAR_STAGING_DATA_TASK_NAME, Delete.class);
-        TaskProvider<DefaultTask> promoteStagingToProduction = tasks.register(PROMOTE_STAGING_DATA_TASK_NAME, DefaultTask.class);
+        TaskProvider<CopyData> promoteStagingToProduction = tasks.register(PROMOTE_STAGING_DATA_TASK_NAME, CopyData.class);
         TaskProvider<CreateStagingData> createStagingData = tasks.register(CREATE_STAGING_DATA_TASK_NAME, CreateStagingData.class);
 
         clearStaging.configure(t -> {
@@ -169,45 +157,16 @@ public class CompassPlugin implements Plugin<Project> {
         promoteStagingToProduction.configure(t -> {
             t.setGroup(COMPASS_GROUP);
             t.setDescription("Promotes the staging data to production.");
-            t.onlyIf(_t -> extension.getStagingData().get().getAsFile().exists());
             t.mustRunAfter(tasks.named(CREATE_STAGING_DATA_TASK_NAME));
-            t.doLast(_t -> {
-                File stagingDataDir = extension.getStagingData().get().getAsFile();
-                if (stagingDataDir.exists()) {
-                    String[] list = stagingDataDir.list();
-                    if (list != null && list.length == 0) return;
-                } else {
-                    return;
-                }
-
-                MappingDataContainer staging;
-                try {
-                    staging = extension.getStagingDataFormat().get().read(stagingDataDir.toPath());
-                } catch (IOException e) {
-                    throw new UncheckedIOException("Failed to read staging data for promotion", e);
-                }
-                try {
-                    // noinspection ResultOfMethodCallIgnored
-                    Files.walk(stagingDataDir.toPath())
-                            .sorted(Comparator.reverseOrder())
-                            .map(Path::toFile)
-                            .forEach(File::delete);
-                } catch (IOException e) {
-                    t.getLogger().warn("Unable to delete staging data directory; continuing", e);
-                }
-
-                File prodDataDir = extension.getProductionData().get().getAsFile();
-                try {
-                    extension.getProductionDataFormat().get().write(staging, prodDataDir.toPath());
-                } catch (IOException e) {
-                    throw new UncheckedIOException("Failed to write promoted staging->production data", e);
-                }
-            });
+            t.finalizedBy(clearStaging);
+            t.getInput().convention(extension.getStagingData());
+            t.getInputFormat().convention(extension.getStagingDataFormat());
+            t.getOutput().convention(extension.getProductionData());
+            t.getOutputFormat().convention(extension.getProductionDataFormat());
         });
 
         createStagingData.configure(t -> {
             t.setGroup(COMPASS_GROUP);
-            t.mustRunAfter(CLEAR_STAGING_DATA_TASK_NAME);
             t.setDescription("Combines the input files with the current production data to create the staging data.");
         });
     }
