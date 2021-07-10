@@ -53,7 +53,6 @@ public class CompassPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getPlugins().apply("de.undercouch.download");
         final CompassExtension extension = project.getExtensions().create(COMPASS_EXTENSION, CompassExtension.class);
         final TaskContainer tasks = project.getTasks();
 
