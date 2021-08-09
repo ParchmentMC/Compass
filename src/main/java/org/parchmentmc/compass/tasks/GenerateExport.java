@@ -90,7 +90,7 @@ public abstract class GenerateExport extends DefaultTask {
     @Nullable
     @Internal
     protected SourceMetadata getSourceMetadata() throws IOException {
-        if (getUseBlackstone().get() == Boolean.TRUE) {
+        if (getUseBlackstone().get()) {
             final BlackstoneDownloader blackstoneDownloader = getProject().getPlugins()
                     .getPlugin(CompassPlugin.class).getBlackstoneDownloader();
             return blackstoneDownloader.retrieveMetadata();
