@@ -2,9 +2,7 @@ package org.parchmentmc.compass.tasks;
 
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
-import org.parchmentmc.compass.CompassPlugin;
 import org.parchmentmc.compass.util.MappingUtil;
-import org.parchmentmc.compass.util.download.BlackstoneDownloader;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
 import org.parchmentmc.feather.metadata.ClassMetadata;
@@ -20,7 +18,6 @@ public abstract class GenerateSanitizedExport extends GenerateExport {
         getSkipLambdaParameters().convention(Boolean.TRUE);
         getSkipAnonymousClassParameters().convention(Boolean.TRUE);
         getIntermediate().convention("official"); // Required for us to work.
-        getUseBlackstone().convention(Boolean.FALSE);
     }
 
     @Override
@@ -28,14 +25,7 @@ public abstract class GenerateSanitizedExport extends GenerateExport {
         final String paramPrefix = getParameterPrefix().get();
         final MappingDataBuilder builder = MappingDataBuilder.copyOf(container);
 
-        final SourceMetadata metadata;
-        if (getUseBlackstone().get()) {
-            final BlackstoneDownloader blackstoneDownloader = getProject().getPlugins()
-                    .getPlugin(CompassPlugin.class).getBlackstoneDownloader();
-            metadata = blackstoneDownloader.retrieveMetadata();
-        } else {
-            metadata = null;
-        }
+        final SourceMetadata metadata = getSourceMetadata();
 
         final boolean skipLambdas = getSkipLambdaParameters().get();
         final boolean skipAnonClasses = getSkipAnonymousClassParameters().get();
@@ -46,6 +36,8 @@ public abstract class GenerateSanitizedExport extends GenerateExport {
             final ClassMetadata clsMeta = classMetadataMap.get(clsData.getName());
 
             boolean anonClass = withinAnonymousClass(clsData.getName());
+
+            cascadeParentMethods(builder, classMetadataMap, clsData, clsMeta);
 
             clsData.getMethods().forEach(methodData -> {
                 final MethodMetadata methodMeta = clsMeta != null ? clsMeta.getMethods().stream()
@@ -80,9 +72,6 @@ public abstract class GenerateSanitizedExport extends GenerateExport {
 
     @Input
     public abstract Property<Boolean> getSkipAnonymousClassParameters();
-
-    @Input
-    public abstract Property<Boolean> getUseBlackstone();
 
     private static String capitalize(String input) {
         return Character.toTitleCase(input.charAt(0)) + input.substring(1);
