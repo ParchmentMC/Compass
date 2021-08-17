@@ -22,10 +22,12 @@ import org.parchmentmc.feather.io.moshi.MDCMoshiAdapter;
 import org.parchmentmc.feather.io.moshi.SimpleVersionAdapter;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
+import org.parchmentmc.feather.metadata.BouncingTargetMetadata;
 import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;
 import org.parchmentmc.feather.metadata.MethodReference;
 import org.parchmentmc.feather.metadata.SourceMetadata;
+import org.parchmentmc.feather.named.Named;
 
 import java.io.IOException;
 import java.util.Map;
@@ -108,7 +110,14 @@ public abstract class GenerateExport extends DefaultTask {
             String desc = methodMeta.getDescriptor().getMojangName().orElse(null);
             if (name == null || desc == null)
                 return;
-            GenerateExport.cascadeParentMethod(builder, classMetadataMap, methodMeta, () -> clsData.getOrCreateMethod(name, desc));
+            // Create method data at the bouncer target if it exists, otherwise default to the current method.
+            Supplier<MappingDataBuilder.MutableMethodData> supplier = methodMeta.getBouncingTarget()
+                    .flatMap(BouncingTargetMetadata::getTarget)
+                    .<Supplier<MappingDataBuilder.MutableMethodData>>map(ref -> () ->
+                            builder.getOrCreateClass(getMojangName(ref.getOwner()))
+                                    .getOrCreateMethod(getMojangName(ref.getName()), getMojangName(ref.getDescriptor())))
+                    .orElse(() -> clsData.getOrCreateMethod(name, desc));
+            GenerateExport.cascadeParentMethod(builder, classMetadataMap, methodMeta, supplier);
         });
     }
 
@@ -124,13 +133,13 @@ public abstract class GenerateExport extends DefaultTask {
         while (parentMethodData == null && parentMethodMeta != null && parentMethodMeta.getParent().isPresent()) {
             MethodReference parent = parentMethodMeta.getParent().get();
             // Get the current method metadata so we can get the next parent
-            parentMethodMeta = classMetadataMap.get(parent.getOwner().getMojangName().orElse("")).getMethods().stream()
+            parentMethodMeta = classMetadataMap.get(getMojangName(parent.getOwner())).getMethods().stream()
                     .filter(m -> m.getName().getMojangName().equals(parent.getName().getMojangName())
                             && m.getDescriptor().getMojangName().equals(parent.getDescriptor().getMojangName()))
                     .findFirst().orElse(null);
             // Query the actual mapping data to see if the parent method has any javadocs or parameters
-            parentMethodData = Optional.ofNullable(builder.getClass(parent.getOwner().getMojangName().orElse("")))
-                    .map(c -> c.getMethod(parent.getName().getMojangName().orElse(""), parent.getDescriptor().getMojangName().orElse("")))
+            parentMethodData = Optional.ofNullable(builder.getClass(getMojangName(parent.getOwner())))
+                    .map(c -> c.getMethod(getMojangName(parent.getName()), getMojangName(parent.getDescriptor())))
                     .filter(m -> !m.getJavadoc().isEmpty() || m.getParameters().stream().anyMatch(p -> p.getJavadoc() != null || p.getName() != null))
                     .orElse(null);
         }
@@ -154,5 +163,9 @@ public abstract class GenerateExport extends DefaultTask {
                     methodData.getOrCreateParameter(idx).setJavadoc(parentParam.getJavadoc());
             });
         }
+    }
+
+    private static String getMojangName(Named named) {
+        return named.getMojangName().orElse("");
     }
 }
