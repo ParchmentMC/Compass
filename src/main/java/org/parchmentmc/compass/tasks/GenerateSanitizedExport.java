@@ -87,7 +87,7 @@ public abstract class GenerateSanitizedExport extends GenerateExport {
              */
             int firstChar = name.codePointAt(0);
             // See Character#isJavaIdentifierPart
-            if (Character.getType(firstChar) == Character.LETTER_NUMBER) {
+            if (Character.isDigit(firstChar)) {
                 return true;
             }
         }
