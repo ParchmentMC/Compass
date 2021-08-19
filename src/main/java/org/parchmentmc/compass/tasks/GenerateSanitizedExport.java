@@ -32,12 +32,13 @@ public abstract class GenerateSanitizedExport extends GenerateExport {
 
         final Map<String, ClassMetadata> classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
 
+        // Cascade parent methods first separately so that prefixes don't get applied multiple times
+        builder.getClasses().forEach(clsData -> cascadeParentMethods(builder, classMetadataMap, clsData, classMetadataMap.get(clsData.getName())));
+
         builder.getClasses().forEach(clsData -> {
             final ClassMetadata clsMeta = classMetadataMap.get(clsData.getName());
 
             boolean anonClass = withinAnonymousClass(clsData.getName());
-
-            cascadeParentMethods(builder, classMetadataMap, clsData, clsMeta);
 
             clsData.getMethods().forEach(methodData -> {
                 final MethodMetadata methodMeta = clsMeta != null ? clsMeta.getMethods().stream()
