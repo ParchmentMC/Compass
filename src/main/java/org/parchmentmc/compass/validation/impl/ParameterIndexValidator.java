@@ -24,8 +24,7 @@ public class ParameterIndexValidator extends AbstractValidator {
     public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
                          ParameterData paramData, @Nullable ClassMetadata classMetadata,
                          @Nullable MethodMetadata methodMetadata) {
-        // Ignore metadata for now, see ParchmentMC/Blackstone#3
-        final BitSet indexes = indexer.getIndexes(methodData, null);
+        final BitSet indexes = indexer.getIndexes(methodData, methodMetadata);
         byte paramIndex = paramData.getIndex();
 
         if (!indexes.get(paramIndex)) {

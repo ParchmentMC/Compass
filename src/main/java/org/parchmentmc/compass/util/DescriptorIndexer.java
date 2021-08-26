@@ -51,12 +51,15 @@ public class DescriptorIndexer {
 
         int index = startIndex;
         int cursor = -1;
+        boolean isArray = false;
         while (++cursor < parameters.length()) {
             set.set(index);
-            switch (parameters.charAt(cursor)) {
+            char c = parameters.charAt(cursor);
+            switch (c) {
                 case 'D':
                 case 'J': {
-                    index++; // longs and doubles take up two indexes
+                    if (!isArray)
+                        index++; // longs and doubles take up two indexes
                     break;
                 }
                 case 'L': {
@@ -66,7 +69,9 @@ public class DescriptorIndexer {
                     break;
                 }
             }
-            index++;
+            if (!isArray)
+                index++;
+            isArray = c == '[';
         }
     }
 }

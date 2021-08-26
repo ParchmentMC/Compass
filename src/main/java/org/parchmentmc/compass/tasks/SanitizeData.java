@@ -101,8 +101,7 @@ public abstract class SanitizeData extends DefaultTask {
                     methodsToRemove.add(methodData);
                     hasRemoved = true;
                 } else {
-                    // Ignore metadata for now, see ParchmentMC/Blackstone#3
-                    final BitSet indexes = indexer.getIndexes(methodData, null);
+                    final BitSet indexes = indexer.getIndexes(methodData, methodMeta);
 
                     for (MutableParameterData paramData : methodData.getParameters()) {
                         byte index = paramData.getIndex();
