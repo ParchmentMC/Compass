@@ -23,6 +23,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.parchmentmc.compass.storage.io.enigma.EnigmaWriter.stripToMostInner;
@@ -34,6 +35,7 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
             "    ", "mapping");
 
     static final CharMatcher DOLLAR_SIGN = CharMatcher.is('$');
+    static final String DOLLAR_SIGN_REGEX = Pattern.quote(DOLLAR_SIGN.toString());
     static final Comparator<String> CLASS_NAME_LENGTH_THEN_LEXICOGRAPHICALLY = Comparator
             .comparingInt(String::length)
             .thenComparing(Function.identity());
@@ -179,8 +181,8 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
     }
 
     static int compareClassNames(String a, String b) {
-        final String[] aComponents = a.split(DOLLAR_SIGN.toString());
-        final String[] bComponents = b.split(DOLLAR_SIGN.toString());
+        final String[] aComponents = a.split(DOLLAR_SIGN_REGEX);
+        final String[] bComponents = b.split(DOLLAR_SIGN_REGEX);
 
         int ret = 0;
         int minimum = Math.min(aComponents.length, bComponents.length);
