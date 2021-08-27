@@ -35,7 +35,7 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
             "    ", "mapping");
 
     static final CharMatcher DOLLAR_SIGN = CharMatcher.is('$');
-    static final String DOLLAR_SIGN_REGEX = Pattern.quote(DOLLAR_SIGN.toString());
+    static final String DOLLAR_SIGN_REGEX = "\\$";
     static final Comparator<String> CLASS_NAME_LENGTH_THEN_LEXICOGRAPHICALLY = Comparator
             .comparingInt(String::length)
             .thenComparing(Function.identity());
