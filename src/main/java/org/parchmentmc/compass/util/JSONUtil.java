@@ -4,10 +4,7 @@ import com.squareup.moshi.*;
 import okio.BufferedSource;
 import okio.Okio;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.parchmentmc.feather.io.moshi.LinkedHashSetMoshiAdapter;
-import org.parchmentmc.feather.io.moshi.MDCMoshiAdapter;
-import org.parchmentmc.feather.io.moshi.MetadataMoshiAdapter;
-import org.parchmentmc.feather.io.moshi.SimpleVersionAdapter;
+import org.parchmentmc.feather.io.moshi.*;
 import org.parchmentmc.feather.manifests.LauncherManifest;
 import org.parchmentmc.feather.manifests.VersionManifest;
 
@@ -16,12 +13,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 
 public final class JSONUtil {
     public static final Moshi MOSHI = new Moshi.Builder()
-            .add(OffsetDateTime.class, new OffsetDateTimeAdapter())
+            .add(new OffsetDateTimeAdapter())
             .add(new MDCMoshiAdapter(true))
             .add(new SimpleVersionAdapter())
             .add(LinkedHashSetMoshiAdapter.FACTORY)
@@ -78,28 +73,6 @@ public final class JSONUtil {
 
         try (BufferedSource source = Okio.buffer(Okio.source(manifest))) {
             return MOSHI.adapter(type).fromJson(source);
-        }
-    }
-
-    static class OffsetDateTimeAdapter extends JsonAdapter<OffsetDateTime> {
-
-        @Nullable
-        @Override
-        public OffsetDateTime fromJson(JsonReader reader) throws IOException {
-            if (reader.peek() == JsonReader.Token.NULL) {
-                throw new JsonDataException("Unexpected null at " + reader.getPath());
-            } else {
-                return OffsetDateTime.parse(reader.nextString());
-            }
-        }
-
-        @Override
-        public void toJson(JsonWriter writer, @Nullable OffsetDateTime value) throws IOException {
-            if (value == null) {
-                throw new JsonDataException("Unexpected null at " + writer.getPath());
-            } else {
-                writer.jsonValue(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(value));
-            }
         }
     }
 }
