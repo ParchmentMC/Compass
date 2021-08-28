@@ -100,32 +100,34 @@ public class DescriptorIndexer {
     }
 
     // Package-private for testing
-    /* package-private */ static void calculateIndexes(BitSet set, String descriptor, int startIndex) {
+    /* package-private */
+    static void calculateIndexes(BitSet set, String descriptor, int startIndex) {
         String parameters = descriptor.substring(1, descriptor.indexOf(')'));
 
         int index = startIndex;
         int cursor = -1;
-        boolean isArray = false;
+        boolean prevCharIsArray = false;
         while (++cursor < parameters.length()) {
-            set.set(index);
             char c = parameters.charAt(cursor);
-            switch (c) {
-                case 'D':
-                case 'J': {
-                    if (!isArray)
-                        index++; // longs and doubles take up two indexes when not in an array
-                    break;
+            if (c != '[') { // Skip if an array character
+                set.set(index);
+                switch (c) {
+                    case 'D':
+                    case 'J': {
+                        if (!prevCharIsArray) // longs and doubles take up two indexes when not in an array
+                            index++;
+                        break;
+                    }
+                    case 'L': {
+                        do {
+                            cursor++;
+                        } while (parameters.charAt(cursor) != ';');
+                        break;
+                    }
                 }
-                case 'L': {
-                    do {
-                        cursor++;
-                    } while (parameters.charAt(cursor) != ';');
-                    break;
-                }
-            }
-            if (!isArray)
                 index++;
-            isArray = c == '[';
+            }
+            prevCharIsArray = c == '[';
         }
     }
 }
