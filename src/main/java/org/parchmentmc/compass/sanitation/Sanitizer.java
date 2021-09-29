@@ -171,7 +171,7 @@ public interface Sanitizer extends Named {
             this.data = data;
         }
 
-        private enum ActionType {
+        enum ActionType {
             NOTHING,
             MODIFY,
             DELETE
