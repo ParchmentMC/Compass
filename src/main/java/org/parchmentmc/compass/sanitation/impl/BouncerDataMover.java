@@ -33,8 +33,8 @@ public class BouncerDataMover extends AbstractSanitizer {
                 final MethodReference targetRef = targetData.getTarget().get();
 
                 String targetRefString = targetRef.getOwner().getMojangName("") + "#"
-                    + targetRef.getName().getMojangName("") + "#"
-                    + targetRef.getDescriptor().getMojangName("");
+                        + targetRef.getName().getMojangName("") + "#"
+                        + targetRef.getDescriptor().getMojangName("");
 
                 data.put(targetRefString, methodData);
                 return Action.delete();
@@ -43,7 +43,7 @@ public class BouncerDataMover extends AbstractSanitizer {
 
         if (finishedCollecting) {
             String methodRefString = classData.getName() + "#"
-                + methodData.getName() + "#" + methodData.getDescriptor();
+                    + methodData.getName() + "#" + methodData.getDescriptor();
 
             final MethodData bouncerData = data.remove(methodRefString);
             if (bouncerData != null) {

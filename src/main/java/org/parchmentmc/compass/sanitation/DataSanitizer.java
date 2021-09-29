@@ -134,15 +134,15 @@ public class DataSanitizer {
         }
 
         return action.type == ActionType.DELETE || (classData.getJavadoc().isEmpty()
-            && classData.getFields().isEmpty() && classData.getMethods().isEmpty());
+                && classData.getFields().isEmpty() && classData.getMethods().isEmpty());
     }
 
     private boolean sanitizeField(Context ctx, ClassData classData, MutableFieldData fieldData,
                                   @Nullable ClassMetadata classMeta) {
 
         final FieldMetadata fieldMeta = classMeta != null ? classMeta.getFields().stream()
-            .filter(s -> s.getName().getMojangName().orElse("").contentEquals(fieldData.getName()))
-            .findFirst().orElse(null) : null;
+                .filter(s -> s.getName().getMojangName().orElse("").contentEquals(fieldData.getName()))
+                .findFirst().orElse(null) : null;
 
         final Action<FieldData> action = ctx.sanitizer.sanitize(classData, fieldData, classMeta, fieldMeta);
 
@@ -156,9 +156,9 @@ public class DataSanitizer {
     private boolean sanitizeMethod(Context ctx, ClassData classData, MutableMethodData methodData,
                                    @Nullable ClassMetadata classMeta) {
         final MethodMetadata methodMeta = classMeta != null ? classMeta.getMethods().stream()
-            .filter(s -> s.getName().getMojangName().orElse("").contentEquals(methodData.getName())
-                && s.getDescriptor().getMojangName().orElse("").contentEquals(methodData.getDescriptor()))
-            .findFirst().orElse(null) : null;
+                .filter(s -> s.getName().getMojangName().orElse("").contentEquals(methodData.getName())
+                        && s.getDescriptor().getMojangName().orElse("").contentEquals(methodData.getDescriptor()))
+                .findFirst().orElse(null) : null;
 
         final Action<MethodData> action = ctx.sanitizer.sanitize(classData, methodData, classMeta, methodMeta);
 
