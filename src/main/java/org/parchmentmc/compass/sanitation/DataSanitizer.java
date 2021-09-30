@@ -58,7 +58,7 @@ public class DataSanitizer {
      * @param metadata  the metadata, may be {@code null}
      * @return the sanitized data
      */
-    public MappingDataContainer validate(MappingDataContainer inputData, @Nullable SourceMetadata metadata) {
+    public MappingDataContainer sanitize(MappingDataContainer inputData, @Nullable SourceMetadata metadata) {
         final MappingDataBuilder workingData = copyOf(inputData);
         final Map<String, ClassMetadata> classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
 
