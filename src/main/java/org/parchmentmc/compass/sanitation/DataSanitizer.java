@@ -102,7 +102,7 @@ public class DataSanitizer {
 
         }
 
-        throw new UnsupportedOperationException("Not yet implemented");
+        return workingData;
     }
 
     // Return true to delete
