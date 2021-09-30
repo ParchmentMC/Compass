@@ -25,6 +25,12 @@ public class BouncerDataMover extends AbstractSanitizer {
     }
 
     @Override
+    public boolean start(boolean isMetadataAvailable) {
+        data.clear();
+        return isMetadataAvailable; // Skip if metadata is not available
+    }
+
+    @Override
     public Action<MethodData> sanitize(ClassData classData, MethodData methodData,
                                        @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         if (!finishedCollecting && methodMetadata != null && methodMetadata.getBouncingTarget().isPresent()) {
@@ -56,11 +62,7 @@ public class BouncerDataMover extends AbstractSanitizer {
 
     @Override
     public boolean revisit() {
-        if (finishedCollecting) {
-            data.clear();
-            return false;
-        }
-        finishedCollecting = true;
-        return true;
+        finishedCollecting = !finishedCollecting;
+        return finishedCollecting;
     }
 }

@@ -13,6 +13,11 @@ public class EnumValueOfRemover extends AbstractSanitizer {
     }
 
     @Override
+    public boolean start(boolean isMetadataAvailable) {
+        return isMetadataAvailable;
+    }
+
+    @Override
     public Action<MappingDataContainer.MethodData> sanitize(MappingDataContainer.ClassData classData, MappingDataContainer.MethodData methodData, @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         if (classMetadata != null && classMetadata.hasAccessFlag(AccessFlag.ENUM)
                 && methodData.getName().equals("valueOf")

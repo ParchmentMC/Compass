@@ -18,6 +18,11 @@ public class SyntheticsRemover extends AbstractSanitizer {
     }
 
     @Override
+    public boolean start(boolean isMetadataAvailable) {
+        return isMetadataAvailable;
+    }
+
+    @Override
     public Action<FieldData> sanitize(ClassData classData, FieldData fieldData,
                                       @Nullable ClassMetadata classMetadata, @Nullable FieldMetadata fieldMetadata) {
         // Remove javadocs from synthetic fields

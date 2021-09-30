@@ -22,6 +22,20 @@ import static org.parchmentmc.feather.mapping.MappingDataBuilder.*;
  */
 public interface Sanitizer extends Named {
     /**
+     * Called before this sanitizer is passed over the mapping data. The return value indicates whether to continue
+     * with the sanitizer's pass, where {@code false} means the sanitizer will be skipped as completed.
+     *
+     * <p>This is called at least once when the sanitizer is first ran, and subsequently for each revisit (as requested
+     * by {@link #revisit()}.</p>
+     *
+     * @param isMetadataAvailable whether the {@link org.parchmentmc.feather.metadata.SourceMetadata} is available
+     * @return whether to start
+     */
+    default boolean start(boolean isMetadataAvailable) {
+        return true;
+    }
+
+    /**
      * Sanitizes the given package data.
      *
      * <p>A {@link Action#delete() deletion action} will only affect the package information; any classes which are

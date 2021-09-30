@@ -70,6 +70,7 @@ public class DataSanitizer {
             int revisits = 0;
 
             do {
+                if (!sanitizer.start(metadata != null)) break; // Skip if the sanitizer doesn't want to
 
                 // **** Packages ****
                 for (MutablePackageData packageData : workingData.getPackages()) {
