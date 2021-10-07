@@ -1,6 +1,5 @@
 package org.parchmentmc.compass.data.sanitation;
 
-import kotlin.Pair;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.parchmentmc.compass.data.sanitation.Sanitizer.Action;
 import org.parchmentmc.compass.data.sanitation.Sanitizer.Action.ActionType;
@@ -127,10 +126,10 @@ public class DataSanitizer {
             // Visit methods
             for (MutableMethodData methodData : classData.getMethods()) {
                 if (sanitizeMethod(ctx, classData, methodData, classMeta)) {
-                    ctx.methodsToRemove.add(new Pair<>(methodData.getName(), methodData.getDescriptor()));
+                    ctx.methodsToRemove.add(new String[]{ methodData.getName(), methodData.getDescriptor() });
                 }
             }
-            ctx.methodsToRemove.forEach(pair -> classData.removeMethod(pair.getFirst(), pair.getSecond()));
+            ctx.methodsToRemove.forEach(arr -> classData.removeMethod(arr[0], arr[1]));
             ctx.methodsToRemove.clear();
         }
 
@@ -197,7 +196,8 @@ public class DataSanitizer {
         Set<String> packagesToRemove = new HashSet<>();
         Set<String> classesToRemove = new HashSet<>();
         Set<String> fieldsToRemove = new HashSet<>();
-        Set<Pair<String, String>> methodsToRemove = new HashSet<>();
+        // Each array has two elements: the method name, then the method descriptor
+        Set<String[]> methodsToRemove = new HashSet<>();
         Set<Byte> paramsToRemove = new HashSet<>();
     }
 }
