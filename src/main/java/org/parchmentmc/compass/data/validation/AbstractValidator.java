@@ -1,4 +1,4 @@
-package org.parchmentmc.compass.validation;
+package org.parchmentmc.compass.data.validation;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 

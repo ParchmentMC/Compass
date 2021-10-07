@@ -1,4 +1,4 @@
-package org.parchmentmc.compass.sanitation;
+package org.parchmentmc.compass.data.sanitation;
 
 import com.google.common.base.Preconditions;
 import org.checkerframework.checker.nullness.qual.Nullable;

@@ -1,10 +1,10 @@
-package org.parchmentmc.compass.validation.impl;
+package org.parchmentmc.compass.data.validation.impl;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.parchmentmc.compass.validation.AbstractValidator;
-import org.parchmentmc.compass.validation.ValidationIssue;
+import org.parchmentmc.compass.data.validation.AbstractValidator;
+import org.parchmentmc.compass.data.validation.ValidationIssue;
 import org.parchmentmc.feather.mapping.MappingDataContainer.ClassData;
 import org.parchmentmc.feather.mapping.MappingDataContainer.MethodData;
 import org.parchmentmc.feather.mapping.MappingDataContainer.ParameterData;

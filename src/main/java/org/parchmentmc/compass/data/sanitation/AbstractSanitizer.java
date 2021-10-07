@@ -1,4 +1,4 @@
-package org.parchmentmc.compass.sanitation;
+package org.parchmentmc.compass.data.sanitation;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 

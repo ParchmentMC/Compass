@@ -1,8 +1,8 @@
-package org.parchmentmc.compass.sanitation.impl;
+package org.parchmentmc.compass.data.sanitation.impl;
 
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.parchmentmc.compass.sanitation.AbstractSanitizer;
+import org.parchmentmc.compass.data.sanitation.AbstractSanitizer;
 import org.parchmentmc.compass.util.DescriptorIndexer;
 import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;

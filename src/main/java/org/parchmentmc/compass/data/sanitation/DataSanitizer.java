@@ -1,9 +1,9 @@
-package org.parchmentmc.compass.sanitation;
+package org.parchmentmc.compass.data.sanitation;
 
 import kotlin.Pair;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.parchmentmc.compass.sanitation.Sanitizer.Action;
-import org.parchmentmc.compass.sanitation.Sanitizer.Action.ActionType;
+import org.parchmentmc.compass.data.sanitation.Sanitizer.Action;
+import org.parchmentmc.compass.data.sanitation.Sanitizer.Action.ActionType;
 import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
