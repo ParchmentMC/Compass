@@ -1,6 +1,7 @@
 package org.parchmentmc.compass.tasks;
 
 import org.gradle.api.DefaultTask;
+import org.gradle.api.Named;
 import org.gradle.api.NamedDomainObjectList;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.logging.Logger;
@@ -24,6 +25,7 @@ import org.parchmentmc.feather.metadata.SourceMetadata;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 public abstract class SanitizeData extends DefaultTask {
     private final NamedDomainObjectList<Sanitizer> sanitizers;
@@ -58,17 +60,18 @@ public abstract class SanitizeData extends DefaultTask {
         final BlackstoneDownloader blackstoneDownloader = plugin.getBlackstoneDownloader();
 
         final SourceMetadata metadata = blackstoneDownloader.retrieveMetadata();
-        if (metadata == null) {
-            logger.warn("No Blackstone metadata loaded, sanitization may not have any effects");
-        }
 
         final MappingDataContainer inputData = getInputFormat().get().read(input);
 
         DataSanitizer sanitizer = new DataSanitizer();
 
         getSanitizers().forEach(sanitizer::addSanitizer);
-        sanitizer.getSanitizers().forEach(s -> System.out.println(s.getName()));
 
+        logger.lifecycle("Sanitizers in use: {}", sanitizer.getSanitizers().stream().map(Named::getName).collect(Collectors.toSet()));
+        if (metadata == null) {
+            logger.warn("No Blackstone metadata loaded, sanitation may not have any effects");
+        }
+        logger.lifecycle("Sanitizing mapping data in '{}'", input.getAbsolutePath());
         final MappingDataContainer sanitizedData = sanitizer.sanitize(inputData, metadata);
 
         getInputFormat().get().write(sanitizedData, input);
