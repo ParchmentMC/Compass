@@ -21,7 +21,7 @@ public class ParameterIndexValidator extends AbstractValidator {
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                          ParameterData paramData, @Nullable ClassMetadata classMetadata,
                          @Nullable MethodMetadata methodMetadata) {
         final BitSet indexes = indexer.getIndexes(methodData, methodMetadata);
@@ -29,7 +29,7 @@ public class ParameterIndexValidator extends AbstractValidator {
 
         if (!indexes.get(paramIndex)) {
             // When above is resolved, add special-case for index 0 and non-static method
-            issues.accept(error("Parameter does not exist according to descriptor"));
+            issueHandler.accept(error("Parameter does not exist according to descriptor"));
         }
     }
 }

@@ -25,9 +25,9 @@ public class MethodStandardsValidator extends AbstractValidator {
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                          @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
-        this.validateJavadoc(issues, methodData);
+        this.validateJavadoc(issueHandler, methodData);
     }
 
     /**

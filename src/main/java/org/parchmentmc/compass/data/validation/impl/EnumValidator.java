@@ -27,30 +27,30 @@ public class EnumValidator extends AbstractValidator {
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, FieldData fieldData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, FieldData fieldData,
                          @Nullable ClassMetadata classMetadata, @Nullable FieldMetadata fieldMetadata) {
         if (classMetadata != null && classMetadata.hasAccessFlag(AccessFlag.ENUM)) {
             if (fieldData.getName().equals(VALUES_FIELD_NAME) && !fieldData.getJavadoc().isEmpty()) {
-                issues.accept(error(VALUES_FIELD_NAME + " field of enum class should not be documented"));
+                issueHandler.accept(error(VALUES_FIELD_NAME + " field of enum class should not be documented"));
             }
         }
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                          @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         if (classMetadata != null && classMetadata.hasAccessFlag(AccessFlag.ENUM)) {
             if (methodData.getName().equals(VALUE_OF_METHOD_NAME)
                     && methodData.getDescriptor().equals(String.format(VALUE_OF_METHOD_DESCRIPTOR_FORMAT, classData.getName()))
                     && (methodMetadata == null || methodMetadata.isStatic())
                     && !methodData.getJavadoc().isEmpty()) {
-                issues.accept(error(VALUE_OF_METHOD_NAME + " method should not be documented"));
+                issueHandler.accept(error(VALUE_OF_METHOD_NAME + " method should not be documented"));
             }
         }
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                          ParameterData paramData, @Nullable ClassMetadata classMetadata,
                          @Nullable MethodMetadata methodMetadata) {
         if (classMetadata != null && classMetadata.hasAccessFlag(AccessFlag.ENUM)) {
@@ -58,10 +58,10 @@ public class EnumValidator extends AbstractValidator {
                     && methodData.getDescriptor().equals(String.format(VALUE_OF_METHOD_DESCRIPTOR_FORMAT, classData.getName()))
                     && (methodMetadata == null || methodMetadata.isStatic())) {
                 if (paramData.getName() != null) {
-                    issues.accept(error("parameter of " + VALUE_OF_METHOD_NAME + " method should not be named"));
+                    issueHandler.accept(error("parameter of " + VALUE_OF_METHOD_NAME + " method should not be named"));
                 }
                 if (paramData.getJavadoc() != null) {
-                    issues.accept(error("parameter of " + VALUE_OF_METHOD_NAME + " method should not be documented"));
+                    issueHandler.accept(error("parameter of " + VALUE_OF_METHOD_NAME + " method should not be documented"));
                 }
             }
         }

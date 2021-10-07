@@ -22,28 +22,28 @@ public class BridgeValidator extends AbstractValidator {
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                          @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         if (methodData.getName().startsWith(BRIDGE_METHOD_NAME_PREFIX)
                 && (methodMetadata == null || methodMetadata.hasAccessFlag(AccessFlag.BRIDGE))) {
             if (methodData.getJavadoc().isEmpty()) {
-                issues.accept(error("Bridge method must not be documented"));
+                issueHandler.accept(error("Bridge method must not be documented"));
             }
         }
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                          ParameterData paramData, @Nullable ClassMetadata classMetadata,
                          @Nullable MethodMetadata methodMetadata) {
 
         if (methodData.getName().startsWith(BRIDGE_METHOD_NAME_PREFIX)
                 && (methodMetadata == null || methodMetadata.hasAccessFlag(AccessFlag.BRIDGE))) {
             if (paramData.getName() != null) {
-                issues.accept(error("Bridge method parameter must not be named"));
+                issueHandler.accept(error("Bridge method parameter must not be named"));
             }
             if (paramData.getJavadoc() != null) {
-                issues.accept(error("Bridge method parameter must not be documented"));
+                issueHandler.accept(error("Bridge method parameter must not be documented"));
             }
         }
     }

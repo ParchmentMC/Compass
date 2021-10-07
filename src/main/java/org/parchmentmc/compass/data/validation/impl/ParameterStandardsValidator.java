@@ -40,16 +40,16 @@ public class ParameterStandardsValidator extends AbstractValidator {
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                          ParameterData paramData, @Nullable ClassMetadata classMetadata,
                          @Nullable MethodMetadata methodMetadata) {
         String paramName = paramData.getName();
         if (paramName != null) {
             if (!STANDARDS_REGEX_PATTERN.matcher(paramName).matches()) {
-                issues.accept(error("Parameter name '" + paramName + "' does not match regex " + STANDARDS_REGEX_PATTERN.pattern()));
+                issueHandler.accept(error("Parameter name '" + paramName + "' does not match regex " + STANDARDS_REGEX_PATTERN.pattern()));
             }
             if (isReserved(paramName.toLowerCase(Locale.ROOT))) {
-                issues.accept(error("Parameter name (case-insensitively) matches a reserved keyword: " + paramName));
+                issueHandler.accept(error("Parameter name (case-insensitively) matches a reserved keyword: " + paramName));
             }
         }
     }

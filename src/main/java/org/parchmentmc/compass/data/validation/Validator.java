@@ -21,22 +21,63 @@ import static org.parchmentmc.feather.mapping.MappingDataContainer.*;
  * @see org.parchmentmc.feather.mapping.MappingDataContainer
  */
 public interface Validator extends Named {
-    default void validate(Consumer<? super ValidationIssue> issues, PackageData packageData) {
+    /**
+     * Validates the given package data.
+     *
+     * @param issueHandler the issues handler for the package data
+     * @param packageData  the package data to be validated
+     */
+    default void validate(Consumer<? super ValidationIssue> issueHandler, PackageData packageData) {
     }
 
-    default void validate(Consumer<? super ValidationIssue> issues, ClassData classData,
+    /**
+     * Validates the given class data.
+     *
+     * @param issueHandler  the issues handler for the class data
+     * @param classData     the class data to be validated
+     * @param classMetadata the class metadata, may be {@code null}
+     */
+    default void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData,
                           @Nullable ClassMetadata classMetadata) {
     }
 
-    default void validate(Consumer<? super ValidationIssue> issues, ClassData classData, FieldData fieldData,
+    /**
+     * Validates the given field data.
+     *
+     * @param issueHandler  the issues handler for the field data
+     * @param classData     the owning class data
+     * @param fieldData     the field data to be validated
+     * @param classMetadata the class metadata, may be {@code null}
+     * @param fieldMetadata the field metadata, may be {@code null}
+     */
+    default void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, FieldData fieldData,
                           @Nullable ClassMetadata classMetadata, @Nullable FieldMetadata fieldMetadata) {
     }
 
-    default void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    /**
+     * Validates the given method data.
+     *
+     * @param issueHandler   the issues handler for the field data
+     * @param classData      the owning class data
+     * @param methodData     the method data to be validated
+     * @param classMetadata  the class metadata, may be {@code null}
+     * @param methodMetadata the method metadata, may be {@code null}
+     */
+    default void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                           @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
     }
 
-    default void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    /**
+     * Validates the given parameter data.
+     *
+     * @param issueHandler   the issues handler for the field data
+     * @param classData      the owning class data
+     * @param methodData     the owning method data
+     * @param paramData      the parameter data to be validated
+     * @param classMetadata  the class metadata, may be {@code null}
+     * @param methodMetadata the method metadata, may be {@code null}
+     */
+    default void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                           ParameterData paramData, @Nullable ClassMetadata classMetadata,
                           @Nullable MethodMetadata methodMetadata) {
     }
