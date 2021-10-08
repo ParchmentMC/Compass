@@ -13,6 +13,11 @@ import org.parchmentmc.feather.metadata.MethodMetadata;
 import java.util.BitSet;
 import java.util.function.Consumer;
 
+/**
+ * Validates that only the valid parameters according to the method descriptor exist.
+ *
+ * @see DescriptorIndexer
+ */
 public class ParameterIndexValidator extends AbstractValidator {
     private final DescriptorIndexer indexer = new DescriptorIndexer();
 
