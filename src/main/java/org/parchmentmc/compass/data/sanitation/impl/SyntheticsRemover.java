@@ -27,7 +27,6 @@ public class SyntheticsRemover extends AbstractSanitizer {
                                       @Nullable ClassMetadata classMetadata, @Nullable FieldMetadata fieldMetadata) {
         // Remove javadocs from synthetic fields
         if (fieldMetadata != null && fieldMetadata.hasAccessFlag(AccessFlag.SYNTHETIC) && !fieldData.getJavadoc().isEmpty()) {
-//            logger.lifecycle("Dropping synthetic field {}#{}", classData.getName(), fieldData.getName());
             return Action.delete();
         }
         return super.sanitize(classData, fieldData, classMetadata, fieldMetadata);
@@ -38,7 +37,6 @@ public class SyntheticsRemover extends AbstractSanitizer {
                                        @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         // Remove javadocs from synthetic methods which aren't lambdas
         if (methodMetadata != null && methodMetadata.hasAccessFlag(AccessFlag.SYNTHETIC) && !methodMetadata.isLambda()) {
-//            logger.lifecycle("Dropping synthetic method {}#{}{}", classData.getName(), methodData.getName(), methodData.getDescriptor());
             return Action.delete();
         }
         return super.sanitize(classData, methodData, classMetadata, methodMetadata);

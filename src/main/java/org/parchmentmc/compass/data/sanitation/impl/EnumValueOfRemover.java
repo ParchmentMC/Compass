@@ -22,7 +22,6 @@ public class EnumValueOfRemover extends AbstractSanitizer {
         if (classMetadata != null && classMetadata.hasAccessFlag(AccessFlag.ENUM)
                 && methodData.getName().equals("valueOf")
                 && methodData.getDescriptor().equals("(Ljava/lang/String;)L" + classData.getName() + ';')) {
-//            logger.lifecycle("Dropping enum `valueOf` method for {}", classData.getName(), methodData.getName(), methodData.getDescriptor());
             return Action.delete();
         }
         return super.sanitize(classData, methodData, classMetadata, methodMetadata);
