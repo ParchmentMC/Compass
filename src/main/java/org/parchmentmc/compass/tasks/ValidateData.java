@@ -98,32 +98,33 @@ public abstract class ValidateData extends DefaultTask implements VerificationTa
         logger.warn(VALIDATION, "( <!> means validation warning, (X) means validation error )");
 
         for (ResultContainer.PackageResult<List<? extends ValidationIssue>> packageResult : results.getPackages()) {
-            final List<? extends ValidationIssue> issues = packageResult.getData();
-            logger.error(VALIDATION, "Package: {}", packageResult.getName());
-            logIssue(logger, issues, count, "");
+            logIssue(logger, count, packageResult.getData(),
+                    "package \"" + packageResult.getName() + "\"");
+            // error [package "{}"]: ...
         }
 
         for (ResultContainer.ClassResult<List<? extends ValidationIssue>> classResult : results.getClasses()) {
-            final List<? extends ValidationIssue> issues = classResult.getData();
-            logger.error(VALIDATION, "Class: {}", classResult.getName());
-            logIssue(logger, issues, count, "");
+            logIssue(logger, count, classResult.getData(),
+                    "class \"" + classResult.getName() + "\"");
+            // error [class "{}"]: ...
 
             for (ResultContainer.FieldResult<List<? extends ValidationIssue>> fieldResult : classResult.getFields()) {
-                final List<? extends ValidationIssue> fieldIssues = fieldResult.getData();
-                logger.error(VALIDATION, "    Field: {}", fieldResult.getName());
-                logIssue(logger, fieldIssues, count, "    ");
+                logIssue(logger, count, fieldResult.getData(),
+                        "field \"" + fieldResult.getName() + "\" of \"" + classResult.getName() + "\"");
+                // error [field "{}" of "{}"]: ...
             }
 
             for (ResultContainer.MethodResult<List<? extends ValidationIssue>> methodResult : classResult.getMethods()) {
-                final List<? extends ValidationIssue> methodIssues = methodResult.getData();
-                logger.error(VALIDATION, "    Method: {}{}", methodResult.getName(),
-                        methodResult.getDescriptor());
-                logIssue(logger, methodIssues, count, "    ");
+                logIssue(logger, count, methodResult.getData(),
+                        "method \"" + methodResult.getName() + methodResult.getDescriptor() + "\" of \""
+                                + classResult.getName() + "\"");
+                // error [method "{}" of "{}"]: ...
 
                 for (ResultContainer.ParameterResult<List<? extends ValidationIssue>> paramResult : methodResult.getParameters()) {
-                    final List<? extends ValidationIssue> paramIssues = paramResult.getData();
-                    logger.warn(VALIDATION, "        Parameter at index {}", paramResult.getIndex());
-                    logIssue(logger, paramIssues, count, "        ");
+                    logIssue(logger, count, paramResult.getData(),
+                            "parameter #" + paramResult.getIndex() + " of \"" + methodResult.getName()
+                                    + methodResult.getDescriptor() + "\" of \"" + classResult.getName() + "\"");
+                    // error [parameter #{} of "{}" of "{}"]: ...
                 }
             }
         }
@@ -140,13 +141,15 @@ public abstract class ValidateData extends DefaultTask implements VerificationTa
         }
     }
 
-    private void logIssue(Logger logger, List<? extends ValidationIssue> issues, IssueCount count, String prefix) {
+    private static final String ISSUE_LOG_TEMPLATE = "{} from '{}' [{}]: {}";
+
+    private void logIssue(Logger logger, IssueCount count, List<? extends ValidationIssue> issues, String type) {
         for (ValidationIssue issue : issues) {
             if (issue instanceof ValidationIssue.ValidationWarning) {
-                logger.error(prefix + " - <!> {}: {}", issue.getValidatorName(), issue.getMessage());
+                logger.warn(VALIDATION, ISSUE_LOG_TEMPLATE, "warning", issue.getValidatorName(), type, issue.getMessage());
                 count.warnings++;
             } else if (issue instanceof ValidationIssue.ValidationError) {
-                logger.error(prefix + " - (X) {}: {}", issue.getValidatorName(), issue.getMessage());
+                logger.error(VALIDATION, ISSUE_LOG_TEMPLATE, "error", issue.getValidatorName(), type, issue.getMessage());
                 count.errors++;
             }
         }
