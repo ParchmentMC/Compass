@@ -26,7 +26,6 @@ public class BouncerDataMover extends AbstractSanitizer {
 
     @Override
     public boolean start(boolean isMetadataAvailable) {
-        data.clear();
         return isMetadataAvailable; // Skip if metadata is not available
     }
 
@@ -63,6 +62,9 @@ public class BouncerDataMover extends AbstractSanitizer {
     @Override
     public boolean revisit() {
         finishedCollecting = !finishedCollecting;
+        if (!finishedCollecting) {
+            data.clear();
+        }
         return finishedCollecting;
     }
 }
