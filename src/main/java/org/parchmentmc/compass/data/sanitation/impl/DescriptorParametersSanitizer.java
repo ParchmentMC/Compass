@@ -36,4 +36,10 @@ public class DescriptorParametersSanitizer extends AbstractSanitizer {
 
         return Action.nothing();
     }
+
+    @Override
+    public boolean revisit() {
+        indexer = null;
+        return super.revisit();
+    }
 }
