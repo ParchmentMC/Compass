@@ -1,8 +1,8 @@
-package org.parchmentmc.compass.validation.impl;
+package org.parchmentmc.compass.data.validation.impl;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.parchmentmc.compass.validation.AbstractValidator;
-import org.parchmentmc.compass.validation.ValidationIssue;
+import org.parchmentmc.compass.data.validation.AbstractValidator;
+import org.parchmentmc.compass.data.validation.ValidationIssue;
 import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;
 
@@ -21,24 +21,24 @@ public class LambdaValidator extends AbstractValidator {
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                          @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         if (methodData.getName().startsWith(LAMBDA_METHOD_NAME_PREFIX)
                 && (methodMetadata == null || methodMetadata.isLambda())) {
             if (!methodData.getJavadoc().isEmpty()) {
-                issues.accept(error("Lambda method must not be documented"));
+                issueHandler.accept(error("Lambda method must not be documented"));
             }
         }
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                          ParameterData paramData, @Nullable ClassMetadata classMetadata,
                          @Nullable MethodMetadata methodMetadata) {
         if (methodData.getName().startsWith(LAMBDA_METHOD_NAME_PREFIX)
                 && (methodMetadata == null || methodMetadata.isLambda())) {
             if (paramData.getJavadoc() != null) {
-                issues.accept(error("Lambda method parameter must not be documented"));
+                issueHandler.accept(error("Lambda method parameter must not be documented"));
             }
         }
     }

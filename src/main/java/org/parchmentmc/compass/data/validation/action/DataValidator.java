@@ -1,11 +1,11 @@
-package org.parchmentmc.compass.validation.action;
+package org.parchmentmc.compass.data.validation.action;
 
 import com.google.common.collect.ImmutableList;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.compass.util.ResultContainer;
-import org.parchmentmc.compass.validation.ValidationIssue;
-import org.parchmentmc.compass.validation.Validator;
+import org.parchmentmc.compass.data.validation.ValidationIssue;
+import org.parchmentmc.compass.data.validation.Validator;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
 import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.FieldMetadata;

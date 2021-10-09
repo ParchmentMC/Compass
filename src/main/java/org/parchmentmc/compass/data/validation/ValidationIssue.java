@@ -1,4 +1,4 @@
-package org.parchmentmc.compass.validation;
+package org.parchmentmc.compass.data.validation;
 
 public abstract class ValidationIssue {
     private final String validatorName;

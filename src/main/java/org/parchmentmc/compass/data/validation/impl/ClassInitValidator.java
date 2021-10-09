@@ -1,8 +1,8 @@
-package org.parchmentmc.compass.validation.impl;
+package org.parchmentmc.compass.data.validation.impl;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.parchmentmc.compass.validation.AbstractValidator;
-import org.parchmentmc.compass.validation.ValidationIssue;
+import org.parchmentmc.compass.data.validation.AbstractValidator;
+import org.parchmentmc.compass.data.validation.ValidationIssue;
 import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;
 
@@ -24,21 +24,21 @@ public class ClassInitValidator extends AbstractValidator {
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                          @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         if (methodData.getName().equals(CLASS_INITIALIZATION_METHOD_NAME)) {
             if (!methodData.getJavadoc().isEmpty()) {
-                issues.accept(error("Class/interface initialization method must not be documented"));
+                issueHandler.accept(error("Class/interface initialization method must not be documented"));
             }
         }
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                          ParameterData paramData, @Nullable ClassMetadata classMetadata,
                          @Nullable MethodMetadata methodMetadata) {
         if (methodData.getName().equals(CLASS_INITIALIZATION_METHOD_NAME)) {
-            issues.accept(error("There should be no parameters for the class/interface initialization method"));
+            issueHandler.accept(error("There should be no parameters for the class/interface initialization method"));
         }
     }
 }

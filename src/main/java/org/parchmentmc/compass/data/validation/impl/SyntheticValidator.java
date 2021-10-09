@@ -1,8 +1,8 @@
-package org.parchmentmc.compass.validation.impl;
+package org.parchmentmc.compass.data.validation.impl;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.parchmentmc.compass.validation.AbstractValidator;
-import org.parchmentmc.compass.validation.ValidationIssue;
+import org.parchmentmc.compass.data.validation.AbstractValidator;
+import org.parchmentmc.compass.data.validation.ValidationIssue;
 import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.FieldMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;
@@ -21,35 +21,35 @@ public class SyntheticValidator extends AbstractValidator {
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, FieldData fieldData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, FieldData fieldData,
                          @Nullable ClassMetadata classMetadata, @Nullable FieldMetadata fieldMetadata) {
         if (fieldMetadata != null && fieldMetadata.hasAccessFlag(AccessFlag.SYNTHETIC)) {
             if (!fieldData.getJavadoc().isEmpty()) {
-                issues.accept(error("Synthetic method must not be documented"));
+                issueHandler.accept(error("Synthetic method must not be documented"));
             }
         }
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                          @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         if (methodMetadata != null && methodMetadata.hasAccessFlag(AccessFlag.SYNTHETIC) && !methodMetadata.isLambda()) {
             if (!methodData.getJavadoc().isEmpty()) {
-                issues.accept(error("Synthetic method must not be documented"));
+                issueHandler.accept(error("Synthetic method must not be documented"));
             }
         }
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                          ParameterData paramData, @Nullable ClassMetadata classMetadata,
                          @Nullable MethodMetadata methodMetadata) {
         if (methodMetadata != null && methodMetadata.hasAccessFlag(AccessFlag.SYNTHETIC) && !methodMetadata.isLambda()) {
             if (paramData.getName() != null) {
-                issues.accept(error("Synthetic method parameter must not be named"));
+                issueHandler.accept(error("Synthetic method parameter must not be named"));
             }
             if (paramData.getJavadoc() != null) {
-                issues.accept(error("Synthetic method parameter must not be documented"));
+                issueHandler.accept(error("Synthetic method parameter must not be documented"));
             }
         }
     }

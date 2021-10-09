@@ -1,10 +1,10 @@
-package org.parchmentmc.compass.validation.impl;
+package org.parchmentmc.compass.data.validation.impl;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.parchmentmc.compass.validation.AbstractValidator;
-import org.parchmentmc.compass.validation.ValidationIssue;
+import org.parchmentmc.compass.data.validation.AbstractValidator;
+import org.parchmentmc.compass.data.validation.ValidationIssue;
 import org.parchmentmc.feather.mapping.MappingDataContainer.ClassData;
 import org.parchmentmc.feather.mapping.MappingDataContainer.MethodData;
 import org.parchmentmc.feather.mapping.MappingDataContainer.ParameterData;
@@ -27,7 +27,7 @@ public class ParameterConflictsValidator extends AbstractValidator {
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issues, ClassData classData, MethodData methodData,
+    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
                          @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         reusedNameToIndex.clear();
         for (ParameterData params : methodData.getParameters()) {
@@ -40,7 +40,7 @@ public class ParameterConflictsValidator extends AbstractValidator {
         for (String name : reusedNameToIndex.keySet()) {
             final Collection<Byte> indices = reusedNameToIndex.get(name);
             if (indices.size() > 1) { // Conflicts! weewoo *insert patrick star meme here*
-                issues.accept(error("Parameters at indices " + indices + " conflict with same name: " + name));
+                issueHandler.accept(error("Parameters at indices " + indices + " conflict with same name: " + name));
             }
         }
     }
