@@ -129,11 +129,14 @@ public abstract class ValidateData extends DefaultTask implements VerificationTa
         }
 
         logger.warn("Found {} validation warnings and {} validation errors", count.warnings, count.errors);
-        if (!ignoreFailures) {
-            throw new ValidationFailedException("Found " + count.warnings + " validation warnings and "
-                    + count.errors + " validation errors");
-        } else {
-            logger.warn("Ignoring failures.");
+
+        if (count.errors > 0) {
+            if (!ignoreFailures) {
+                throw new ValidationFailedException("Found " + count.warnings + " validation warnings and "
+                        + count.errors + " validation errors");
+            } else {
+                logger.warn("Ignoring failures.");
+            }
         }
     }
 
