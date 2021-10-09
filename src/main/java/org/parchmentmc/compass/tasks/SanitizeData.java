@@ -67,7 +67,7 @@ public abstract class SanitizeData extends DefaultTask {
 
         getSanitizers().forEach(sanitizer::addSanitizer);
 
-        logger.lifecycle("Sanitizers in use: {}", sanitizer.getSanitizers().stream().map(Named::getName).collect(Collectors.toSet()));
+        logger.lifecycle("Sanitizers in use: {}", sanitizer.getSanitizers().stream().map(Named::getName).collect(Collectors.toList()));
         if (metadata == null) {
             logger.warn("No Blackstone metadata loaded, sanitation may not have any effects");
         }
