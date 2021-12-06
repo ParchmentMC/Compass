@@ -74,7 +74,7 @@ public class SRGProvider extends IntermediateProvider {
             }
 
             logger.debug("MCPConfig spec version: {}, MC version: {}, mappings file: '{}'", configFile.spec, configFile.version, configFile.data.mappings);
-            if (configFile.spec != 1 && configFile.spec != 2) {
+            if (configFile.spec != 1 && configFile.spec != 2 && configFile.spec != 3) {
                 logger.warn("MCPConfig artifact has unrecognized spec of {}", configFile.spec);
             }
             if (!configFile.version.equals(extension.getVersion().get())) {
