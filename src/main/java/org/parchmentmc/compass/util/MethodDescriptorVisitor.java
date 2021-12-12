@@ -51,42 +51,36 @@ public interface MethodDescriptorVisitor {
             char c = parameters.charAt(cursor);
             currentParam.append(c);
 
-            switch (c) {
-                case '[': {
-                    // Arrays are attached to other components, so skip to the next one (the type contained in the array)
-                    break;
-                }
-                case 'L': {
-                    if (!parsingLType) {
-                        // Loop until we reach the end of the L-type
-                        parsingLType = true;
-                        break;
-                    }
-                }
-                case ';': {
-                    if (parsingLType) {
-                        // End of an L-type
-                        parsingLType = false;
-                    }
-                }
-                default: {
-                    if (parsingLType) {
-                        // Still parsing an L-type, so skip visiting until we reach its end (see the case for semicolon)
-                        break;
-                    }
-                    visitor.visit(position, index, currentParam.toString());
-                    if (currentParam.length() == 1) {
-                        switch (currentParam.charAt(0)) {
-                            case 'D':
-                            case 'J':
-                                index++;
-                        }
-                    }
-                    index++;
-                    position++;
-                    currentParam.setLength(0);
+            if (c == '[') {
+                // Arrays are attached to other components, so skip to the next one (the type contained in the array)
+                continue;
+            }
+
+            if (parsingLType) { // Currently parsing an L-type
+                if (c == ';') {
+                    // End of an L-type; continue to the visit section
+                    parsingLType = false;
+                } else {
+                    // Still parsing an L-type, so continue going down the descriptor we reach its end
+                    continue;
                 }
             }
+
+            if (c == 'L') {
+                // Loop until we reach the end of the L-type
+                parsingLType = true;
+                continue;
+            }
+
+            visitor.visit(position, index, currentParam.toString());
+            if (currentParam.length() == 1 && (c == 'D' || c == 'J')) {
+                // If a double or long, increment the index twice
+                index++;
+            }
+            index++;
+
+            position++;
+            currentParam.setLength(0);
         }
         visitor.visit(position, (byte) -1, descriptor.substring(descriptor.indexOf(')') + 1));
     }

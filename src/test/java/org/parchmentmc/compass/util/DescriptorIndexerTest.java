@@ -45,6 +45,12 @@ public class DescriptorIndexerTest {
     }
 
     @Test
+    @DisplayName("Capital L character in a reference type parses correctly")
+    public void capital_l_in_reference_type_parses_correctly() {
+        testIndexes("Lorg/example/Label;I", "xx");
+    }
+
+    @Test
     @DisplayName("Arrays of any dimension take up one index")
     public void arrays_of_any_dimension_take_up_one_index() {
         // int
