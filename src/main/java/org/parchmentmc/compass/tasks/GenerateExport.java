@@ -25,7 +25,7 @@ import org.parchmentmc.feather.mapping.MappingDataContainer;
 import org.parchmentmc.feather.metadata.BouncingTargetMetadata;
 import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;
-import org.parchmentmc.feather.metadata.MethodReference;
+import org.parchmentmc.feather.metadata.Reference;
 import org.parchmentmc.feather.metadata.SourceMetadata;
 import org.parchmentmc.feather.named.Named;
 
@@ -131,7 +131,7 @@ public abstract class GenerateExport extends DefaultTask {
         MappingDataBuilder.MutableMethodData parentMethodData = null;
 
         while (parentMethodData == null && parentMethodMeta != null && parentMethodMeta.getParent().isPresent()) {
-            MethodReference parent = parentMethodMeta.getParent().get();
+            Reference parent = parentMethodMeta.getParent().get();
             // Get the current method metadata so we can get the next parent
             parentMethodMeta = classMetadataMap.get(getMojangName(parent.getOwner())).getMethods().stream()
                     .filter(m -> m.getName().getMojangName().equals(parent.getName().getMojangName())

@@ -5,12 +5,13 @@ import org.parchmentmc.compass.data.sanitation.AbstractSanitizer;
 import org.parchmentmc.feather.metadata.BouncingTargetMetadata;
 import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;
-import org.parchmentmc.feather.metadata.MethodReference;
+import org.parchmentmc.feather.metadata.Reference;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.parchmentmc.feather.mapping.MappingDataContainer.*;
+import static org.parchmentmc.feather.mapping.MappingDataContainer.ClassData;
+import static org.parchmentmc.feather.mapping.MappingDataContainer.MethodData;
 
 /**
  * Moves data in bouncer methods to their targets.
@@ -35,7 +36,7 @@ public class BouncerDataMover extends AbstractSanitizer {
         if (!finishedCollecting && methodMetadata != null && methodMetadata.getBouncingTarget().isPresent()) {
             final BouncingTargetMetadata targetData = methodMetadata.getBouncingTarget().get();
             if (targetData.getTarget().isPresent()) {
-                final MethodReference targetRef = targetData.getTarget().get();
+                final Reference targetRef = targetData.getTarget().get();
 
                 String targetRefString = targetRef.getOwner().getMojangName("") + "#"
                         + targetRef.getName().getMojangName("") + "#"
