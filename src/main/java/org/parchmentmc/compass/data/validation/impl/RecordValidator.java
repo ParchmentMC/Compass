@@ -57,7 +57,7 @@ public class RecordValidator extends AbstractValidator {
             .collect(Collectors.toList());
 
         MethodDescriptorVisitor.visit(1, methodData.getDescriptor(), (position, index, type) -> {
-            final MappingDataContainer.ParameterData param = methodData.getParameter(position);
+            final MappingDataContainer.ParameterData param = methodData.getParameter(index);
             if (param != null && param.getName() != null) {
                 final String expectedName = recordNames.get(position);
                 if (!param.getName().equals(expectedName)) {
