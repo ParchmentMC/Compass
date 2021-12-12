@@ -52,6 +52,10 @@ public interface MethodDescriptorVisitor {
             currentParam.append(c);
 
             switch (c) {
+                case '[': {
+                    // Arrays are attached to other components, so skip to the next one (the type contained in the array)
+                    break;
+                }
                 case 'L': {
                     if (!parsingLType) {
                         // Loop until we reach the end of the L-type
@@ -66,6 +70,10 @@ public interface MethodDescriptorVisitor {
                     }
                 }
                 default: {
+                    if (parsingLType) {
+                        // Still parsing an L-type, so skip visiting until we reach its end (see the case for semicolon)
+                        break;
+                    }
                     visitor.visit(position, index, currentParam.toString());
                     if (currentParam.length() == 1) {
                         switch (currentParam.charAt(0)) {
