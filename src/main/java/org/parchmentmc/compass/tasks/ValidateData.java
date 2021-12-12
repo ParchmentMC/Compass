@@ -60,6 +60,7 @@ public abstract class ValidateData extends DefaultTask implements VerificationTa
         validators.add(new MethodStandardsValidator());
         validators.add(new ParameterConflictsValidator());
         validators.add(new ParameterIndexValidator());
+        validators.add(new RecordValidator());
     }
 
     @TaskAction
