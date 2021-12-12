@@ -4,8 +4,8 @@ import net.minecraftforge.srgutils.IMappingFile;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Project;
-import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
@@ -22,6 +22,8 @@ public class ObfuscationMapsDownloader {
     private final Property<String> clientDownloadKey;
     private final Property<String> serverDownloadKey;
     private final DirectoryProperty outputDirectory;
+    private final Provider<RegularFile> clientDownloadOutput;
+    private final Provider<RegularFile> serverDownloadOutput;
 
     private final Provider<VersionManifest.DownloadInfo> clientDownload;
     private final Provider<VersionManifest.DownloadInfo> serverDownload;
@@ -37,6 +39,8 @@ public class ObfuscationMapsDownloader {
         serverDownloadKey = objects.property(String.class).convention("server_mappings");
         outputDirectory = objects.directoryProperty()
                 .convention(project.getLayout().getBuildDirectory().dir("obfuscationMaps").zip(versionManifest, (d, manifest) -> d.dir(manifest.getId())));
+        clientDownloadOutput = outputDirectory.file("client.txt");
+        serverDownloadOutput = outputDirectory.file("server.txt");
 
         versionManifest.finalizeValueOnRead();
         clientDownloadKey.finalizeValueOnRead();
@@ -81,6 +85,14 @@ public class ObfuscationMapsDownloader {
         return outputDirectory;
     }
 
+    public Provider<RegularFile> getClientDownloadOutput() {
+        return clientDownloadOutput;
+    }
+
+    public Provider<RegularFile> getServerDownloadOutput() {
+        return serverDownloadOutput;
+    }
+
     private void downloadFile(VersionManifest.DownloadInfo download, File output, String info) {
         try {
             createAndExecuteAction(project, download.getUrl(), output, info);
@@ -98,15 +110,14 @@ public class ObfuscationMapsDownloader {
             return obfuscationMap; // We've already executed and downloaded; return cached.
         }
         String version = this.versionManifest.get().getId();
-        Directory outputDir = this.outputDirectory.get();
 
-        File clientMappings = outputDir.file("client.txt").getAsFile();
+        File clientMappings = clientDownloadOutput.get().getAsFile();
         VersionManifest.DownloadInfo clientInfo = clientDownload.get();
         if (!clientMappings.exists() || areNotChecksumsEqual(clientMappings, clientInfo.getSHA1())) {
             downloadFile(clientInfo, clientMappings, "client obfuscation map for " + version);
         }
 
-        File serverMappings = outputDir.file("server.txt").getAsFile();
+        File serverMappings = serverDownloadOutput.get().getAsFile();
         VersionManifest.DownloadInfo serverInfo = serverDownload.get();
         if (!serverMappings.exists() || areNotChecksumsEqual(serverMappings, serverInfo.getSHA1())) {
             downloadFile(serverInfo, serverMappings, "server obfuscation map for " + version);
