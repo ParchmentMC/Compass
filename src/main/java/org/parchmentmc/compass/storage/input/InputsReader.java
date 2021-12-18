@@ -2,7 +2,6 @@ package org.parchmentmc.compass.storage.input;
 
 import net.minecraftforge.srgutils.IMappingFile;
 import org.gradle.api.NamedDomainObjectCollection;
-import org.gradle.internal.Pair;
 import org.parchmentmc.compass.providers.IntermediateProvider;
 import org.parchmentmc.compass.storage.io.SingleFileDataIO;
 import org.parchmentmc.compass.util.MappingUtil;
@@ -13,7 +12,11 @@ import org.parchmentmc.feather.mapping.MappingDataContainer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /*
@@ -49,7 +52,7 @@ public class InputsReader {
             // Ignore directories without a corresponding intermediate
             if (provider != null) {
                 System.out.println("Found intermediate for " + dirName);
-                directories.add(Pair.of(provider, subdir));
+                directories.add(new Pair<>(provider, subdir));
             }
         }
 
@@ -59,13 +62,13 @@ public class InputsReader {
         }
 
         for (Pair<IntermediateProvider, Path> dir : directories) {
-            Set<Path> files = Files.list(Objects.requireNonNull(dir.getRight())).filter(Files::isRegularFile).collect(Collectors.toSet());
+            Set<Path> files = Files.list(Objects.requireNonNull(dir.right)).filter(Files::isRegularFile).collect(Collectors.toSet());
             // Skip if there are no files within this directory
             if (files.isEmpty()) {
                 continue;
             }
 
-            IntermediateProvider provider = Objects.requireNonNull(dir.getLeft());
+            IntermediateProvider provider = Objects.requireNonNull(dir.left);
             IMappingFile mapping = provider.getMapping();
             IMappingFile toOfficial = mapping.reverse().chain(obfToOfficial);
 
@@ -149,5 +152,15 @@ public class InputsReader {
             }
         }
 
+    }
+
+    private static class Pair<L, R> {
+        public final L left;
+        public final R right;
+
+        public Pair(L left, R right) {
+            this.left = left;
+            this.right = right;
+        }
     }
 }

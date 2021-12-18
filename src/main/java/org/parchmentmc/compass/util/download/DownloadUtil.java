@@ -1,11 +1,13 @@
 package org.parchmentmc.compass.util.download;
 
+import com.google.common.hash.Hashing;
+import com.google.common.io.Files;
 import de.undercouch.gradle.tasks.download.DownloadAction;
 import org.gradle.api.Project;
-import org.gradle.internal.hash.HashUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 public final class DownloadUtil {
     private DownloadUtil() {
@@ -27,8 +29,19 @@ public final class DownloadUtil {
         return action;
     }
 
+    @SuppressWarnings({"deprecation", "UnstableApiUsage"})
+    private static String sha1(File file) {
+        try {
+            // While Hashing#sha1 is deprecated in favor of SHA-256, we have to use it as the hashes we use
+            // are in SHA-1
+            return Files.asByteSource(file).hash(Hashing.sha1()).toString();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to hash " + file.getAbsolutePath(), e);
+        }
+    }
+
     public static boolean areChecksumsEqual(File output, String expected) {
-        return HashUtil.sha1(output).asZeroPaddedHexString(40).equals(expected);
+        return sha1(output).equals(expected);
     }
 
     public static boolean areNotChecksumsEqual(File output, String expected) {
@@ -36,7 +49,7 @@ public final class DownloadUtil {
     }
 
     public static void verifyChecksum(File output, String expected, String info) throws IOException {
-        String actual = HashUtil.sha1(output).asZeroPaddedHexString(40);
+        String actual = sha1(output);
         if (!expected.equals(actual)) {
             throw new IOException("Hash for downloaded " + info +
                     " does not match expected; expected " + expected + ", actual is " + actual);
