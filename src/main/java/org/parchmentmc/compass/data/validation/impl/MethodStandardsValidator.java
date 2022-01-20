@@ -1,12 +1,9 @@
 package org.parchmentmc.compass.data.validation.impl;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.parchmentmc.compass.data.validation.AbstractValidator;
-import org.parchmentmc.compass.data.validation.ValidationIssue;
+import org.parchmentmc.compass.data.validation.Validator;
 import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;
-
-import java.util.function.Consumer;
 
 import static org.parchmentmc.feather.mapping.MappingDataContainer.ClassData;
 import static org.parchmentmc.feather.mapping.MappingDataContainer.MethodData;
@@ -19,27 +16,27 @@ import static org.parchmentmc.feather.mapping.MappingDataContainer.MethodData;
  *     <li>The methods javadoc does not contain the {@code @param} specification.</li>
  * </ol>
  */
-public class MethodStandardsValidator extends AbstractValidator {
+public class MethodStandardsValidator extends Validator {
     public MethodStandardsValidator() {
         super("Method standards");
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
-                         @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
-        this.validateJavadoc(issueHandler, methodData);
+    public boolean visitMethod(ClassData classData, MethodData methodData,
+                               @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
+        this.validateJavadoc(methodData);
+        return false;
     }
 
     /**
      * Validates that the methods javadoc is valid.
      * Currently only validates the the javadoc does not contains an @param entry.
      *
-     * @param issues     A consumer of issues
      * @param methodData The data to verify.
      */
-    private void validateJavadoc(final Consumer<? super ValidationIssue> issues, final MethodData methodData) {
+    private void validateJavadoc(final MethodData methodData) {
         if (methodData.getJavadoc().stream().anyMatch(line -> line.contains("@param"))) {
-            issues.accept(error("The javadoc information contains an @param entry."));
+            error("The javadoc information contains an @param entry.");
         }
     }
 }

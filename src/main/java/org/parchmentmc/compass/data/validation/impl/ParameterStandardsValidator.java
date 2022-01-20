@@ -2,17 +2,17 @@ package org.parchmentmc.compass.data.validation.impl;
 
 import com.google.common.base.Preconditions;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.parchmentmc.compass.data.validation.AbstractValidator;
-import org.parchmentmc.compass.data.validation.ValidationIssue;
+import org.parchmentmc.compass.data.validation.Validator;
 import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;
 
 import javax.lang.model.SourceVersion;
 import java.util.Locale;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-import static org.parchmentmc.feather.mapping.MappingDataContainer.*;
+import static org.parchmentmc.feather.mapping.MappingDataContainer.ClassData;
+import static org.parchmentmc.feather.mapping.MappingDataContainer.MethodData;
+import static org.parchmentmc.feather.mapping.MappingDataContainer.ParameterData;
 
 /**
  * Validates that parameter names follow the current mapping standards.
@@ -31,7 +31,7 @@ import static org.parchmentmc.feather.mapping.MappingDataContainer.*;
  * @see <a href="https://docs.oracle.com/javase/specs/jls/se16/html/jls-3.html#jls-3.10.8">JLS 16,
  * &sect;3.10.8 "The Null Literal"</a>
  */
-public class ParameterStandardsValidator extends AbstractValidator {
+public class ParameterStandardsValidator extends Validator {
     public static final String DEFAULT_STANDARDS_REGEX = "[a-z][A-Za-z0-9]*";
     private static final Pattern STANDARDS_REGEX_PATTERN = Pattern.compile(DEFAULT_STANDARDS_REGEX);
     private Pattern regexPattern = STANDARDS_REGEX_PATTERN;
@@ -50,17 +50,15 @@ public class ParameterStandardsValidator extends AbstractValidator {
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
-                         ParameterData paramData, @Nullable ClassMetadata classMetadata,
-                         @Nullable MethodMetadata methodMetadata) {
+    public void visitParameter(ClassData classData, MethodData methodData, ParameterData paramData,
+                               @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         String paramName = paramData.getName();
         if (paramName != null) {
             if (!regexPattern.matcher(paramName).matches()) {
-                issueHandler.accept(error("Parameter name '" + paramName + "' does not match regex "
-                        + regexPattern.pattern()));
+                error("Parameter name '" + paramName + "' does not match regex " + regexPattern.pattern());
             }
             if (isReserved(paramName.toLowerCase(Locale.ROOT))) {
-                issueHandler.accept(error("Parameter name (case-insensitively) matches a reserved keyword: " + paramName));
+                error("Parameter name (case-insensitively) matches a reserved keyword: " + paramName);
             }
         }
     }
