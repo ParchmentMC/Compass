@@ -2,6 +2,7 @@ package org.parchmentmc.compass.data.visitation;
 
 import com.google.common.base.Preconditions;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
 import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.FieldMetadata;
@@ -117,6 +118,36 @@ public interface ModifyingDataVisitor extends DataVisitor {
      * {@inheritDoc}
      */
     default void postVisit(DataType type) {
+    }
+
+
+    /**
+     * Fully visits and potentially modifies a mapping data container and optional source metadata using a modifying
+     * data visitor.
+     *
+     * @param revisitLimit the limit to the amount of times the data will be revisited; a limit of {@code 0} means the
+     *                     data will not be revisited at all
+     * @param visitor      the modifying data visitor
+     * @param container    the mapping data container to be visited
+     * @param metadata     the source metadata, may be {@code null}
+     * @throws IllegalArgumentException if the revisit limit is negative
+     */
+    static void visit(int revisitLimit, ModifyingDataVisitor visitor, MappingDataBuilder container, @Nullable SourceMetadata metadata) {
+        Preconditions.checkArgument(revisitLimit >= 0, "Revisit limit cannot be negative");
+        DataVisitorHelper.visitModify(revisitLimit, visitor, container, metadata);
+    }
+
+    /**
+     * Fully visit and potentially modifies s a mapping data container and optional source metadata using a modifying
+     * data visitor. This has a revisit limit of {@link Integer#MAX_VALUE}.
+     *
+     * @param visitor   the modifying data visitor
+     * @param container the mapping data container to be visited
+     * @param metadata  the source metadata, may be {@code null}
+     * @see #visit(int, ModifyingDataVisitor, MappingDataContainer, SourceMetadata)
+     */
+    static void visit(ModifyingDataVisitor visitor, MappingDataBuilder container, @Nullable SourceMetadata metadata) {
+        visit(Integer.MAX_VALUE, visitor, container, metadata);
     }
 
     // ********** Overridden methods from DataVisitor ********** //
