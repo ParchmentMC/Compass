@@ -17,7 +17,7 @@ import static org.parchmentmc.feather.mapping.MappingDataContainer.ParameterData
 /**
  * A {@link DataVisitor} which may modify or delete mapping data while visiting.
  *
- * <p>The {@code visit*} methods within this class may not return {@code null}. Instead, they must return an
+ * <p>The {@code modify*} methods within this class may not return {@code null}. Instead, they must return an
  * appropriate action such as {@link Action#nothing()}</p>
  *
  * <p>If {@link DataVisitor#visit(DataVisitor, MappingDataContainer, SourceMetadata)} is called with a visitor of this
