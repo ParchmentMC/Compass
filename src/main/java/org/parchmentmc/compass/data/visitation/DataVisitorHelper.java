@@ -14,60 +14,65 @@ import java.util.Map;
 // Package-private helper class for the actual impl. for visiting the mapping data
 class DataVisitorHelper {
     public static void visit(DataVisitor visitor, MappingDataContainer container, @Nullable SourceMetadata metadata) {
-        if (!visitor.visit(container, metadata)) return;
+        Map<String, ClassMetadata> classMetadataMap = null;
+        do {
+            if (!visitor.visit(container, metadata)) return;
 
-        // Packages
-        if (visitor.preVisit(DataType.PACKAGES)) {
-            for (MappingDataContainer.PackageData packageData : container.getPackages()) {
-                visitor.visitPackage(packageData);
-            }
-
-            visitor.postVisit(DataType.PACKAGES);
-        }
-
-        if (!visitor.preVisit(DataType.CLASSES)) return;
-
-        final Map<String, ClassMetadata> classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
-
-        // Classes
-        for (MappingDataContainer.ClassData classData : container.getClasses()) {
-            @Nullable ClassMetadata classMeta = classMetadataMap.get(classData.getName());
-
-            if (!visitor.visitClass(classData, classMeta)) continue;
-
-            // Fields
-            if (visitor.preVisit(DataType.FIELDS)) {
-                for (MappingDataContainer.FieldData fieldData : classData.getFields()) {
-                    @Nullable FieldMetadata fieldMeta = getFieldMetadata(classMeta, fieldData.getName());
-
-                    visitor.visitField(classData, fieldData, classMeta, fieldMeta);
+            // Packages
+            if (visitor.preVisit(DataType.PACKAGES)) {
+                for (MappingDataContainer.PackageData packageData : container.getPackages()) {
+                    visitor.visitPackage(packageData);
                 }
 
-                visitor.postVisit(DataType.FIELDS);
+                visitor.postVisit(DataType.PACKAGES);
             }
 
-            // Methods
-            if (!visitor.preVisit(DataType.METHODS)) continue;
+            if (!visitor.preVisit(DataType.CLASSES)) return;
 
-            for (MappingDataContainer.MethodData methodData : classData.getMethods()) {
-                @Nullable MethodMetadata methodMeta = getMethodMetadata(classMeta, methodData.getName(), methodData.getDescriptor());
+            if (classMetadataMap == null) { // Build the map once, only when required
+                classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
+            }
 
-                if (!visitor.visitMethod(classData, methodData, classMeta, methodMeta)) continue;
+            // Classes
+            for (MappingDataContainer.ClassData classData : container.getClasses()) {
+                @Nullable ClassMetadata classMeta = classMetadataMap.get(classData.getName());
 
-                // Parameters
-                if (!visitor.preVisit(DataType.PARAMETERS)) continue;
+                if (!visitor.visitClass(classData, classMeta)) continue;
 
-                for (MappingDataContainer.ParameterData paramData : methodData.getParameters()) {
-                    visitor.visitParameter(classData, methodData, paramData, classMeta, methodMeta);
+                // Fields
+                if (visitor.preVisit(DataType.FIELDS)) {
+                    for (MappingDataContainer.FieldData fieldData : classData.getFields()) {
+                        @Nullable FieldMetadata fieldMeta = getFieldMetadata(classMeta, fieldData.getName());
+
+                        visitor.visitField(classData, fieldData, classMeta, fieldMeta);
+                    }
+
+                    visitor.postVisit(DataType.FIELDS);
                 }
 
-                visitor.postVisit(DataType.PARAMETERS);
+                // Methods
+                if (!visitor.preVisit(DataType.METHODS)) continue;
+
+                for (MappingDataContainer.MethodData methodData : classData.getMethods()) {
+                    @Nullable MethodMetadata methodMeta = getMethodMetadata(classMeta, methodData.getName(), methodData.getDescriptor());
+
+                    if (!visitor.visitMethod(classData, methodData, classMeta, methodMeta)) continue;
+
+                    // Parameters
+                    if (!visitor.preVisit(DataType.PARAMETERS)) continue;
+
+                    for (MappingDataContainer.ParameterData paramData : methodData.getParameters()) {
+                        visitor.visitParameter(classData, methodData, paramData, classMeta, methodMeta);
+                    }
+
+                    visitor.postVisit(DataType.PARAMETERS);
+                }
+
+                visitor.postVisit(DataType.METHODS);
             }
 
-            visitor.postVisit(DataType.METHODS);
-        }
-
-        visitor.postVisit(DataType.CLASSES);
+            visitor.postVisit(DataType.CLASSES);
+        } while (visitor.revisit());
     }
 
     @Nullable
