@@ -144,7 +144,7 @@ public interface ModifyingDataVisitor extends DataVisitor {
      * @param visitor   the modifying data visitor
      * @param container the mapping data container to be visited
      * @param metadata  the source metadata, may be {@code null}
-     * @see #visit(int, ModifyingDataVisitor, MappingDataContainer, SourceMetadata)
+     * @see #visit(int, ModifyingDataVisitor, MappingDataBuilder, SourceMetadata)
      */
     static void visit(ModifyingDataVisitor visitor, MappingDataBuilder container, @Nullable SourceMetadata metadata) {
         visit(Integer.MAX_VALUE, visitor, container, metadata);
