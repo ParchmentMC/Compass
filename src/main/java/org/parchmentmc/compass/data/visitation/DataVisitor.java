@@ -1,5 +1,6 @@
 package org.parchmentmc.compass.data.visitation;
 
+import com.google.common.base.Preconditions;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
 import org.parchmentmc.feather.metadata.ClassMetadata;
@@ -16,14 +17,14 @@ import static org.parchmentmc.feather.mapping.MappingDataContainer.ParameterData
 /**
  * A visitor for a {@link MappingDataContainer mapping data container}, with optional {@link SourceMetadata metadata}.
  *
- * @see #visit(DataVisitor, MappingDataContainer, SourceMetadata)
+ * @see #visit(int, DataVisitor, MappingDataContainer, SourceMetadata)
  */
 public interface DataVisitor {
     /**
      * Called when starting to visit a mapping data container.
      *
      * <p>This should not be called manually by applications to visit a mapping data container.
-     * Call {@link #visit(DataVisitor, MappingDataContainer, SourceMetadata)} instead.</p>
+     * Call {@link #visit(int, DataVisitor, MappingDataContainer, SourceMetadata)} instead.</p>
      *
      * @param container the mapping data container
      * @param metadata  the source metadata, may be {@code null}
@@ -121,12 +122,29 @@ public interface DataVisitor {
     /**
      * Fully visits a mapping data container and optional source metadata using a data visitor.
      *
+     * @param revisitLimit the limit to the amount of times the data will be revisited; a limit of {@code 0} means the
+     *                     data will not be revisited at all
      * @param visitor   the data visitor
      * @param container the mapping data container to be visited
      * @param metadata  the source metadata, may be {@code null}
+     * @throws IllegalArgumentException if the revisit limit is negative
+     */
+    static void visit(int revisitLimit, DataVisitor visitor, MappingDataContainer container, @Nullable SourceMetadata metadata) {
+        Preconditions.checkArgument(revisitLimit >= 0, "Revisit limit cannot be negative");
+        DataVisitorHelper.visit(revisitLimit, visitor, container, metadata);
+    }
+
+    /**
+     * Fully visits a mapping data container and optional source metadata using a data visitor. This has a revisit limit
+     * of {@link Integer#MAX_VALUE}.
+     *
+     * @param visitor   the data visitor
+     * @param container the mapping data container to be visited
+     * @param metadata  the source metadata, may be {@code null}
+     * @see #visit(int, DataVisitor, MappingDataContainer, SourceMetadata)
      */
     static void visit(DataVisitor visitor, MappingDataContainer container, @Nullable SourceMetadata metadata) {
-        DataVisitorHelper.visit(visitor, container, metadata);
+        visit(Integer.MAX_VALUE, visitor, container, metadata);
     }
 
     /**

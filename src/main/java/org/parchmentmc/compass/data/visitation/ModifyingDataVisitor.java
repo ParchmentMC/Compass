@@ -20,16 +20,16 @@ import static org.parchmentmc.feather.mapping.MappingDataContainer.ParameterData
  * <p>The {@code modify*} methods within this class may not return {@code null}. Instead, they must return an
  * appropriate action such as {@link Action#nothing()}</p>
  *
- * <p>If {@link DataVisitor#visit(DataVisitor, MappingDataContainer, SourceMetadata)} is called with a visitor of this
- * type, then this visitor will effectively have <strong>read-only</strong> access to the mapping data; any modification
- * to the data by these methods' returned {@link Action}s will be disregarded.</p>
+ * <p>If {@link DataVisitor#visit(int, DataVisitor, MappingDataContainer, SourceMetadata)} is called with a visitor of
+ * this type, then this visitor will effectively have <strong>read-only</strong> access to the mapping data; any
+ * modification to the data by these methods' returned {@link Action}s will be disregarded.</p>
  */
 public interface ModifyingDataVisitor extends DataVisitor {
     /**
      * {@inheritDoc}
      *
      * <strong>Note: </strong> See the class javadocs for information regarding the use of
-     * {@link #visit(DataVisitor, MappingDataContainer, SourceMetadata)} with visitors of this type.
+     * {@link #visit(int, DataVisitor, MappingDataContainer, SourceMetadata)} with visitors of this type.
      */
     default boolean visit(MappingDataContainer container, @Nullable SourceMetadata metadata) {
         return true;

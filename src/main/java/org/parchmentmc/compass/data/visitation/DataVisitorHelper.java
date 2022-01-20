@@ -13,10 +13,13 @@ import java.util.Map;
 
 // Package-private helper class for the actual impl. for visiting the mapping data
 class DataVisitorHelper {
-    public static void visit(DataVisitor visitor, MappingDataContainer container, @Nullable SourceMetadata metadata) {
+    public static void visit(int revisitLimit, DataVisitor visitor, MappingDataContainer container,
+                             @Nullable SourceMetadata metadata) {
         Map<String, ClassMetadata> classMetadataMap = null;
+        int visitCount = 0;
         do {
             if (!visitor.visit(container, metadata)) return;
+            visitCount++;
 
             // Packages
             if (visitor.preVisit(DataType.PACKAGES)) {
@@ -72,7 +75,7 @@ class DataVisitorHelper {
             }
 
             visitor.postVisit(DataType.CLASSES);
-        } while (visitor.revisit());
+        } while (visitor.revisit() && visitCount < revisitLimit);
     }
 
     @Nullable
