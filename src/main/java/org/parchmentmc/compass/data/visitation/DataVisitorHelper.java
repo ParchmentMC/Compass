@@ -157,10 +157,9 @@ class DataVisitorHelper {
                 if (sanitizeClass(ctx, classData, classMeta)) {
                     ctx.classesToRemove.add(classData.getName());
                 }
-
-                ctx.classesToRemove.forEach(data::removeClass);
-                ctx.classesToRemove.clear();
             }
+            ctx.classesToRemove.forEach(data::removeClass);
+            ctx.classesToRemove.clear();
 
             visitor.postVisit(DataType.CLASSES);
         } while (visitor.revisit() && visitCount < revisitLimit);
