@@ -30,7 +30,7 @@ class DataVisitorHelper {
                 visitor.postVisit(DataType.PACKAGES);
             }
 
-            if (!visitor.preVisit(DataType.CLASSES)) return;
+            if (!visitor.preVisit(DataType.CLASSES)) continue;
 
             if (classMetadataMap == null) { // Build the map once, only when required
                 classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
