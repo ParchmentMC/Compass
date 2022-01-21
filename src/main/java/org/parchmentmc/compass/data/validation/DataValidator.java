@@ -114,7 +114,7 @@ public class DataValidator {
                     fieldValidators.removeIf(v -> !v.preVisit(DataType.FIELDS));
 
                     for (MappingDataContainer.FieldData fieldData : classData.getFields()) {
-                        final FieldMetadata fieldMetadata = getFieldMetadata(classMetadata, fieldData.getName());
+                        final FieldMetadata fieldMetadata = MappingUtil.getFieldMetadata(classMetadata, fieldData.getName());
                         fieldIssues.clear();
 
                         fieldValidators.forEach(v -> {
@@ -144,7 +144,7 @@ public class DataValidator {
                     methodValidators.removeIf(v -> !v.preVisit(DataType.METHODS));
 
                     for (MappingDataContainer.MethodData methodData : classData.getMethods()) {
-                        final MethodMetadata methodMetadata = getMethodMetadata(classMetadata, methodData.getName(),
+                        final MethodMetadata methodMetadata = MappingUtil.getMethodMetadata(classMetadata, methodData.getName(),
                             methodData.getDescriptor());
                         methodIssues.clear();
 
@@ -216,24 +216,5 @@ public class DataValidator {
         }
 
         return results;
-    }
-
-    @Nullable
-    private static FieldMetadata getFieldMetadata(@Nullable ClassMetadata classMeta, String fieldName) {
-        if (classMeta == null) return null;
-
-        return classMeta.getFields().stream()
-            .filter(s -> s.getName().getMojangName().orElse("").contentEquals(fieldName))
-            .findFirst().orElse(null);
-    }
-
-    @Nullable
-    private static MethodMetadata getMethodMetadata(@Nullable ClassMetadata classMeta, String methodName, String methodDesc) {
-        if (classMeta == null) return null;
-
-        return classMeta.getMethods().stream()
-            .filter(s -> s.getName().getMojangName().orElse("").contentEquals(methodName)
-                && s.getDescriptor().getMojangName().orElse("").contentEquals(methodDesc))
-            .findFirst().orElse(null);
     }
 }

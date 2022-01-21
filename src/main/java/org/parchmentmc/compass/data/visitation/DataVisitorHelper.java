@@ -61,7 +61,7 @@ class DataVisitorHelper {
                 // Fields
                 if (visitor.preVisit(DataType.FIELDS)) {
                     for (FieldData fieldData : classData.getFields()) {
-                        @Nullable FieldMetadata fieldMeta = getFieldMetadata(classMeta, fieldData.getName());
+                        @Nullable FieldMetadata fieldMeta = MappingUtil.getFieldMetadata(classMeta, fieldData.getName());
 
                         visitor.visitField(classData, fieldData, classMeta, fieldMeta);
                     }
@@ -73,7 +73,7 @@ class DataVisitorHelper {
                 if (!visitor.preVisit(DataType.METHODS)) continue;
 
                 for (MethodData methodData : classData.getMethods()) {
-                    @Nullable MethodMetadata methodMeta = getMethodMetadata(classMeta, methodData.getName(), methodData.getDescriptor());
+                    @Nullable MethodMetadata methodMeta = MappingUtil.getMethodMetadata(classMeta, methodData.getName(), methodData.getDescriptor());
 
                     if (!visitor.visitMethod(classData, methodData, classMeta, methodMeta)) continue;
 
@@ -92,25 +92,6 @@ class DataVisitorHelper {
 
             visitor.postVisit(DataType.CLASSES);
         } while (visitor.revisit() && visitCount < revisitLimit);
-    }
-
-    @Nullable
-    private static FieldMetadata getFieldMetadata(@Nullable ClassMetadata classMeta, String fieldName) {
-        if (classMeta == null) return null;
-
-        return classMeta.getFields().stream()
-                .filter(s -> s.getName().getMojangName().orElse("").contentEquals(fieldName))
-                .findFirst().orElse(null);
-    }
-
-    @Nullable
-    private static MethodMetadata getMethodMetadata(@Nullable ClassMetadata classMeta, String methodName, String methodDesc) {
-        if (classMeta == null) return null;
-
-        return classMeta.getMethods().stream()
-                .filter(s -> s.getName().getMojangName().orElse("").contentEquals(methodName)
-                        && s.getDescriptor().getMojangName().orElse("").contentEquals(methodDesc))
-                .findFirst().orElse(null);
     }
 
     // ModifyingDataVisitor
@@ -208,7 +189,7 @@ class DataVisitorHelper {
     private static boolean sanitizeField(Context ctx, ClassData classData, MutableFieldData fieldData,
                                          @Nullable ClassMetadata classMeta) {
         final Action<FieldData> action = ctx.visitor.modifyField(classData, fieldData,
-                classMeta, getFieldMetadata(classMeta, fieldData.getName()));
+                classMeta, MappingUtil.getFieldMetadata(classMeta, fieldData.getName()));
 
         if (action.type == Action.ActionType.MODIFY && action.data != null) {
             fieldData.clearJavadoc().addJavadoc(action.data.getJavadoc());
@@ -220,7 +201,7 @@ class DataVisitorHelper {
 
     private static boolean sanitizeMethod(Context ctx, ClassData classData, MutableMethodData methodData,
                                           @Nullable ClassMetadata classMeta) {
-        final MethodMetadata methodMeta = getMethodMetadata(classMeta, methodData.getName(), methodData.getDescriptor());
+        final MethodMetadata methodMeta = MappingUtil.getMethodMetadata(classMeta, methodData.getName(), methodData.getDescriptor());
 
         final Action<MethodData> action = ctx.visitor.modifyMethod(classData, methodData, classMeta, methodMeta);
 

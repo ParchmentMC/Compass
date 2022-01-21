@@ -133,10 +133,8 @@ public abstract class GenerateExport extends DefaultTask {
         while (parentMethodData == null && parentMethodMeta != null && parentMethodMeta.getParent().isPresent()) {
             Reference parent = parentMethodMeta.getParent().get();
             // Get the current method metadata so we can get the next parent
-            parentMethodMeta = classMetadataMap.get(getMojangName(parent.getOwner())).getMethods().stream()
-                    .filter(m -> m.getName().getMojangName().equals(parent.getName().getMojangName())
-                            && m.getDescriptor().getMojangName().equals(parent.getDescriptor().getMojangName()))
-                    .findFirst().orElse(null);
+            parentMethodMeta = MappingUtil.getMethodMetadata(classMetadataMap.get(getMojangName(parent.getOwner())),
+                    getMojangName(parent.getName()), getMojangName(parent.getDescriptor()));
             // Query the actual mapping data to see if the parent method has any javadocs or parameters
             parentMethodData = Optional.ofNullable(builder.getClass(getMojangName(parent.getOwner())))
                     .map(c -> c.getMethod(getMojangName(parent.getName()), getMojangName(parent.getDescriptor())))

@@ -41,10 +41,7 @@ public abstract class GenerateSanitizedExport extends GenerateExport {
             boolean anonClass = withinAnonymousClass(clsData.getName());
 
             clsData.getMethods().forEach(methodData -> {
-                final MethodMetadata methodMeta = clsMeta != null ? clsMeta.getMethods().stream()
-                        .filter(s -> s.getName().getMojangName().orElse("").contentEquals(methodData.getName())
-                                && s.getDescriptor().getMojangName().orElse("").contentEquals(methodData.getDescriptor()))
-                        .findFirst().orElse(null) : null;
+                final MethodMetadata methodMeta = MappingUtil.getMethodMetadata(clsMeta, methodData.getName(), methodData.getDescriptor());
 
                 // Simple heuristic; if it starts with `lambda$`, it's a lambda.
                 boolean lambda = (methodMeta != null && methodMeta.isLambda())
