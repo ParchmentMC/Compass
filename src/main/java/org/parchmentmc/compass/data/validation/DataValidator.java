@@ -16,6 +16,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static com.google.common.collect.ImmutableList.copyOf;
 
@@ -41,180 +44,179 @@ public class DataValidator {
         final ResultContainer<List<? extends ValidationIssue>> results = new ResultContainer<>();
 
         final Set<Validator> validators = new LinkedHashSet<>(this.validators);
+        // Remove all validators which do not wish to visit the data
+        // (shouldn't really happen with Validators, but this is the DataVisitor contract)
         validators.removeIf(v -> !v.visit(data, metadata));
 
+        // Shared context
+        final Context ctx = new Context(validators.size());
+
         // ********** Packages ********** //
-        {
-            final List<ValidationIssue> packageIssues = new ArrayList<>();
-            final Set<Validator> packageValidators = new LinkedHashSet<>(validators);
-            // Remove all validators which do not wish to visit the packages
-            packageValidators.removeIf(v -> !v.preVisit(DataType.PACKAGES));
+        // Remove all validators which do not wish to visit the packages
+        ctx.preVisit(ctx.packageValidators, validators, DataType.PACKAGES);
 
-            for (MappingDataContainer.PackageData packageData : data.getPackages()) {
-                packageIssues.clear();
-                packageValidators.forEach(v -> {
-                    v.issueHandler = packageIssues::add;
-                    v.visitPackage(packageData);
-                    v.issueHandler = null;
-                });
+        for (MappingDataContainer.PackageData packageData : data.getPackages()) {
 
-                // If this package has results, add it to the result
-                if (!packageIssues.isEmpty()) {
-                    results.addPackage(new ResultContainer.PackageResult<>(packageData.getName(), copyOf(packageIssues)));
-                }
+            ctx.matching(ctx.packageValidators, ctx.packageIssues,
+                    v -> v.visitPackage(packageData),
+                    i -> results.addPackage(new ResultContainer.PackageResult<>(packageData.getName(), i)));
 
-                // Finished visiting one package
-            }
-
-            packageValidators.forEach(v -> v.postVisit(DataType.PACKAGES));
-            // All packages have been visited
+            // Finished visiting one package
         }
+
+        ctx.postVisit(ctx.packageValidators, DataType.PACKAGES);
+        // All packages have been visited
 
         // ********** Classes ********** //
-        {
-            final List<ValidationIssue> classIssues = new ArrayList<>();
-            final Set<Validator> classValidators = new LinkedHashSet<>(validators);
-            // Remove all validators which do not wish to visit classes (and children)
-            classValidators.removeIf(v -> !v.preVisit(DataType.CLASSES));
+        // Remove all validators which do not wish to visit classes (and children)
+        ctx.preVisit(ctx.classValidators, validators, DataType.CLASSES);
 
-            // Shared lists
-            final Set<Validator> currentClassValidators = new LinkedHashSet<>(classValidators.size());
-            final List<ValidationIssue> fieldIssues = new ArrayList<>();
-            final Set<Validator> fieldValidators = new LinkedHashSet<>(classValidators.size());
-            final List<ValidationIssue> methodIssues = new ArrayList<>();
-            final Set<Validator> methodValidators = new LinkedHashSet<>(classValidators.size());
-            final Set<Validator> currentMethodValidators = new LinkedHashSet<>(classValidators.size());
-            final List<ValidationIssue> paramIssues = new ArrayList<>();
-            final Set<Validator> paramValidators = new LinkedHashSet<>(classValidators.size());
+        final Map<String, ClassMetadata> classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
 
-            final Map<String, ClassMetadata> classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
+        for (MappingDataContainer.ClassData classData : data.getClasses()) {
+            final ClassMetadata classMetadata = classMetadataMap.get(classData.getName());
 
-            for (MappingDataContainer.ClassData classData : data.getClasses()) {
-                final ClassMetadata classMetadata = classMetadataMap.get(classData.getName());
-                classIssues.clear();
+            // Remove all validators which do not wish to visit the children (fields, methods) of this class
+            final ResultContainer.ClassResult<List<? extends ValidationIssue>> classResult =
+                    ctx.removeMatching(ctx.currentClassValidators, ctx.classValidators, ctx.classIssues,
+                            v -> !v.visitClass(classData, classMetadata),
+                            i -> new ResultContainer.ClassResult<>(classData.getName(), i));
 
-                currentClassValidators.clear();
-                currentClassValidators.addAll(classValidators);
-                // Remove all validators which do not wish to visit the children (fields, methods) of this class
-                currentClassValidators.removeIf(v -> {
-                    v.issueHandler = classIssues::add;
-                    boolean visitChildren = v.visitClass(classData, classMetadata);
-                    v.issueHandler = null;
-                    return !visitChildren;
-                });
+            // ********** Fields ********** //
+            // Remove all validators which do not wish to visit the fields of this class
+            ctx.preVisit(ctx.fieldValidators, ctx.currentClassValidators, DataType.FIELDS);
 
-                final ResultContainer.ClassResult<List<? extends ValidationIssue>> classResult =
-                    new ResultContainer.ClassResult<>(classData.getName(), copyOf(classIssues));
-                // ********** Fields ********** //
-                {
-                    fieldIssues.clear();
-                    fieldValidators.clear();
-                    fieldValidators.addAll(currentClassValidators);
-                    // Remove all validators which do not wish to visit the fields of this class
-                    fieldValidators.removeIf(v -> !v.preVisit(DataType.FIELDS));
+            for (MappingDataContainer.FieldData fieldData : classData.getFields()) {
+                final FieldMetadata fieldMetadata = MappingUtil.getFieldMetadata(classMetadata, fieldData.getName());
 
-                    for (MappingDataContainer.FieldData fieldData : classData.getFields()) {
-                        final FieldMetadata fieldMetadata = MappingUtil.getFieldMetadata(classMetadata, fieldData.getName());
-                        fieldIssues.clear();
+                ctx.matching(ctx.fieldValidators, ctx.fieldIssues,
+                        v -> v.visitField(classData, fieldData, classMetadata, fieldMetadata),
+                        i -> classResult.addField(new ResultContainer.FieldResult<>(fieldData.getName(), i)));
 
-                        fieldValidators.forEach(v -> {
-                            v.issueHandler = fieldIssues::add;
-                            v.visitField(classData, fieldData, classMetadata, fieldMetadata);
-                            v.issueHandler = null;
-                        });
-
-                        // If this field has issues, add it to the class' result
-                        if (!fieldIssues.isEmpty()) {
-                            classResult.addField(new ResultContainer.FieldResult<>(fieldData.getName(), copyOf(fieldIssues)));
-                        }
-
-                        // Finished visiting one field
-                    }
-
-                    fieldValidators.forEach(v -> v.postVisit(DataType.FIELDS));
-                    // All fields have been visited
-                }
-
-                // ********** Methods ********** //
-                {
-                    methodIssues.clear();
-                    methodValidators.clear();
-                    methodValidators.addAll(currentClassValidators);
-                    // Remove all validators which do not wish to visit methods (or its parameters)
-                    methodValidators.removeIf(v -> !v.preVisit(DataType.METHODS));
-
-                    for (MappingDataContainer.MethodData methodData : classData.getMethods()) {
-                        final MethodMetadata methodMetadata = MappingUtil.getMethodMetadata(classMetadata, methodData.getName(),
-                            methodData.getDescriptor());
-                        methodIssues.clear();
-
-                        currentMethodValidators.clear();
-                        currentMethodValidators.addAll(methodValidators);
-                        // Remove all validators which do not wish to visit the parameters of this method
-                        currentMethodValidators.removeIf(v -> {
-                            v.issueHandler = methodIssues::add;
-                            boolean visitChildren = v.visitMethod(classData, methodData, classMetadata, methodMetadata);
-                            v.issueHandler = null;
-                            return !visitChildren;
-                        });
-
-                        ResultContainer.MethodResult<List<? extends ValidationIssue>> methodResult =
-                            new ResultContainer.MethodResult<>(methodData.getName(), methodData.getDescriptor(),
-                                copyOf(methodIssues));
-                        // ********** Parameters ********** //
-                        {
-                            paramIssues.clear();
-                            paramValidators.clear();
-                            paramValidators.addAll(currentMethodValidators);
-                            // Remove all validators which do not wish to visit parameters
-                            paramValidators.removeIf(v -> !v.preVisit(DataType.PARAMETERS));
-
-                            for (MappingDataContainer.ParameterData paramData : methodData.getParameters()) {
-                                paramIssues.clear();
-
-                                paramValidators.forEach(v -> {
-                                    v.issueHandler = paramIssues::add;
-                                    v.visitParameter(classData, methodData, paramData, classMetadata, methodMetadata);
-                                    v.issueHandler = null;
-                                });
-
-                                // If this field has issues, add it to the method' result
-                                if (!paramIssues.isEmpty()) {
-                                    methodResult.addParameter(new ResultContainer.ParameterResult<>(paramData.getIndex(),
-                                        copyOf(paramIssues)));
-                                }
-
-                                // Finished visiting one parameter
-                            }
-
-                            paramValidators.forEach(v -> v.postVisit(DataType.PARAMETERS));
-                            // All parameters of this method have been visited
-                        }
-
-                        // If this method (or its parameter) has issues, add it to the class' result
-                        if (!methodResult.getData().isEmpty() || !methodResult.isEmpty()) {
-                            classResult.addMethod(methodResult);
-                        }
-
-                        // Finished visiting one method
-                    }
-
-                    methodValidators.forEach(v -> v.postVisit(DataType.METHODS));
-                    // All methods of this class have been visited
-                }
-
-                // If this class (or its children) has issues, add it to the result
-                if (!classResult.getData().isEmpty() || !classResult.isEmpty()) {
-                    results.addClass(classResult);
-                }
-
-                // Finished visiting one class
+                // Finished visiting one field
             }
 
-            classValidators.forEach(v -> v.postVisit(DataType.CLASSES));
-            // All classes have been visited
+            ctx.postVisit(ctx.fieldValidators, DataType.FIELDS);
+            // All fields have been visited
+
+            // ********** Methods ********** //
+            // Remove all validators which do not wish to visit methods (or its parameters)
+            ctx.preVisit(ctx.methodValidators, ctx.currentClassValidators, DataType.METHODS);
+
+            for (MappingDataContainer.MethodData methodData : classData.getMethods()) {
+                final MethodMetadata methodMetadata = MappingUtil.getMethodMetadata(classMetadata, methodData.getName(),
+                        methodData.getDescriptor());
+
+                // Remove all validators which do not wish to visit the parameters of this method
+                final ResultContainer.MethodResult<List<? extends ValidationIssue>> methodResult =
+                        ctx.removeMatching(ctx.currentMethodValidators, ctx.methodValidators, ctx.methodIssues,
+                                v -> !v.visitMethod(classData, methodData, classMetadata, methodMetadata),
+                                i -> new ResultContainer.MethodResult<>(methodData.getName(), methodData.getDescriptor(), i));
+
+                // ********** Parameters ********** //
+                // Remove all validators which do not wish to visit parameters
+                ctx.preVisit(ctx.paramValidators, ctx.currentMethodValidators, DataType.PARAMETERS);
+
+                for (MappingDataContainer.ParameterData paramData : methodData.getParameters()) {
+
+                    ctx.matching(ctx.paramValidators, ctx.paramIssues,
+                            v -> v.visitParameter(classData, methodData, paramData, classMetadata, methodMetadata),
+                            i -> methodResult.addParameter(new ResultContainer.ParameterResult<>(paramData.getIndex(), i)));
+
+                    // Finished visiting one parameter
+                }
+
+                ctx.postVisit(ctx.paramValidators, DataType.PARAMETERS);
+                // All parameters of this method have been visited
+
+                // If this method (or its parameter) has issues, add it to the class' result
+                if (!methodResult.getData().isEmpty() || !methodResult.isEmpty()) {
+                    classResult.addMethod(methodResult);
+                }
+
+                // Finished visiting one method
+            }
+
+            ctx.postVisit(ctx.methodValidators, DataType.METHODS);
+            // All methods of this class have been visited
+
+            // If this class (or its children) has issues, add it to the result
+            if (!classResult.getData().isEmpty() || !classResult.isEmpty()) {
+                results.addClass(classResult);
+            }
+
+            // Finished visiting one class
         }
 
+        ctx.postVisit(ctx.classValidators, DataType.CLASSES);
+        // All classes have been visited
+
         return results;
+    }
+
+    private static class Context {
+        final List<ValidationIssue> packageIssues = new ArrayList<>();
+        final Set<Validator> packageValidators;
+        final List<ValidationIssue> classIssues = new ArrayList<>();
+        final Set<Validator> classValidators;
+        final Set<Validator> currentClassValidators;
+        final List<ValidationIssue> fieldIssues = new ArrayList<>();
+        final Set<Validator> fieldValidators;
+        final List<ValidationIssue> methodIssues = new ArrayList<>();
+        final Set<Validator> methodValidators;
+        final Set<Validator> currentMethodValidators;
+        final List<ValidationIssue> paramIssues = new ArrayList<>();
+        final Set<Validator> paramValidators;
+
+        public Context(int validators) {
+            this.packageValidators = new LinkedHashSet<>(validators);
+            this.classValidators = new LinkedHashSet<>(validators);
+            this.currentClassValidators = new LinkedHashSet<>(validators);
+            this.fieldValidators = new LinkedHashSet<>(validators);
+            this.methodValidators = new LinkedHashSet<>(validators);
+            this.currentMethodValidators = new LinkedHashSet<>(validators);
+            this.paramValidators = new LinkedHashSet<>(validators);
+        }
+
+        public void matching(Set<Validator> workingSet, List<ValidationIssue> issues,
+                             Consumer<Validator> validatorConsumer, Consumer<List<? extends ValidationIssue>> issuesConsumer) {
+            issues.clear();
+            workingSet.forEach(v -> {
+                v.issueHandler = issues::add;
+                validatorConsumer.accept(v);
+                v.issueHandler = null;
+            });
+            if (!issues.isEmpty()) {
+                issuesConsumer.accept(copyOf(issues));
+                issues.clear();
+            }
+        }
+
+        public <C> C removeMatching(Set<Validator> workingSet, Set<Validator> superset, List<ValidationIssue> issues,
+                                    Predicate<Validator> validatorPredicate,
+                                    Function<List<? extends ValidationIssue>, C> resultCreator) {
+            issues.clear();
+            workingSet.clear();
+            workingSet.addAll(superset);
+            workingSet.removeIf(v -> {
+                v.issueHandler = issues::add;
+                boolean walkChildren = validatorPredicate.test(v);
+                v.issueHandler = null;
+                return walkChildren;
+            });
+            C result = resultCreator.apply(copyOf(issues));
+            issues.clear();
+            return result;
+        }
+
+        public void preVisit(Set<Validator> workingSet, Set<Validator> superset, DataType type) {
+            workingSet.clear();
+            workingSet.addAll(superset);
+            workingSet.removeIf(v -> !v.preVisit(type));
+        }
+
+        public void postVisit(Set<Validator> workingSet, DataType type) {
+            workingSet.forEach(v -> v.postVisit(type));
+        }
     }
 }
