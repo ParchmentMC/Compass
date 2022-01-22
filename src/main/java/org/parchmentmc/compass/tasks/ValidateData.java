@@ -12,10 +12,19 @@ import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.VerificationTask;
 import org.parchmentmc.compass.CompassPlugin;
+import org.parchmentmc.compass.data.validation.DataValidator;
 import org.parchmentmc.compass.data.validation.ValidationIssue;
 import org.parchmentmc.compass.data.validation.Validator;
-import org.parchmentmc.compass.data.validation.action.DataValidator;
-import org.parchmentmc.compass.data.validation.impl.*;
+import org.parchmentmc.compass.data.validation.impl.BridgeValidator;
+import org.parchmentmc.compass.data.validation.impl.ClassInitValidator;
+import org.parchmentmc.compass.data.validation.impl.EnumValidator;
+import org.parchmentmc.compass.data.validation.impl.LambdaValidator;
+import org.parchmentmc.compass.data.validation.impl.MethodStandardsValidator;
+import org.parchmentmc.compass.data.validation.impl.ParameterConflictsValidator;
+import org.parchmentmc.compass.data.validation.impl.ParameterIndexValidator;
+import org.parchmentmc.compass.data.validation.impl.ParameterStandardsValidator;
+import org.parchmentmc.compass.data.validation.impl.RecordValidator;
+import org.parchmentmc.compass.data.validation.impl.SyntheticValidator;
 import org.parchmentmc.compass.storage.io.MappingIOFormat;
 import org.parchmentmc.compass.util.ResultContainer;
 import org.parchmentmc.compass.util.download.BlackstoneDownloader;
@@ -95,36 +104,36 @@ public abstract class ValidateData extends DefaultTask implements VerificationTa
         IssueCount count = new IssueCount();
 
         logger.warn(VALIDATION, "Found validation issues in {} packages and {} classes", results.getPackages().size(),
-                results.getClasses().size());
+            results.getClasses().size());
         logger.warn(VALIDATION, "( <!> means validation warning, (X) means validation error )");
 
         for (ResultContainer.PackageResult<List<? extends ValidationIssue>> packageResult : results.getPackages()) {
             logIssue(logger, count, packageResult.getData(),
-                    "package \"" + packageResult.getName() + "\"");
+                "package \"" + packageResult.getName() + "\"");
             // error [package "{}"]: ...
         }
 
         for (ResultContainer.ClassResult<List<? extends ValidationIssue>> classResult : results.getClasses()) {
             logIssue(logger, count, classResult.getData(),
-                    "class \"" + classResult.getName() + "\"");
+                "class \"" + classResult.getName() + "\"");
             // error [class "{}"]: ...
 
             for (ResultContainer.FieldResult<List<? extends ValidationIssue>> fieldResult : classResult.getFields()) {
                 logIssue(logger, count, fieldResult.getData(),
-                        "field \"" + fieldResult.getName() + "\" of \"" + classResult.getName() + "\"");
+                    "field \"" + fieldResult.getName() + "\" of \"" + classResult.getName() + "\"");
                 // error [field "{}" of "{}"]: ...
             }
 
             for (ResultContainer.MethodResult<List<? extends ValidationIssue>> methodResult : classResult.getMethods()) {
                 logIssue(logger, count, methodResult.getData(),
-                        "method \"" + methodResult.getName() + methodResult.getDescriptor() + "\" of \""
-                                + classResult.getName() + "\"");
+                    "method \"" + methodResult.getName() + methodResult.getDescriptor() + "\" of \""
+                        + classResult.getName() + "\"");
                 // error [method "{}" of "{}"]: ...
 
                 for (ResultContainer.ParameterResult<List<? extends ValidationIssue>> paramResult : methodResult.getParameters()) {
                     logIssue(logger, count, paramResult.getData(),
-                            "parameter #" + paramResult.getIndex() + " of \"" + methodResult.getName()
-                                    + methodResult.getDescriptor() + "\" of \"" + classResult.getName() + "\"");
+                        "parameter #" + paramResult.getIndex() + " of \"" + methodResult.getName()
+                            + methodResult.getDescriptor() + "\" of \"" + classResult.getName() + "\"");
                     // error [parameter #{} of "{}" of "{}"]: ...
                 }
             }
@@ -135,7 +144,7 @@ public abstract class ValidateData extends DefaultTask implements VerificationTa
         if (count.errors > 0) {
             if (!ignoreFailures) {
                 throw new ValidationFailedException("Found " + count.warnings + " validation warnings and "
-                        + count.errors + " validation errors");
+                    + count.errors + " validation errors");
             } else {
                 logger.warn("Ignoring failures.");
             }

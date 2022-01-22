@@ -1,19 +1,16 @@
 package org.parchmentmc.compass.data.sanitation;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.parchmentmc.compass.data.sanitation.Sanitizer.Action;
-import org.parchmentmc.compass.data.sanitation.Sanitizer.Action.ActionType;
-import org.parchmentmc.compass.util.MappingUtil;
+import org.parchmentmc.compass.data.visitation.ModifyingDataVisitor;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
-import org.parchmentmc.feather.metadata.ClassMetadata;
-import org.parchmentmc.feather.metadata.FieldMetadata;
-import org.parchmentmc.feather.metadata.MethodMetadata;
 import org.parchmentmc.feather.metadata.SourceMetadata;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
-import static org.parchmentmc.feather.mapping.MappingDataBuilder.*;
+import static org.parchmentmc.feather.mapping.MappingDataBuilder.copyOf;
 
 /**
  * A data sanitizer, which runs multiple {@link Sanitizer} on given input mapping data.
@@ -59,145 +56,11 @@ public class DataSanitizer {
      */
     public MappingDataContainer sanitize(MappingDataContainer inputData, @Nullable SourceMetadata metadata) {
         final MappingDataBuilder workingData = copyOf(inputData);
-        final Map<String, ClassMetadata> classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
-
-        Context ctx = new Context();
 
         for (Sanitizer sanitizer : sanitizers) {
-            ctx.sanitizer = sanitizer;
-
-            int revisits = 0;
-
-            do {
-                if (!sanitizer.start(metadata != null)) break; // Skip if the sanitizer doesn't want to
-
-                // **** Packages ****
-                for (MutablePackageData packageData : workingData.getPackages()) {
-                    final Action<PackageData> action = sanitizer.sanitize(packageData);
-                    if (action.type == ActionType.DELETE) {
-                        ctx.packagesToRemove.add(packageData.getName());
-                    } else if (action.type == ActionType.MODIFY && action.data != null) {
-                        packageData.clearJavadoc().addJavadoc(action.data.getJavadoc());
-                        if (packageData.getJavadoc().isEmpty()) {
-                            ctx.packagesToRemove.add(packageData.getName());
-                        }
-                    }
-                    // Ignore skip, as package data have no children
-                }
-                ctx.packagesToRemove.forEach(workingData::removePackage);
-                ctx.packagesToRemove.clear();
-
-                // **** Classes ****
-                for (MutableClassData classData : workingData.getClasses()) {
-                    final ClassMetadata classMeta = classMetadataMap.get(classData.getName());
-                    if (sanitizeClass(ctx, classData, classMeta)) {
-                        ctx.classesToRemove.add(classData.getName());
-                    }
-                }
-                ctx.classesToRemove.forEach(workingData::removeClass);
-                ctx.classesToRemove.clear();
-
-            } while (revisits++ < revisitLimit && sanitizer.revisit());
-
+            ModifyingDataVisitor.visit(revisitLimit, sanitizer, workingData, metadata);
         }
 
         return workingData;
-    }
-
-    // Return true to delete
-    private boolean sanitizeClass(Context ctx,
-                                  MutableClassData classData, @Nullable ClassMetadata classMeta) {
-        final Action<ClassData> action = ctx.sanitizer.sanitize(classData, classMeta);
-
-        if (action.type == ActionType.MODIFY && action.data != null) {
-            classData.clearJavadoc().addJavadoc(action.data.getJavadoc());
-        }
-
-        if (!action.skip) {
-            // Visit fields
-            for (MutableFieldData fieldData : classData.getFields()) {
-                if (sanitizeField(ctx, classData, fieldData, classMeta)) {
-                    ctx.fieldsToRemove.add(fieldData.getName());
-                }
-            }
-            ctx.fieldsToRemove.forEach(classData::removeField);
-            ctx.fieldsToRemove.clear();
-
-            // Visit methods
-            for (MutableMethodData methodData : classData.getMethods()) {
-                if (sanitizeMethod(ctx, classData, methodData, classMeta)) {
-                    ctx.methodsToRemove.add(new String[]{ methodData.getName(), methodData.getDescriptor() });
-                }
-            }
-            ctx.methodsToRemove.forEach(arr -> classData.removeMethod(arr[0], arr[1]));
-            ctx.methodsToRemove.clear();
-        }
-
-        return action.type == ActionType.DELETE || (classData.getJavadoc().isEmpty()
-                && classData.getFields().isEmpty() && classData.getMethods().isEmpty());
-    }
-
-    private boolean sanitizeField(Context ctx, ClassData classData, MutableFieldData fieldData,
-                                  @Nullable ClassMetadata classMeta) {
-
-        final FieldMetadata fieldMeta = classMeta != null ? classMeta.getFields().stream()
-                .filter(s -> s.getName().getMojangName().orElse("").contentEquals(fieldData.getName()))
-                .findFirst().orElse(null) : null;
-
-        final Action<FieldData> action = ctx.sanitizer.sanitize(classData, fieldData, classMeta, fieldMeta);
-
-        if (action.type == ActionType.MODIFY && action.data != null) {
-            fieldData.clearJavadoc().addJavadoc(action.data.getJavadoc());
-        }
-
-        return action.type == ActionType.DELETE || (fieldData.getJavadoc().isEmpty());
-    }
-
-    private boolean sanitizeMethod(Context ctx, ClassData classData, MutableMethodData methodData,
-                                   @Nullable ClassMetadata classMeta) {
-        final MethodMetadata methodMeta = classMeta != null ? classMeta.getMethods().stream()
-                .filter(s -> s.getName().getMojangName().orElse("").contentEquals(methodData.getName())
-                        && s.getDescriptor().getMojangName().orElse("").contentEquals(methodData.getDescriptor()))
-                .findFirst().orElse(null) : null;
-
-        final Action<MethodData> action = ctx.sanitizer.sanitize(classData, methodData, classMeta, methodMeta);
-
-        if (action.type == ActionType.MODIFY && action.data != null) {
-            methodData.clearJavadoc().addJavadoc(action.data.getJavadoc());
-        }
-
-        if (!action.skip) {
-            for (MutableParameterData paramData : methodData.getParameters()) {
-                if (sanitizeParam(ctx, classData, methodData, paramData, classMeta, methodMeta)) {
-                    ctx.paramsToRemove.add(paramData.getIndex());
-                }
-            }
-            ctx.paramsToRemove.forEach(methodData::removeParameter);
-            ctx.paramsToRemove.clear();
-        }
-
-        return action.type == ActionType.DELETE || (methodData.getJavadoc().isEmpty() && methodData.getParameters().isEmpty());
-    }
-
-    private boolean sanitizeParam(Context ctx, ClassData classData, MethodData methodData, MutableParameterData paramData,
-                                  @Nullable ClassMetadata classMeta, @Nullable MethodMetadata methodMeta) {
-
-        final Action<ParameterData> action = ctx.sanitizer.sanitize(classData, methodData, paramData, classMeta, methodMeta);
-
-        if (action.type == ActionType.MODIFY && action.data != null) {
-            paramData.setName(action.data.getName()).setJavadoc(action.data.getJavadoc());
-        }
-
-        return action.type == ActionType.DELETE || (paramData.getName() == null && paramData.getJavadoc() == null);
-    }
-
-    private static class Context {
-        Sanitizer sanitizer;
-        Set<String> packagesToRemove = new HashSet<>();
-        Set<String> classesToRemove = new HashSet<>();
-        Set<String> fieldsToRemove = new HashSet<>();
-        // Each array has two elements: the method name, then the method descriptor
-        Set<String[]> methodsToRemove = new HashSet<>();
-        Set<Byte> paramsToRemove = new HashSet<>();
     }
 }

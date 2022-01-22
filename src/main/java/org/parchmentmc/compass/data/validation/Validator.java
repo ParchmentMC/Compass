@@ -1,84 +1,56 @@
 package org.parchmentmc.compass.data.validation;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.gradle.api.Named;
-import org.parchmentmc.feather.metadata.ClassMetadata;
-import org.parchmentmc.feather.metadata.FieldMetadata;
-import org.parchmentmc.feather.metadata.MethodMetadata;
+import org.parchmentmc.compass.data.visitation.DataVisitor;
 
 import java.util.function.Consumer;
-
-import static org.parchmentmc.feather.mapping.MappingDataContainer.*;
 
 /**
  * A validator for mapping data.
  *
- * <p>The mapping data passed into the validators must be in Official names.</p>
+ * <p>Validators will only pass through the mapping set <strong>once</strong>; it will not revisit the mapping set.</p>
  *
- * <p>Implementors should override one of the {@code validate} methods and implement their validation logic, and use
- * the provided {@link AbstractValidator} to ease implementation.</p>
+ * <p>The mapping data passed into the validators must be in official names.</p>
+ *
+ * <p>Implementors should override one of the {@code visit} methods and implement their validation logic.</p>
  *
  * @see org.parchmentmc.feather.mapping.MappingDataContainer
  */
-public interface Validator extends Named {
-    /**
-     * Validates the given package data.
-     *
-     * @param issueHandler the issues handler for the package data
-     * @param packageData  the package data to be validated
-     */
-    default void validate(Consumer<? super ValidationIssue> issueHandler, PackageData packageData) {
+public abstract class Validator implements Named, DataVisitor {
+    private final String name;
+    Consumer<? super ValidationIssue> issueHandler;
+
+    protected Validator(String name) {
+        this.name = name;
+    }
+
+    @Override
+    @NonNull
+    public final String getName() {
+        return name;
     }
 
     /**
-     * Validates the given class data.
+     * {@inheritDoc}
      *
-     * @param issueHandler  the issues handler for the class data
-     * @param classData     the class data to be validated
-     * @param classMetadata the class metadata, may be {@code null}
+     * @deprecated Validators will never revisit the mapping data after their first pass.
      */
-    default void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData,
-                          @Nullable ClassMetadata classMetadata) {
+    @Deprecated
+    @Override
+    public final boolean revisit() {
+        return false;
     }
 
-    /**
-     * Validates the given field data.
-     *
-     * @param issueHandler  the issues handler for the field data
-     * @param classData     the owning class data
-     * @param fieldData     the field data to be validated
-     * @param classMetadata the class metadata, may be {@code null}
-     * @param fieldMetadata the field metadata, may be {@code null}
-     */
-    default void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, FieldData fieldData,
-                          @Nullable ClassMetadata classMetadata, @Nullable FieldMetadata fieldMetadata) {
+    protected void error(String message) {
+        if (issueHandler != null) {
+            issueHandler.accept(new ValidationIssue.ValidationError(this, message));
+        }
     }
 
-    /**
-     * Validates the given method data.
-     *
-     * @param issueHandler   the issues handler for the field data
-     * @param classData      the owning class data
-     * @param methodData     the method data to be validated
-     * @param classMetadata  the class metadata, may be {@code null}
-     * @param methodMetadata the method metadata, may be {@code null}
-     */
-    default void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
-                          @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
-    }
-
-    /**
-     * Validates the given parameter data.
-     *
-     * @param issueHandler   the issues handler for the field data
-     * @param classData      the owning class data
-     * @param methodData     the owning method data
-     * @param paramData      the parameter data to be validated
-     * @param classMetadata  the class metadata, may be {@code null}
-     * @param methodMetadata the method metadata, may be {@code null}
-     */
-    default void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
-                          ParameterData paramData, @Nullable ClassMetadata classMetadata,
-                          @Nullable MethodMetadata methodMetadata) {
+    protected void warning(String message) {
+        if (issueHandler != null) {
+            issueHandler.accept(new ValidationIssue.ValidationWarning(this, message));
+        }
     }
 }

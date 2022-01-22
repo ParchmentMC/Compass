@@ -1,19 +1,21 @@
 package org.parchmentmc.compass.data.validation.impl;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.parchmentmc.compass.data.validation.AbstractValidator;
-import org.parchmentmc.compass.data.validation.ValidationIssue;
+import org.parchmentmc.compass.data.validation.Validator;
 import org.parchmentmc.compass.util.MethodDescriptorVisitor;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
 import org.parchmentmc.feather.mapping.MappingDataContainer.ClassData;
 import org.parchmentmc.feather.mapping.MappingDataContainer.MethodData;
-import org.parchmentmc.feather.metadata.*;
+import org.parchmentmc.feather.metadata.ClassMetadata;
+import org.parchmentmc.feather.metadata.MethodMetadata;
+import org.parchmentmc.feather.metadata.RecordMetadata;
+import org.parchmentmc.feather.metadata.WithName;
+import org.parchmentmc.feather.metadata.WithType;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -23,7 +25,7 @@ import java.util.stream.Collectors;
  * @see <a href="https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.10.4.1">The Java&reg; Language
  * Specification, Java SE 17 Edition, &sect;8.10.4.1 "Normal Canonical Constructors"</a>
  */
-public class RecordValidator extends AbstractValidator {
+public class RecordValidator extends Validator {
     private final Map<String, String> classesToCanonicalDescriptors = new HashMap<>();
 
     public RecordValidator() {
@@ -31,11 +33,17 @@ public class RecordValidator extends AbstractValidator {
     }
 
     @Override
-    public void validate(Consumer<? super ValidationIssue> issueHandler, ClassData classData, MethodData methodData,
-                         @Nullable ClassMetadata classMeta, @Nullable MethodMetadata methodMeta) {
-        if (classMeta == null || !classMeta.isRecord()) return; // We have metadata available and is a record class
+    public boolean preVisit(DataType type) {
+        return DataType.METHODS.test(type);
+    }
 
-        if (!methodData.getName().equals("<init>")) return; // Is a constructor
+    @Override
+    public boolean visitMethod(ClassData classData, MethodData methodData,
+                               @Nullable ClassMetadata classMeta, @Nullable MethodMetadata methodMeta) {
+        if (classMeta == null || !classMeta.isRecord())
+            return false; // We have metadata available and is a record class
+
+        if (!methodData.getName().equals("<init>")) return false; // Is a constructor
 
         // Check if the method is the canonical constructor
         // The canonical constructor has the same amount and type of parameters as the record's components
@@ -45,9 +53,10 @@ public class RecordValidator extends AbstractValidator {
         final String canonicalDesc = classesToCanonicalDescriptors.computeIfAbsent(classData.getName(),
             s -> createCanonicalConstructor(classMeta));
 
-        if (!methodData.getDescriptor().equals(canonicalDesc)) return; // Matches expected descriptor for canonical ctor
+        if (!methodData.getDescriptor().equals(canonicalDesc))
+            return false; // Matches expected descriptor for canonical ctor
 
-        if (methodData.getParameters().isEmpty()) return; // Fail-fast if there's no parameters mapped
+        if (methodData.getParameters().isEmpty()) return false; // Fail-fast if there's no parameters mapped
 
         final List<String> recordNames = classMeta.getRecords().stream()
             .map(RecordMetadata::getField)
@@ -61,11 +70,13 @@ public class RecordValidator extends AbstractValidator {
             if (param != null && param.getName() != null) {
                 final String expectedName = recordNames.get(position);
                 if (!param.getName().equals(expectedName)) {
-                    issueHandler.accept(error("Parameter for canonical constructor named '" + param.getName()
-                        + "' does not matched expected name of '" + expectedName + "'"));
+                    error("Parameter for canonical constructor named '" + param.getName()
+                        + "' does not matched expected name of '" + expectedName + "'");
                 }
             }
         });
+
+        return false;
     }
 
     private static String createCanonicalConstructor(ClassMetadata classMeta) {

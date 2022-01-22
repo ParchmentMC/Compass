@@ -7,16 +7,30 @@ import org.parchmentmc.compass.util.download.ObfuscationMapsDownloader;
 import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
 import org.parchmentmc.feather.metadata.ClassMetadata;
+import org.parchmentmc.feather.metadata.FieldMetadata;
+import org.parchmentmc.feather.metadata.MethodMetadata;
 import org.parchmentmc.feather.metadata.SourceMetadata;
+import org.parchmentmc.feather.named.Named;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.parchmentmc.feather.mapping.MappingDataBuilder.*;
+import static org.parchmentmc.feather.mapping.MappingDataBuilder.MutableClassData;
+import static org.parchmentmc.feather.mapping.MappingDataBuilder.MutableFieldData;
+import static org.parchmentmc.feather.mapping.MappingDataBuilder.MutableMethodData;
+import static org.parchmentmc.feather.mapping.MappingDataBuilder.MutablePackageData;
+import static org.parchmentmc.feather.mapping.MappingDataBuilder.MutableParameterData;
+import static org.parchmentmc.feather.mapping.MappingDataBuilder.copyOf;
 
 public class MappingUtil {
 
@@ -295,5 +309,76 @@ public class MappingUtil {
         }
 
         return classMetadataMap;
+    }
+
+    /**
+     * Returns the matching field metadata from the class metadata according to the name from the naming function.
+     *
+     * @param nameFunction  the naming function
+     * @param classMetadata the class metadata, may be {@code null}
+     * @param fieldName     the field name
+     * @return the matching field metadata, or {@code null} if either the class metadata is {@code null} or there is no
+     * field metadata in the class which has a matching name
+     */
+    @Nullable
+    private static FieldMetadata getFieldMetadata(Function<Named, Optional<String>> nameFunction,
+                                                  @Nullable ClassMetadata classMetadata, String fieldName) {
+        if (classMetadata == null) return null;
+
+        return classMetadata.getFields().stream()
+                .filter(s -> nameFunction.apply(s.getName()).orElse("").contentEquals(fieldName))
+                .findFirst().orElse(null);
+    }
+
+    /**
+     * Returns the matching field metadata from the class metadata according to {@linkplain Named#getMojangName()
+     * Mojang names}.
+     *
+     * @param classMetadata the class metadata, may be {@code null}
+     * @param fieldName     the field name
+     * @return the matching field metadata, or {@code null} if either the class metadata is {@code null} or there is no
+     * field metadata in the class which has a matching Mojang name
+     * @see #getFieldMetadata(Function, ClassMetadata, String)
+     */
+    @Nullable
+    public static FieldMetadata getFieldMetadata(@Nullable ClassMetadata classMetadata, String fieldName) {
+        return getFieldMetadata(Named::getMojangName, classMetadata, fieldName);
+    }
+
+    /**
+     * Returns the matching method metadata from the class metadata according to the names from the naming function.
+     *
+     * @param nameFunction  the naming function
+     * @param classMetadata the class metadata, may be {@code null}
+     * @param methodName    the method name
+     * @param methodDesc    the method description
+     * @return the matching method metadata, or {@code null} if either the class metadata is {@code null} or there is no
+     * method metadata in the class which has a matching name and descriptor
+     */
+    @Nullable
+    private static MethodMetadata getMethodMetadata(Function<Named, Optional<String>> nameFunction,
+                                                    @Nullable ClassMetadata classMetadata, String methodName, String methodDesc) {
+        if (classMetadata == null) return null;
+
+        return classMetadata.getMethods().stream()
+                .filter(s -> nameFunction.apply(s.getName()).orElse("").contentEquals(methodName)
+                        && nameFunction.apply(s.getDescriptor()).orElse("").contentEquals(methodDesc))
+                .findFirst().orElse(null);
+    }
+
+    /**
+     * Returns the matching method metadata from the class metadata according to {@linkplain Named#getMojangName()
+     * Mojang names}.
+     *
+     * @param classMetadata the class metadata, may be {@code null}
+     * @param methodName    the method name
+     * @param methodDesc    the method description
+     * @return the matching method metadata, or {@code null} if either the class metadata is {@code null} or there is no
+     * method metadata in the class which has a matching name and descriptor with Mojang names
+     * @see #getMethodMetadata(Function, ClassMetadata, String, String)
+     */
+    @Nullable
+    public static MethodMetadata getMethodMetadata(@Nullable ClassMetadata classMetadata, String methodName, String methodDesc) {
+        return getMethodMetadata(Named::getMojangName, classMetadata, methodName, methodDesc);
     }
 }
