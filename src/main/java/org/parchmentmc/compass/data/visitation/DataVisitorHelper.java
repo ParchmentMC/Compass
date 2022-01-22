@@ -91,7 +91,7 @@ class DataVisitorHelper {
             }
 
             visitor.postVisit(DataType.CLASSES);
-        } while (visitor.revisit() && visitCount < revisitLimit);
+        } while (visitCount < revisitLimit && visitor.revisit());
     }
 
     // ModifyingDataVisitor
@@ -143,7 +143,7 @@ class DataVisitorHelper {
             ctx.classesToRemove.clear();
 
             visitor.postVisit(DataType.CLASSES);
-        } while (visitor.revisit() && visitCount < revisitLimit);
+        } while (visitCount < revisitLimit && visitor.revisit());
     }
 
     // Return true to delete
