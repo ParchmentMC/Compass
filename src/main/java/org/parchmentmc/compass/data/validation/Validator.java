@@ -43,10 +43,14 @@ public abstract class Validator implements Named, DataVisitor {
     }
 
     protected void error(String message) {
-        issueHandler.accept(new ValidationIssue.ValidationError(this, message));
+        if (issueHandler != null) {
+            issueHandler.accept(new ValidationIssue.ValidationError(this, message));
+        }
     }
 
     protected void warning(String message) {
-        issueHandler.accept(new ValidationIssue.ValidationWarning(this, message));
+        if (issueHandler != null) {
+            issueHandler.accept(new ValidationIssue.ValidationWarning(this, message));
+        }
     }
 }
