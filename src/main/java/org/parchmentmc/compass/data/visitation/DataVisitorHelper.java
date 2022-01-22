@@ -25,7 +25,6 @@ import static org.parchmentmc.feather.mapping.MappingDataBuilder.MutableMethodDa
 import static org.parchmentmc.feather.mapping.MappingDataBuilder.MutableParameterData;
 import static org.parchmentmc.feather.mapping.MappingDataBuilder.PackageData;
 import static org.parchmentmc.feather.mapping.MappingDataBuilder.ParameterData;
-import static org.parchmentmc.feather.mapping.MappingDataBuilder.copyOf;
 
 // Package-private helper class for the actual impl. for visiting the mapping data
 class DataVisitorHelper {
@@ -113,14 +112,18 @@ class DataVisitorHelper {
 
                     if (action.type == Action.ActionType.MODIFY && action.data != null) {
                         packageData.clearJavadoc().addJavadoc(action.data.getJavadoc());
+                    } else if (action.type == Action.ActionType.REPLACE && action.data != null) {
+                        ctx.packagesToAdd.add(action.data);
                     }
-                    if (action.type == Action.ActionType.DELETE || packageData.getJavadoc().isEmpty()) {
+                    if (action.type.removeExisting || packageData.getJavadoc().isEmpty()) {
                         ctx.packagesToRemove.add(packageData.getName());
                     }
                     // Ignore skip, as package data have no children
                 }
                 ctx.packagesToRemove.forEach(data::removePackage);
                 ctx.packagesToRemove.clear();
+                ctx.packagesToAdd.forEach(p -> data.getOrCreatePackage(p.getName()).addJavadoc(p.getJavadoc()));
+                ctx.packagesToAdd.clear();
 
                 visitor.postVisit(DataType.PACKAGES);
             }
@@ -141,6 +144,8 @@ class DataVisitorHelper {
             }
             ctx.classesToRemove.forEach(data::removeClass);
             ctx.classesToRemove.clear();
+            ctx.classesToAdd.forEach(c -> copyClass(data.getOrCreateClass(c.getName()), c));
+            ctx.classesToAdd.clear();
 
             visitor.postVisit(DataType.CLASSES);
         } while (visitCount < revisitLimit && visitor.revisit());
@@ -152,6 +157,8 @@ class DataVisitorHelper {
 
         if (action.type == Action.ActionType.MODIFY && action.data != null) {
             classData.clearJavadoc().addJavadoc(action.data.getJavadoc());
+        } else if (action.type == Action.ActionType.REPLACE && action.data != null) {
+            ctx.classesToAdd.add(action.data);
         }
 
         if (!action.skip) {
@@ -164,6 +171,8 @@ class DataVisitorHelper {
                 }
                 ctx.fieldsToRemove.forEach(classData::removeField);
                 ctx.fieldsToRemove.clear();
+                ctx.fieldsToAdd.forEach(f -> classData.createField(f.getName(), f.getDescriptor()).addJavadoc(f.getJavadoc()));
+                ctx.fieldsToAdd.clear();
 
                 ctx.visitor.postVisit(DataType.FIELDS);
             }
@@ -177,12 +186,14 @@ class DataVisitorHelper {
                 }
                 ctx.methodsToRemove.forEach(arr -> classData.removeMethod(arr[0], arr[1]));
                 ctx.methodsToRemove.clear();
+                ctx.methodsToAdd.forEach(m -> copyMethod(classData.createMethod(m.getName(), m.getDescriptor()), m));
+                ctx.methodsToAdd.clear();
 
                 ctx.visitor.postVisit(DataType.METHODS);
             }
         }
 
-        return action.type == Action.ActionType.DELETE
+        return action.type.removeExisting
                 || (classData.getJavadoc().isEmpty() && classData.getFields().isEmpty() && classData.getMethods().isEmpty());
     }
 
@@ -193,9 +204,11 @@ class DataVisitorHelper {
 
         if (action.type == Action.ActionType.MODIFY && action.data != null) {
             fieldData.clearJavadoc().addJavadoc(action.data.getJavadoc());
+        } else if (action.type == Action.ActionType.REPLACE && action.data != null) {
+            ctx.fieldsToAdd.add(action.data);
         }
 
-        return action.type == Action.ActionType.DELETE
+        return action.type.removeExisting
                 || (fieldData.getJavadoc().isEmpty());
     }
 
@@ -207,6 +220,8 @@ class DataVisitorHelper {
 
         if (action.type == Action.ActionType.MODIFY && action.data != null) {
             methodData.clearJavadoc().addJavadoc(action.data.getJavadoc());
+        } else if (action.type == Action.ActionType.REPLACE && action.data != null) {
+            ctx.methodsToAdd.add(action.data);
         }
 
         if (!action.skip && ctx.visitor.preVisit(DataType.PARAMETERS)) {
@@ -217,11 +232,13 @@ class DataVisitorHelper {
             }
             ctx.paramsToRemove.forEach(methodData::removeParameter);
             ctx.paramsToRemove.clear();
+            ctx.paramsToAdd.forEach(p -> methodData.createParameter(p.getIndex()).setName(p.getName()).addJavadoc(p.getJavadoc()));
+            ctx.paramsToAdd.clear();
 
             ctx.visitor.postVisit(DataType.PARAMETERS);
         }
 
-        return action.type == Action.ActionType.DELETE
+        return action.type.removeExisting
                 || (methodData.getJavadoc().isEmpty() && methodData.getParameters().isEmpty());
     }
 
@@ -232,14 +249,35 @@ class DataVisitorHelper {
 
         if (action.type == Action.ActionType.MODIFY && action.data != null) {
             paramData.setName(action.data.getName()).setJavadoc(action.data.getJavadoc());
+        } else if (action.type == Action.ActionType.REPLACE && action.data != null) {
+            ctx.paramsToAdd.add(action.data);
         }
 
-        return action.type == Action.ActionType.DELETE
+        return action.type.removeExisting
                 || (paramData.getName() == null && paramData.getJavadoc() == null);
+    }
+
+    private static void copyClass(MutableClassData target, ClassData origin) {
+        target.clearJavadoc().addJavadoc(origin.getJavadoc());
+        target.clearFields();
+        origin.getFields().forEach(f -> target.createField(f.getName(), f.getDescriptor()).addJavadoc(f.getJavadoc()));
+        target.clearMethods();
+        origin.getMethods().forEach(m -> copyMethod(target.createMethod(m.getName(), m.getDescriptor()), m));
+    }
+
+    private static void copyMethod(MutableMethodData target, MethodData origin) {
+        target.clearJavadoc().addJavadoc(origin.getJavadoc());
+        target.clearParameters();
+        origin.getParameters().forEach(p -> target.createParameter(p.getIndex()).setName(p.getName()).setJavadoc(p.getJavadoc()));
     }
 
     private static class Context {
         ModifyingDataVisitor visitor;
+        Set<PackageData> packagesToAdd = new HashSet<>();
+        Set<ClassData> classesToAdd = new HashSet<>();
+        Set<FieldData> fieldsToAdd = new HashSet<>();
+        Set<MethodData> methodsToAdd = new HashSet<>();
+        Set<ParameterData> paramsToAdd = new HashSet<>();
         Set<String> packagesToRemove = new HashSet<>();
         Set<String> classesToRemove = new HashSet<>();
         Set<String> fieldsToRemove = new HashSet<>();

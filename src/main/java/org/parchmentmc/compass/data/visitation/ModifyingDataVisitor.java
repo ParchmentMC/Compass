@@ -250,6 +250,10 @@ public interface ModifyingDataVisitor extends DataVisitor {
         /**
          * Returns an action which modifies the target element and may skip visiting its children elements.
          *
+         * <p>The allowed modification to a target element is restricted to only modifications on the javadocs of the
+         * target element. If more power is needed (such as to replace the element with a differently named one), use
+         * {@link #replace(Object)} instead.</p>
+         *
          * @param newData the new data for the target element
          * @param skip    whether to skip visiting children elements of the target
          * @param <T>     the type of the target element
@@ -258,6 +262,28 @@ public interface ModifyingDataVisitor extends DataVisitor {
         public static <T> Action<T> modify(T newData, boolean skip) {
             Preconditions.checkNotNull(newData, "New data must not be null");
             return new Action<>(ActionType.MODIFY, skip, newData);
+        }
+
+        /**
+         * Returns an action which replaces the target element with a new element and skips visiting its children
+         * elements. The new element may have a different name from the target element, and may contain children elements
+         * which are also copied over.
+         *
+         * <p>This action works like a combination of {@link #modify(Object, boolean)} and {@link #delete()}: the
+         * original target element is deleted, and the new element is added with all of its children's data intact.
+         * Because the original target element is deleted, its children elements are also deleted and therefore will
+         * not be visited.</p>
+         *
+         * <p>Prefer using {@link #modify(Object, boolean)} if you only need to modify the data directly associated
+         * with the element, as a replacement action has additional costs.</p>
+         *
+         * @param newData the new element which will replace the target element
+         * @param <T> the type of the target and new element
+         * @return an action which replaces the target element with a new element and skips visiting its children
+         */
+        public static <T> Action<T> replace(T newData) {
+            Preconditions.checkNotNull(newData, "New data must not be null");
+            return new Action<>(ActionType.REPLACE, true, newData);
         }
 
         /**
@@ -289,9 +315,16 @@ public interface ModifyingDataVisitor extends DataVisitor {
         }
 
         enum ActionType {
-            NOTHING,
-            MODIFY,
-            DELETE
+            NOTHING(false),
+            MODIFY(false),
+            REPLACE(true),
+            DELETE(true);
+
+            final boolean removeExisting;
+
+            ActionType(boolean removeExisting) {
+                this.removeExisting = removeExisting;
+            }
         }
     }
 }
