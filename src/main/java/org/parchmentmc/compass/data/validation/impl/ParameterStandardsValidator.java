@@ -50,6 +50,11 @@ public class ParameterStandardsValidator extends Validator {
     }
 
     @Override
+    public boolean preVisit(DataType type) {
+        return DataType.PARAMETERS.test(type);
+    }
+
+    @Override
     public void visitParameter(ClassData classData, MethodData methodData, ParameterData paramData,
                                @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         String paramName = paramData.getName();

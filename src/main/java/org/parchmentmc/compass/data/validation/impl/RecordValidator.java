@@ -33,6 +33,11 @@ public class RecordValidator extends Validator {
     }
 
     @Override
+    public boolean preVisit(DataType type) {
+        return DataType.METHODS.test(type);
+    }
+
+    @Override
     public boolean visitMethod(ClassData classData, MethodData methodData,
                                @Nullable ClassMetadata classMeta, @Nullable MethodMetadata methodMeta) {
         if (classMeta == null || !classMeta.isRecord())

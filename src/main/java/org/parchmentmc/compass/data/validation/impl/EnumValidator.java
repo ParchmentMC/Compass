@@ -24,6 +24,11 @@ public class EnumValidator extends Validator {
     }
 
     @Override
+    public boolean preVisit(DataType type) {
+        return DataType.FIELDS.test(type) || DataType.METHODS.test(type) || DataType.PARAMETERS.test(type);
+    }
+
+    @Override
     public void visitField(ClassData classData, FieldData fieldData,
                            @Nullable ClassMetadata classMetadata, @Nullable FieldMetadata fieldMetadata) {
         if (classMetadata != null && classMetadata.hasAccessFlag(AccessFlag.ENUM)) {

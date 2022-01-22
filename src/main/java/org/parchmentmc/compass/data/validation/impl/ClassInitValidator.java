@@ -23,6 +23,11 @@ public class ClassInitValidator extends Validator {
     }
 
     @Override
+    public boolean preVisit(DataType type) {
+        return DataType.METHODS.test(type) || DataType.PARAMETERS.test(type);
+    }
+
+    @Override
     public boolean visitMethod(ClassData classData, MethodData methodData,
                                @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         if (methodData.getName().equals(CLASS_INITIALIZATION_METHOD_NAME)) {

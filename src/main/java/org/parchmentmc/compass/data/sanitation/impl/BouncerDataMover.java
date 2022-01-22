@@ -33,6 +33,11 @@ public class BouncerDataMover extends Sanitizer {
     }
 
     @Override
+    public boolean preVisit(DataType type) {
+        return DataType.METHODS.test(type);
+    }
+
+    @Override
     public Action<MethodData> modifyMethod(ClassData classData, MethodData methodData,
                                        @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         if (!finishedCollecting && methodMetadata != null && methodMetadata.getBouncingTarget().isPresent()) {

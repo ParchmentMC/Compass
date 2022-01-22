@@ -30,6 +30,11 @@ public class DescriptorParametersSanitizer extends Sanitizer {
     }
 
     @Override
+    public boolean preVisit(DataType type) {
+        return DataType.PARAMETERS.test(type);
+    }
+
+    @Override
     public Action<ParameterData> modifyParameter(ClassData classData, MethodData methodData, ParameterData paramData,
                                                  @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         final BitSet indexes = indexer.getIndexes(methodData, methodMetadata);

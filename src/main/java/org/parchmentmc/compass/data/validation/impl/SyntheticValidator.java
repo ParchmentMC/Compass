@@ -21,6 +21,11 @@ public class SyntheticValidator extends Validator {
     }
 
     @Override
+    public boolean preVisit(DataType type) {
+        return DataType.FIELDS.test(type) || DataType.METHODS.test(type) || DataType.PARAMETERS.test(type);
+    }
+
+    @Override
     public void visitField(ClassData classData, FieldData fieldData,
                            @Nullable ClassMetadata classMetadata, @Nullable FieldMetadata fieldMetadata) {
         if (fieldMetadata != null && fieldMetadata.hasAccessFlag(AccessFlag.SYNTHETIC)) {

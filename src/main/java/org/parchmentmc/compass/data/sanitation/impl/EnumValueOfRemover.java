@@ -22,6 +22,11 @@ public class EnumValueOfRemover extends Sanitizer {
     }
 
     @Override
+    public boolean preVisit(DataType type) {
+        return DataType.METHODS.test(type);
+    }
+
+    @Override
     public Action<MethodData> modifyMethod(ClassData classData, MethodData methodData,
                                            @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         if (classMetadata != null && classMetadata.hasAccessFlag(AccessFlag.ENUM)

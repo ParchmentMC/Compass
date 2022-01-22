@@ -27,6 +27,11 @@ public class SyntheticsRemover extends Sanitizer {
     }
 
     @Override
+    public boolean preVisit(DataType type) {
+        return DataType.FIELDS.test(type) || DataType.METHODS.test(type);
+    }
+
+    @Override
     public Action<FieldData> modifyField(ClassData classData, FieldData fieldData,
                                          @Nullable ClassMetadata classMetadata, @Nullable FieldMetadata fieldMetadata) {
         // Remove javadocs from synthetic fields
