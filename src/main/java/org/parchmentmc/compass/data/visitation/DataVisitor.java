@@ -15,7 +15,7 @@ import static org.parchmentmc.feather.mapping.MappingDataContainer.PackageData;
 import static org.parchmentmc.feather.mapping.MappingDataContainer.ParameterData;
 
 /**
- * A visitor for a {@link MappingDataContainer mapping data container}, with optional {@link SourceMetadata metadata}.
+ * A visitor for a {@linkplain MappingDataContainer mapping data container}, with optional {@linkplain SourceMetadata metadata}.
  *
  * @see #visit(int, DataVisitor, MappingDataContainer, SourceMetadata)
  */
@@ -124,9 +124,9 @@ public interface DataVisitor {
      *
      * @param revisitLimit the limit to the amount of times the data will be revisited; a limit of {@code 0} means the
      *                     data will not be revisited at all
-     * @param visitor   the data visitor
-     * @param container the mapping data container to be visited
-     * @param metadata  the source metadata, may be {@code null}
+     * @param visitor      the data visitor
+     * @param container    the mapping data container to be visited
+     * @param metadata     the source metadata, may be {@code null}
      * @throws IllegalArgumentException if the revisit limit is negative
      */
     static void visit(int revisitLimit, DataVisitor visitor, MappingDataContainer container, @Nullable SourceMetadata metadata) {
@@ -167,42 +167,42 @@ public interface DataVisitor {
      */
     enum DataType {
         /**
-         * Packages, represented by {@link MappingDataContainer.PackageData}.
+         * Packages, represented by {@link PackageData}.
          *
          * <p>Packages and classes are regarded as distinct in mapping data containers. Skipping the visitation of
          * packages does not mean that the classes within those packages are skipped from being visited.</p>
          *
-         * @see #visitPackage(PackageData)
+         * @see #visitPackage(MappingDataContainer.PackageData)
          */
         PACKAGES,
         /**
-         * Classes, represented by {@link MappingDataContainer.ClassData} and {@link ClassMetadata}.
+         * Classes, represented by {@link ClassData} and {@link ClassMetadata}.
          *
-         * <p>Skipping the visitation of a class means skipping the visitation of {@link #FIELDS fields} and
-         * {@link #METHODS methods} of the class.</p>
+         * <p>Skipping the visitation of a class means skipping the visitation of {@linkplain #FIELDS fields} and
+         * {@linkplain #METHODS methods} of the class.</p>
          *
-         * @see #visitClass(ClassData, ClassMetadata)
+         * @see DataVisitor#visitClass(MappingDataContainer.ClassData, ClassMetadata)
          */
         CLASSES,
         /**
-         * Fields, represented by {@link MappingDataContainer.FieldData} and {@link FieldMetadata}.
+         * Fields, represented by {@link FieldData} and {@link FieldMetadata}.
          *
-         * @see #visitField(ClassData, FieldData, ClassMetadata, FieldMetadata)
+         * @see #visitField(MappingDataContainer.ClassData, MappingDataContainer.FieldData, ClassMetadata, FieldMetadata)
          */
         FIELDS,
         /**
-         * Methods, represented by {@link MappingDataContainer.MethodData} and {@link MethodMetadata}.
+         * Methods, represented by {@link MethodData} and {@link MethodMetadata}.
          *
          * <p>Skipping the visitation of a method means skipping the visitation of the method's
-         * {@link #PARAMETERS parameters}.</p>
+         * {@linkplain #PARAMETERS parameters}.</p>
          *
-         * @see #visitMethod(ClassData, MethodData, ClassMetadata, MethodMetadata)
+         * @see #visitMethod(MappingDataContainer.ClassData, MappingDataContainer.MethodData, ClassMetadata, MethodMetadata)
          */
         METHODS,
         /**
-         * Method parameters, represented by {@link MappingDataContainer.ParameterData}.
+         * Method parameters, represented by {@link ParameterData}.
          *
-         * @see #visitParameter(ClassData, MethodData, ParameterData, ClassMetadata, MethodMetadata)
+         * @see #visitParameter(MappingDataContainer.ClassData, MappingDataContainer.MethodData, MappingDataContainer.ParameterData, ClassMetadata, MethodMetadata)
          */
         PARAMETERS
     }

@@ -76,6 +76,7 @@ public interface ModifyingDataVisitor extends DataVisitor {
      * @param fieldData     the field data
      * @param classMetadata the owning class's metadata, may be {@code null}
      * @param fieldMetadata the field metadata, may be {@code null}
+     * @return an action to take on the field data
      * @see DataType#FIELDS
      */
     default Action<FieldData> modifyField(ClassData classData, FieldData fieldData,
@@ -155,9 +156,9 @@ public interface ModifyingDataVisitor extends DataVisitor {
     /**
      * {@inheritDoc}
      *
-     * @deprecated Callers should use {@link #modifyPackage(PackageData)} instead of this method (which is also called
-     * by the default implementation of this method). The modification by that method as represented in its
-     * {@link Action} is disregarded.
+     * @deprecated Callers should use {@link #modifyPackage(MappingDataContainer.PackageData)} instead of this method
+     * (which is also called by the default implementation of this method). The modification by that method as
+     * represented in its {@link Action} is disregarded.
      */
     @Deprecated
     default void visitPackage(PackageData data) {
@@ -167,9 +168,9 @@ public interface ModifyingDataVisitor extends DataVisitor {
     /**
      * {@inheritDoc}
      *
-     * @deprecated Callers should use {@link #modifyClass(ClassData, ClassMetadata)} instead of this method (which is
-     * also called by the default implementation of this method). The modification by that method as represented in its
-     * {@link Action} is disregarded.
+     * @deprecated Callers should use {@link #modifyClass(MappingDataContainer.ClassData, ClassMetadata)} instead of
+     * this method (which is also called by the default implementation of this method). The modification by that method
+     * as represented in its {@link Action} is disregarded.
      */
     @Deprecated
     default boolean visitClass(ClassData classData, @Nullable ClassMetadata classMetadata) {
@@ -179,9 +180,9 @@ public interface ModifyingDataVisitor extends DataVisitor {
     /**
      * {@inheritDoc}
      *
-     * @deprecated Callers should use {@link #modifyField(ClassData, FieldData, ClassMetadata, FieldMetadata)} instead
-     * of this method (which is also called by the default implementation of this method). The modification by that
-     * method as represented in its {@link Action} is disregarded.
+     * @deprecated Callers should use {@link #modifyField(MappingDataContainer.ClassData, MappingDataContainer.FieldData,
+     * ClassMetadata, FieldMetadata)} instead of this method (which is also called by the default implementation of this
+     * method). The modification by that method as represented in its {@link Action} is disregarded.
      */
     @Deprecated
     default void visitField(ClassData classData, FieldData fieldData,
@@ -192,9 +193,9 @@ public interface ModifyingDataVisitor extends DataVisitor {
     /**
      * {@inheritDoc}
      *
-     * @deprecated Callers should use {@link #modifyMethod(ClassData, MethodData, ClassMetadata, MethodMetadata)}
-     * instead of this method (which is also called by the default implementation of this method). The modification by
-     * that method as represented in its {@link Action} is disregarded.
+     * @deprecated Callers should use {@link #modifyMethod(MappingDataContainer.ClassData, MappingDataContainer.MethodData,
+     * ClassMetadata, MethodMetadata)} instead of this method (which is also called by the default implementation of
+     * this method). The modification by that method as represented in its {@link Action} is disregarded.
      */
     @Deprecated
     default boolean visitMethod(ClassData classData, MethodData methodData,
@@ -205,9 +206,10 @@ public interface ModifyingDataVisitor extends DataVisitor {
     /**
      * {@inheritDoc}
      *
-     * @deprecated Callers should use {@link #modifyParameter(ClassData, MethodData, ParameterData, ClassMetadata, MethodMetadata)}
-     * instead of this method (which is also called by the default implementation of this method). The modification by
-     * that method as represented in its {@link Action} is disregarded.
+     * @deprecated Callers should use {@link #modifyParameter(MappingDataContainer.ClassData, MappingDataContainer.MethodData,
+     * MappingDataContainer.ParameterData, ClassMetadata, MethodMetadata)} instead of this method (which is also called
+     * by the default implementation of this method). The modification by that method as represented in its
+     * {@link Action} is disregarded.
      */
     @Deprecated
     default void visitParameter(ClassData classData, MethodData methodData, ParameterData paramData,
