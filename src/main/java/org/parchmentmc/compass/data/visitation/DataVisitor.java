@@ -8,6 +8,8 @@ import org.parchmentmc.feather.metadata.FieldMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;
 import org.parchmentmc.feather.metadata.SourceMetadata;
 
+import java.util.function.Predicate;
+
 import static org.parchmentmc.feather.mapping.MappingDataContainer.ClassData;
 import static org.parchmentmc.feather.mapping.MappingDataContainer.FieldData;
 import static org.parchmentmc.feather.mapping.MappingDataContainer.MethodData;
@@ -165,7 +167,7 @@ public interface DataVisitor {
     /**
      * Type of the various objects visitable by a {@link DataVisitor}.
      */
-    enum DataType {
+    enum DataType implements Predicate<DataType> {
         /**
          * Packages, represented by {@link PackageData}.
          *
@@ -185,25 +187,69 @@ public interface DataVisitor {
          */
         CLASSES,
         /**
-         * Fields, represented by {@link FieldData} and {@link FieldMetadata}.
+         * Fields, represented by {@link FieldData} and {@link FieldMetadata}. The enclosing data type is {@link #CLASSES}.
          *
          * @see #visitField(MappingDataContainer.ClassData, MappingDataContainer.FieldData, ClassMetadata, FieldMetadata)
          */
-        FIELDS,
+        FIELDS(CLASSES),
         /**
-         * Methods, represented by {@link MethodData} and {@link MethodMetadata}.
+         * Methods, represented by {@link MethodData} and {@link MethodMetadata}. The enclosing data type is {@link #CLASSES}.
          *
          * <p>Skipping the visitation of a method means skipping the visitation of the method's
          * {@linkplain #PARAMETERS parameters}.</p>
          *
          * @see #visitMethod(MappingDataContainer.ClassData, MappingDataContainer.MethodData, ClassMetadata, MethodMetadata)
          */
-        METHODS,
+        METHODS(CLASSES),
         /**
-         * Method parameters, represented by {@link ParameterData}.
+         * Method parameters, represented by {@link ParameterData}. The enclosing data type is {@link #METHODS}.
          *
          * @see #visitParameter(MappingDataContainer.ClassData, MappingDataContainer.MethodData, MappingDataContainer.ParameterData, ClassMetadata, MethodMetadata)
          */
-        PARAMETERS
+        PARAMETERS(METHODS);
+
+        @Nullable
+        private final DataType enclosingType;
+
+        DataType() {
+            this(null);
+        }
+
+        DataType(@Nullable DataType enclosingType) {
+            this.enclosingType = enclosingType;
+        }
+
+        /**
+         * Tests whether the given data type is either equal to this data type or recursively encloses this data type.
+         *
+         * <p>A data type {@code A} recursively encloses another data type {@code B} if elements of data type {@code B}
+         * can only be visited by a data visitor if the visitor also visits elements of data type {@code A}. For example,
+         * the data type {@link #METHODS} encloses the data type {@link #PARAMETERS}. Another example: the data type
+         * {@link #CLASSES} directly encloses the data type {@link #METHODS}, which means it recursively encloses
+         * {@link #PARAMETERS} as well.</p>
+         *
+         * <p>This method allows for a data visitor to neatly filter out unwanted data types in their {@link
+         * #preVisit(DataType)} method without needing to manually perform an equals check against a data type and all
+         * of its enclosing data types. For example, to create a data visitor that visits {@linkplain #PARAMETERS
+         * method parameters} and {@linkplain #PACKAGES packages}:</p>
+         *
+         * <pre>{@code
+         * public class ExampleDataVisitor implements DataVisitor {
+         *     // ...
+         *     @Override
+         *     public boolean preVisit(DataType type) {
+         *         return DataType.PACKAGES.test(type) || DataType.PARAMETERS.test(type);
+         *     }
+         *     // ...
+         * }
+         * }</pre>
+         *
+         * @param dataType the data type to be tested
+         * @return {@code true} if the data type is equal to or encloses this data type
+         */
+        @Override
+        public boolean test(DataType dataType) {
+            return dataType == this || (enclosingType != null && enclosingType.test(dataType));
+        }
     }
 }
