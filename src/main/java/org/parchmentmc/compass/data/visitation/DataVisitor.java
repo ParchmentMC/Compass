@@ -236,7 +236,6 @@ public interface DataVisitor {
          * <pre>{@code
          * public class ExampleDataVisitor implements DataVisitor {
          *     // ...
-         *     @Override
          *     public boolean preVisit(DataType type) {
          *         return DataType.PACKAGES.test(type) || DataType.PARAMETERS.test(type);
          *     }
