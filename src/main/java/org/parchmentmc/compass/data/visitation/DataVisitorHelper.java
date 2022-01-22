@@ -156,7 +156,7 @@ class DataVisitorHelper {
 
         if (!action.skip) {
             // Visit fields
-            if (!ctx.visitor.preVisit(DataType.FIELDS)) {
+            if (ctx.visitor.preVisit(DataType.FIELDS)) {
                 for (MutableFieldData fieldData : classData.getFields()) {
                     if (sanitizeField(ctx, classData, fieldData, classMeta)) {
                         ctx.fieldsToRemove.add(fieldData.getName());
@@ -169,7 +169,7 @@ class DataVisitorHelper {
             }
 
             // Visit methods
-            if (!ctx.visitor.preVisit(DataType.METHODS)) {
+            if (ctx.visitor.preVisit(DataType.METHODS)) {
                 for (MutableMethodData methodData : classData.getMethods()) {
                     if (sanitizeMethod(ctx, classData, methodData, classMeta)) {
                         ctx.methodsToRemove.add(new String[]{methodData.getName(), methodData.getDescriptor()});
@@ -209,7 +209,7 @@ class DataVisitorHelper {
             methodData.clearJavadoc().addJavadoc(action.data.getJavadoc());
         }
 
-        if (!action.skip && !ctx.visitor.preVisit(DataType.PARAMETERS)) {
+        if (!action.skip && ctx.visitor.preVisit(DataType.PARAMETERS)) {
             for (MutableParameterData paramData : methodData.getParameters()) {
                 if (sanitizeParam(ctx, classData, methodData, paramData, classMeta, methodMeta)) {
                     ctx.paramsToRemove.add(paramData.getIndex());
