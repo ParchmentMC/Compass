@@ -148,13 +148,15 @@ public interface DataVisitor {
     }
 
     /**
-     * {@return whether to revisit the mapping data} This allows a visitor to do multiple passes over the mapping data,
-     * for various purposes such as collecting required information about the data as a whole before doing other
-     * inspections on the data in another pass.
+     * Returns {@code true} if this visitor wishes to revisit the mapping data. This allows a visitor to do multiple
+     * passes over the mapping data, for various purposes such as collecting required information about the data as a
+     * whole before doing other inspections on the data in another pass.
      *
      * <p>There is no guarantee that a visitor which returns {@code true} from this method <em>will</em> be able to
      * revisit the mapping data. For example, the caller of the visitor may have a limit for how many times a data
      * visitor may revisit the mapping data.</p>
+     *
+     * @return {@code true} if this visitor wishes to revisit the mapping data
      */
     default boolean revisit() {
         return false;
