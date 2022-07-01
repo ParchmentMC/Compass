@@ -23,7 +23,6 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.parchmentmc.compass.storage.io.enigma.EnigmaWriter.stripToMostInner;
@@ -45,6 +44,9 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
     static final String METHOD = "METHOD";
     static final String PARAM = "ARG";
     static final String COMMENT = "COMMENT";
+    
+    static final String VERSION_INFO_JSON = "info.json";
+    static final String PACKAGES_DATA_JSON = "packages.json";
 
     private static final ParameterizedType PACKAGE_COLLECTION_TYPE =
             Types.newParameterizedType(Collection.class, Types.subtypeOf(MappingDataContainer.PackageData.class));
@@ -71,7 +73,7 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
         Files.createDirectories(base);
 
         // Write out version data
-        try (BufferedSink sink = Okio.buffer(Okio.sink(base.resolve("info.json")))) {
+        try (BufferedSink sink = Okio.buffer(Okio.sink(base.resolve(VERSION_INFO_JSON)))) {
             DataInfo info = new DataInfo();
             info.version = data.getFormatVersion();
 
@@ -79,7 +81,7 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
         }
 
         // Write out packages.json
-        try (BufferedSink sink = Okio.buffer(Okio.sink(base.resolve("packages.json")))) {
+        try (BufferedSink sink = Okio.buffer(Okio.sink(base.resolve(PACKAGES_DATA_JSON)))) {
             moshi.adapter(PACKAGE_COLLECTION_TYPE).indent(jsonIndent).toJson(sink, data.getPackages());
         }
 
@@ -99,44 +101,48 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
 
             final Path mappingFile = base.resolve(outerClass + '.' + extension);
 
-            if (mappingFile.getParent() != null) {
-                Files.createDirectories(mappingFile.getParent());
-            }
+            writeClassFile(mappingFile, data, outerClass, visited, classes);
+        }
+    }
 
-            try (Writer writer = Files.newBufferedWriter(mappingFile)) {
-                visited.add(outerClass);
+    private void writeClassFile(Path mappingFile, MappingDataContainer data, String outerClass, Set<String> visitedClasses, Set<String> classes) throws IOException {
+        if (mappingFile.getParent() != null) {
+            Files.createDirectories(mappingFile.getParent());
+        }
 
-                ClassData outerClassData = data.getClass(outerClass);
-                // If the data for the outer class is not there, substitute an empty one
-                if (outerClassData == null) outerClassData = new ImmutableMappingDataContainer.ImmutableClassData(
-                        outerClass, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()
+        try (Writer writer = Files.newBufferedWriter(mappingFile)) {
+            visitedClasses.add(outerClass);
+
+            ClassData outerClassData = data.getClass(outerClass);
+            // If the data for the outer class is not there, substitute an empty one
+            if (outerClassData == null) outerClassData = new ImmutableMappingDataContainer.ImmutableClassData(
+                    outerClass, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()
+            );
+
+            writeClass(writer, 0, outerClass, outerClassData);
+
+            for (String clz : classes) {
+                if (clz.contentEquals(outerClass)) continue; // Skip the outer class
+                visitedClasses.add(clz);
+
+                for (String component : EnigmaWriter.expandClass(clz)) {
+                    if (visitedClasses.contains(component)) continue; // Skip if it's already been visited
+                    visitedClasses.add(component);
+                    if (component.contentEquals(clz)) break; // Skip if it's the class currently being written
+
+                    writeClass(writer, DOLLAR_SIGN.countIn(component), stripToMostInner(component),
+                            new ImmutableMappingDataContainer.ImmutableClassData(
+                                    component, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()
+                            ));
+                }
+
+                ClassData clzData = data.getClass(clz);
+                // If the data for the inner class is not there, substitute an empty one
+                if (clzData == null) clzData = new ImmutableMappingDataContainer.ImmutableClassData(
+                        clz, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()
                 );
 
-                writeClass(writer, 0, outerClass, outerClassData);
-
-                for (String clz : classes) {
-                    if (clz.contentEquals(outerClass)) continue; // Skip the outer class
-                    visited.add(clz);
-
-                    for (String component : EnigmaWriter.expandClass(clz)) {
-                        if (visited.contains(component)) continue; // Skip if it's already been visited
-                        visited.add(component);
-                        if (component.contentEquals(clz)) break; // Skip if it's the class currently being written
-
-                        writeClass(writer, DOLLAR_SIGN.countIn(component), stripToMostInner(component),
-                                new ImmutableMappingDataContainer.ImmutableClassData(
-                                        component, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()
-                                ));
-                    }
-
-                    ClassData clzData = data.getClass(clz);
-                    // If the data for the inner class is not there, substitute an empty one
-                    if (clzData == null) clzData = new ImmutableMappingDataContainer.ImmutableClassData(
-                            clz, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()
-                    );
-
-                    writeClass(writer, DOLLAR_SIGN.countIn(clz), stripToMostInner(clz), clzData);
-                }
+                writeClass(writer, DOLLAR_SIGN.countIn(clz), stripToMostInner(clz), clzData);
             }
         }
     }
