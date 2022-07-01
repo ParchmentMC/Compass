@@ -7,7 +7,7 @@ import org.parchmentmc.compass.storage.io.MappingIOFormat;
 
 public abstract class CompassExtension {
     public CompassExtension(final ProjectLayout layout) {
-        getLauncherManifestURL().convention("https://launchermeta.mojang.com/mc/game/version_manifest_v2.json");
+        getLauncherManifestURL().convention("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json");
         getProductionData().convention(layout.getProjectDirectory().dir("data"));
         getProductionDataFormat().convention(MappingIOFormat.MDC_EXPLODED);
         getStagingData().convention(layout.getProjectDirectory().dir("staging"));
