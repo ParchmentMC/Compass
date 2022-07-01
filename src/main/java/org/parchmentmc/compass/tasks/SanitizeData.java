@@ -16,6 +16,7 @@ import org.parchmentmc.compass.data.sanitation.Sanitizer;
 import org.parchmentmc.compass.data.sanitation.impl.BouncerDataMover;
 import org.parchmentmc.compass.data.sanitation.impl.DescriptorParametersSanitizer;
 import org.parchmentmc.compass.data.sanitation.impl.EnumValueOfRemover;
+import org.parchmentmc.compass.data.sanitation.impl.NonexistentMemberRemover;
 import org.parchmentmc.compass.data.sanitation.impl.SyntheticsRemover;
 import org.parchmentmc.compass.storage.io.MappingIOFormat;
 import org.parchmentmc.compass.util.download.BlackstoneDownloader;
@@ -45,6 +46,7 @@ public abstract class SanitizeData extends DefaultTask {
     public SanitizeData(ObjectFactory objectFactory) {
         sanitizers = objectFactory.namedDomainObjectList(Sanitizer.class);
 
+        getSanitizers().add(new NonexistentMemberRemover());
         getSanitizers().add(new BouncerDataMover());
         getSanitizers().add(new EnumValueOfRemover());
         getSanitizers().add(new SyntheticsRemover());

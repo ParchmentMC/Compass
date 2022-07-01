@@ -18,6 +18,7 @@ import org.parchmentmc.compass.data.validation.Validator;
 import org.parchmentmc.compass.data.validation.impl.BridgeValidator;
 import org.parchmentmc.compass.data.validation.impl.ClassInitValidator;
 import org.parchmentmc.compass.data.validation.impl.EnumValidator;
+import org.parchmentmc.compass.data.validation.impl.MemberExistenceValidator;
 import org.parchmentmc.compass.data.validation.impl.LambdaValidator;
 import org.parchmentmc.compass.data.validation.impl.MethodStandardsValidator;
 import org.parchmentmc.compass.data.validation.impl.ParameterConflictsValidator;
@@ -70,6 +71,7 @@ public abstract class ValidateData extends DefaultTask implements VerificationTa
         validators.add(new ParameterConflictsValidator());
         validators.add(new ParameterIndexValidator());
         validators.add(new RecordValidator());
+        validators.add(new MemberExistenceValidator());
     }
 
     @TaskAction
