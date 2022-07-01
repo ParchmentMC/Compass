@@ -18,7 +18,7 @@ import static org.parchmentmc.feather.mapping.MappingDataContainer.MethodData;
  */
 public class MethodStandardsValidator extends Validator {
     public MethodStandardsValidator() {
-        super("Method standards");
+        super("method standards");
     }
 
     @Override
