@@ -127,20 +127,7 @@ public abstract class GenerateExport extends DefaultTask {
      */
     private static void cascadeParentMethod(MappingDataBuilder builder, Map<String, ClassMetadata> classMetadataMap, MethodMetadata methodMeta,
             Supplier<MappingDataBuilder.MutableMethodData> methodDataSupplier) {
-        MethodMetadata parentMethodMeta = methodMeta;
-        MappingDataBuilder.MutableMethodData parentMethodData = null;
-
-        while (parentMethodData == null && parentMethodMeta != null && parentMethodMeta.getParent().isPresent()) {
-            Reference parent = parentMethodMeta.getParent().get();
-            // Get the current method metadata so we can get the next parent
-            parentMethodMeta = MappingUtil.getMethodMetadata(classMetadataMap.get(getMojangName(parent.getOwner())),
-                    getMojangName(parent.getName()), getMojangName(parent.getDescriptor()));
-            // Query the actual mapping data to see if the parent method has any javadocs or parameters
-            parentMethodData = Optional.ofNullable(builder.getClass(getMojangName(parent.getOwner())))
-                    .map(c -> c.getMethod(getMojangName(parent.getName()), getMojangName(parent.getDescriptor())))
-                    .filter(m -> !m.getJavadoc().isEmpty() || m.getParameters().stream().anyMatch(p -> p.getJavadoc() != null || p.getName() != null))
-                    .orElse(null);
-        }
+        MappingDataContainer.MethodData parentMethodData = findParentMethodData(builder, classMetadataMap, methodMeta);
 
         // This code cascades the data only if there is as valid parent method with mapping data
         if (parentMethodData != null) {
@@ -161,6 +148,33 @@ public abstract class GenerateExport extends DefaultTask {
                     methodData.getOrCreateParameter(idx).setJavadoc(parentParam.getJavadoc());
             });
         }
+    }
+
+    @Nullable
+    private static MappingDataContainer.MethodData findParentMethodData(MappingDataContainer builder, Map<String, ClassMetadata> classMetadataMap, MethodMetadata startingMethodMeta) {
+        MethodMetadata currentMethodMeta = startingMethodMeta;
+        MappingDataContainer.MethodData currentMethodData = null;
+        
+        // Continue only while we haven't found (populated) method data and we still have a parent method to traverse
+        while (currentMethodData == null && currentMethodMeta != null && currentMethodMeta.getParent().isPresent()) {
+            Reference parent = currentMethodMeta.getParent().get();
+
+            String parentOwner = getMojangName(parent.getOwner());
+            String parentName = getMojangName(parent.getName());
+            String parentDescriptor = getMojangName(parent.getDescriptor());
+
+            // Get the new method metadata so we can get the next parent
+            currentMethodMeta = MappingUtil.getMethodMetadata(classMetadataMap.get(parentOwner),
+                    parentName, parentDescriptor);
+
+            // Query the actual mapping data to see if the parent method has any javadocs or parameters
+            currentMethodData = Optional.ofNullable(builder.getClass(parentOwner))
+                    .map(c -> c.getMethod(parentName, parentDescriptor))
+                    .filter(m -> !m.getJavadoc().isEmpty() || m.getParameters().stream().anyMatch(p -> p.getJavadoc() != null || p.getName() != null))
+                    .orElse(null);
+        }
+
+        return currentMethodData;
     }
 
     private static String getMojangName(Named named) {
