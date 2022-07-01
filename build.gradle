@@ -21,7 +21,7 @@ repositories {
 
 dependencies {
     implementation gradleApi()
-    implementation 'de.undercouch:gradle-download-task:5.0.2'
+    implementation 'de.undercouch:gradle-download-task:5.1.0'
     implementation 'com.squareup.moshi:moshi:1.13.0'
     implementation 'net.minecraftforge:srgutils:0.4.9'
     implementation 'org.parchmentmc.feather:io-moshi:1.0.0.3'
