@@ -12,7 +12,6 @@ import org.parchmentmc.feather.mapping.*;
 import org.parchmentmc.feather.util.SimpleVersion;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.ParameterizedType;
@@ -24,6 +23,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.parchmentmc.compass.storage.io.enigma.EnigmaWriter.stripToMostInner;
 import static org.parchmentmc.compass.storage.io.enigma.EnigmaWriter.writeClass;
@@ -44,7 +44,7 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
     static final String METHOD = "METHOD";
     static final String PARAM = "ARG";
     static final String COMMENT = "COMMENT";
-    
+
     static final String VERSION_INFO_JSON = "info.json";
     static final String PACKAGES_DATA_JSON = "packages.json";
 
@@ -63,13 +63,6 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
 
     @Override
     public void write(VersionedMappingDataContainer data, Path base) throws IOException {
-        if (Files.exists(base)) {
-            // noinspection ResultOfMethodCallIgnored
-            Files.walk(base)
-                    .sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete);
-        }
         Files.createDirectories(base);
 
         // Write out version data
@@ -94,7 +87,44 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
 
         Set<String> visited = new HashSet<>();
 
-        // Write out classes
+        Files.walkFileTree(base, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                final String fileName = file.getFileName().toString();
+                if (file.getFileName().toString().endsWith('.' + extension)) {
+                    final String outerClassName = extractClassNameFromPath(base.relativize(file));
+                    final Set<String> classes = outerClassesToClasses.remove(outerClassName);
+
+                    if (classes != null) {
+                        // File corresponds to an outer class name, so overwrite contents and continue
+                        writeClassFile(file, data, outerClassName, visited, classes);
+                        return FileVisitResult.CONTINUE;
+                    }
+                } else if (base.relativize(file).getNameCount() == 1 && (VERSION_INFO_JSON.equals(fileName) || PACKAGES_DATA_JSON.equals(fileName))) {
+                    // Do not delete the version info and packages data JSONs
+                    return FileVisitResult.CONTINUE;
+                }
+                // Does not match a class, so delete
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                if (exc != null) {
+                    throw exc;
+                }
+                try (Stream<Path> stream = Files.list(dir)) {
+                    if (!stream.findAny().isPresent()) {
+                        // Empty directory, so delete
+                        Files.delete(dir);
+                    }
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        // Write out classes without existing files
         for (Map.Entry<String, Set<String>> entry : outerClassesToClasses.entrySet()) {
             final String outerClass = entry.getKey();
             final Set<String> classes = entry.getValue();
@@ -103,6 +133,28 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
 
             writeClassFile(mappingFile, data, outerClass, visited, classes);
         }
+    }
+
+    // Parameter is a relative path from base directory
+    private String extractClassNameFromPath(Path relativePath) {
+        StringBuilder builder = new StringBuilder();
+
+        for (Iterator<Path> iterator = relativePath.iterator(); iterator.hasNext(); ) {
+            Path part = iterator.next();
+            if (iterator.hasNext()) {
+                builder.append(part.toString()).append('/');
+            } else {
+                // Filename, so remove extension (and dot) if present and don't append separator
+                String filename = part.toString();
+                if (filename.endsWith(this.extension)) {
+                    // -1 to remove trailing dot (extension separator)
+                    filename = filename.substring(0, filename.length() - this.extension.length() - 1);
+                }
+                builder.append(filename);
+            }
+        }
+
+        return builder.toString();
     }
 
     private void writeClassFile(Path mappingFile, MappingDataContainer data, String outerClass, Set<String> visitedClasses, Set<String> classes) throws IOException {
@@ -166,8 +218,6 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
         Files.walkFileTree(base, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Objects.requireNonNull(file);
-                Objects.requireNonNull(attrs);
                 // Skip files not ending with the extension
                 if (!file.toString().endsWith(extension)) return FileVisitResult.CONTINUE;
 
