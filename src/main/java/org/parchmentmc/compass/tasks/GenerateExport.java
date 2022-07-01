@@ -31,10 +31,12 @@ import org.parchmentmc.feather.named.Named;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 public abstract class GenerateExport extends DefaultTask {
+    private static final String CONSTRUCTOR_METHOD_NAME = "<init>";
     private static final SingleFileDataIO IO = new SingleFileDataIO(new Moshi.Builder()
             .add(new MDCMoshiAdapter(true))
             .add(new SimpleVersionAdapter()).build(), "  ");
@@ -152,26 +154,50 @@ public abstract class GenerateExport extends DefaultTask {
 
     @Nullable
     private static MappingDataContainer.MethodData findParentMethodData(MappingDataContainer builder, Map<String, ClassMetadata> classMetadataMap, MethodMetadata startingMethodMeta) {
+        // Non-null only if the method is a constructor
+        // Since we only check for the same descriptor when looking at constructors, we store this once and reuse
+        String constructorDescriptor = CONSTRUCTOR_METHOD_NAME.equals(getMojangName(startingMethodMeta.getName()))
+                ? getMojangName(startingMethodMeta.getDescriptor())
+                : null;
+        
         MethodMetadata currentMethodMeta = startingMethodMeta;
         MappingDataContainer.MethodData currentMethodData = null;
         
-        // Continue only while we haven't found (populated) method data and we still have a parent method to traverse
-        while (currentMethodData == null && currentMethodMeta != null && currentMethodMeta.getParent().isPresent()) {
-            Reference parent = currentMethodMeta.getParent().get();
+        // Continue while we haven't found (populated) method data yet and we still have method meta to check
+        while (currentMethodData == null && currentMethodMeta != null) {
+            String parentOwner, parentName, parentDescriptor;
+            if (constructorDescriptor != null) {
+                // Special-case for constructors, which do not have override info in their metadata
+                // We match for a method with the same descriptor in their direct superclass instead
 
-            String parentOwner = getMojangName(parent.getOwner());
-            String parentName = getMojangName(parent.getName());
-            String parentDescriptor = getMojangName(parent.getDescriptor());
+                // Get the name of the superclass
+                final ClassMetadata parentOwnerMeta = Objects.requireNonNull(classMetadataMap.get(getMojangName(currentMethodMeta.getOwner())));
+                parentOwner = getMojangName(parentOwnerMeta.getSuperName());
+                parentName = CONSTRUCTOR_METHOD_NAME;
+                parentDescriptor = constructorDescriptor;
 
-            // Get the new method metadata so we can get the next parent
-            currentMethodMeta = MappingUtil.getMethodMetadata(classMetadataMap.get(parentOwner),
-                    parentName, parentDescriptor);
+                // We don't check here if the superclass constructor with same descriptor exists here,
+                // as that'll duplicate the checking done by the loop condition
+            } else {
+                if (!currentMethodMeta.getParent().isPresent()) {
+                    break; // Break out if there is no parent to check
+                }
+                Reference parent = currentMethodMeta.getParent().get();
+
+                parentOwner = getMojangName(parent.getOwner());
+                parentName = getMojangName(parent.getName());
+                parentDescriptor = getMojangName(parent.getDescriptor());
+            }
 
             // Query the actual mapping data to see if the parent method has any javadocs or parameters
             currentMethodData = Optional.ofNullable(builder.getClass(parentOwner))
                     .map(c -> c.getMethod(parentName, parentDescriptor))
                     .filter(m -> !m.getJavadoc().isEmpty() || m.getParameters().stream().anyMatch(p -> p.getJavadoc() != null || p.getName() != null))
                     .orElse(null);
+
+            // Get the new method metadata so we can get the next parent
+            currentMethodMeta = MappingUtil.getMethodMetadata(classMetadataMap.get(parentOwner),
+                    parentName, parentDescriptor);
         }
 
         return currentMethodData;
