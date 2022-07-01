@@ -9,9 +9,9 @@ public abstract class CompassExtension {
     public CompassExtension(final ProjectLayout layout) {
         getLauncherManifestURL().convention("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json");
         getProductionData().convention(layout.getProjectDirectory().dir("data"));
-        getProductionDataFormat().convention(MappingIOFormat.MDC_EXPLODED);
+        getProductionDataFormat().convention(MappingIOFormat.ENIGMA_EXPLODED);
         getStagingData().convention(layout.getProjectDirectory().dir("staging"));
-        getStagingDataFormat().convention(MappingIOFormat.MDC_EXPLODED);
+        getStagingDataFormat().convention(MappingIOFormat.ENIGMA_EXPLODED);
         getInputs().convention(layout.getProjectDirectory().dir("input"));
     }
 
