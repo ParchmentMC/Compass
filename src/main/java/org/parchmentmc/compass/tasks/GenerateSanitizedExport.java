@@ -35,6 +35,8 @@ public abstract class GenerateSanitizedExport extends GenerateExport {
         // Cascade parent methods first separately so that prefixes don't get applied multiple times
         builder.getClasses().forEach(clsData -> cascadeParentMethods(builder, classMetadataMap, clsData, classMetadataMap.get(clsData.getName())));
 
+        builder.getClasses().forEach(clsData -> copyRecordData(clsData, classMetadataMap.get(clsData.getName())));
+
         builder.getClasses().forEach(clsData -> {
             final ClassMetadata clsMeta = classMetadataMap.get(clsData.getName());
 

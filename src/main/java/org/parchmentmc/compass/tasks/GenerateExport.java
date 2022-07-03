@@ -1,5 +1,6 @@
 package org.parchmentmc.compass.tasks;
 
+import com.google.common.base.Strings;
 import com.squareup.moshi.Moshi;
 import net.minecraftforge.srgutils.IMappingFile;
 import org.gradle.api.DefaultTask;
@@ -25,15 +26,22 @@ import org.parchmentmc.feather.mapping.MappingDataContainer;
 import org.parchmentmc.feather.metadata.BouncingTargetMetadata;
 import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;
+import org.parchmentmc.feather.metadata.RecordMetadata;
 import org.parchmentmc.feather.metadata.Reference;
 import org.parchmentmc.feather.metadata.SourceMetadata;
+import org.parchmentmc.feather.metadata.WithName;
+import org.parchmentmc.feather.metadata.WithType;
 import org.parchmentmc.feather.named.Named;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public abstract class GenerateExport extends DefaultTask {
     private static final String CONSTRUCTOR_METHOD_NAME = "<init>";
@@ -72,6 +80,8 @@ public abstract class GenerateExport extends DefaultTask {
         final Map<String, ClassMetadata> classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
 
         builder.getClasses().forEach(clsData -> cascadeParentMethods(builder, classMetadataMap, clsData, classMetadataMap.get(clsData.getName())));
+
+        builder.getClasses().forEach(clsData -> copyRecordData(clsData, classMetadataMap.get(clsData.getName())));
 
         return builder;
     }
@@ -201,6 +211,68 @@ public abstract class GenerateExport extends DefaultTask {
         }
 
         return currentMethodData;
+    }
+    
+    protected static void copyRecordData(MappingDataBuilder.MutableClassData classData, @Nullable ClassMetadata classMeta) {
+        if (classMeta == null || !classMeta.isRecord()) return;
+        
+        // As per JLS, record class fields correspond 1-to-1 with record components, in the same order
+        final List<String> recordNames = classMeta.getRecords().stream()
+                .map(RecordMetadata::getField)
+                .map(WithName::getName)
+                .map(named -> named.getMojangName().orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        final Map<String, MappingDataBuilder.MutableFieldData> recordFields = recordNames.stream()
+                .map(classData::getField)
+                .filter(Objects::nonNull)
+                .filter(s -> !s.getJavadoc().isEmpty()) // Only record fields with javadocs
+                .collect(Collectors.toMap(MappingDataBuilder.MutableFieldData::getName, Function.identity()));
+        
+        if (recordFields.isEmpty()) return; // No fields with javadocs, so exit out early
+
+        final MappingDataBuilder.MutableMethodData canonicalConstructor = 
+                classData.getOrCreateMethod(CONSTRUCTOR_METHOD_NAME, createCanonicalConstructorDescriptor(classMeta));
+
+        for (int i = 0; i < recordNames.size(); i++) {
+            final String recordComponentName = recordNames.get(i);
+            final MappingDataBuilder.MutableFieldData recordField = recordFields.get(recordComponentName);
+
+            // Always define canonical constructor params
+            final MappingDataBuilder.MutableParameterData paramData = canonicalConstructor.createParameter((byte) (i + 1));
+            paramData.setName(recordComponentName);
+            
+            if (recordField == null) continue; // No field, no javadocs
+
+            // Canonical constructor javadoc
+            if (paramData.getJavadoc() == null) {
+                paramData.addJavadoc(recordField.getJavadoc());
+            }
+
+            // Class javadoc
+            final List<String> javadocs = new ArrayList<>(recordField.getJavadoc());
+            final String header = "@param " + recordComponentName + " ";
+            classData.addJavadoc("@param " + recordComponentName + " " + javadocs.remove(0));
+
+            final String spacePrefix = Strings.repeat(" ", header.length()); // Prefix remaining lines with spaces
+            for (String javadocLine : javadocs) {
+                if (!javadocLine.isEmpty()) {
+                    classData.addJavadoc(spacePrefix + javadocLine);
+                }
+            }
+        }
+    }
+
+    private static String createCanonicalConstructorDescriptor(ClassMetadata classMeta) {
+        final String params = classMeta.getRecords().stream()
+                .map(RecordMetadata::getField)
+                .map(WithType::getDescriptor)
+                .map(named -> named.getMojangName().orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(""));
+
+        return "(" + params + ")V";
     }
 
     private static String getMojangName(Named named) {
