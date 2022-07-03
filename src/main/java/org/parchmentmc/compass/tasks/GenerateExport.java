@@ -253,7 +253,7 @@ public abstract class GenerateExport extends DefaultTask {
             // Class javadoc
             final List<String> javadocs = new ArrayList<>(recordField.getJavadoc());
             final String header = "@param " + recordComponentName + " ";
-            classData.addJavadoc("@param " + recordComponentName + " " + javadocs.remove(0));
+            classData.addJavadoc(header + javadocs.remove(0));
 
             final String spacePrefix = Strings.repeat(" ", header.length()); // Prefix remaining lines with spaces
             for (String javadocLine : javadocs) {
