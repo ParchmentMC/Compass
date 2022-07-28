@@ -29,7 +29,7 @@ public final class DownloadUtil {
         return action;
     }
 
-    @SuppressWarnings({"deprecation", "UnstableApiUsage"})
+    @SuppressWarnings("deprecation")
     private static String sha1(File file) {
         try {
             // While Hashing#sha1 is deprecated in favor of SHA-256, we have to use it as the hashes we use
