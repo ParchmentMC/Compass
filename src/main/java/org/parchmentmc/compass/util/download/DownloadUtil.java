@@ -23,8 +23,8 @@ public final class DownloadUtil {
         action.dest(output);
         try {
             action.execute().join(); // Wait until download is finished
-        } catch (IOException e) {
-            throw new IOException("Exception while downloading " + info + " from " + action.getSrc(), e);
+        } catch (Exception e) {
+            throw new IOException("Exception while downloading " + info + " from " + action.getSrc() + " to " + output, e);
         }
         return action;
     }

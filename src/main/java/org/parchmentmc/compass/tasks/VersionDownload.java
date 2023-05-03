@@ -18,6 +18,7 @@ import org.parchmentmc.feather.manifests.VersionManifest;
 import java.io.File;
 import java.io.IOException;
 
+import static org.parchmentmc.compass.util.download.DownloadUtil.areNotChecksumsEqual;
 import static org.parchmentmc.compass.util.download.DownloadUtil.createAndExecuteAction;
 import static org.parchmentmc.compass.util.download.DownloadUtil.verifyChecksum;
 
@@ -63,9 +64,11 @@ public abstract class VersionDownload extends DefaultTask {
             throw new InvalidUserDataException("No download info for key " + key);
         }
 
-        DownloadAction action = createAndExecuteAction(getProject(), info.getUrl(), output, "download entry for key " + key);
-        verifyChecksum(output, info.getSHA1(), "download entry for key " + key);
+        if (!output.exists() || areNotChecksumsEqual(output, info.getSHA1())) {
+            DownloadAction action = createAndExecuteAction(getProject(), info.getUrl(), output, "download entry for key " + key);
+            verifyChecksum(output, info.getSHA1(), "download entry for key " + key);
 
-        setDidWork(!action.isUpToDate());
+            setDidWork(!action.isUpToDate());
+        }
     }
 }

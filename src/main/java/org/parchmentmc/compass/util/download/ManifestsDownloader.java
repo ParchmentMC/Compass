@@ -72,7 +72,9 @@ public class ManifestsDownloader {
             Directory outputDir = this.outputDirectory.get();
             File outputFile = outputDir.file("launcher.json").getAsFile();
 
-            createAndExecuteAction(project, manifestURL, outputFile, "launcher manifest");
+            if (!outputFile.exists()) {
+                createAndExecuteAction(project, manifestURL, outputFile, "launcher manifest");
+            }
 
             launcherManifestData = JSONUtil.parseLauncherManifest(outputFile.toPath());
         } catch (Exception e) {
