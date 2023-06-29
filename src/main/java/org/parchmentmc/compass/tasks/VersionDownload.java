@@ -11,7 +11,6 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
-import org.parchmentmc.compass.CompassExtension;
 import org.parchmentmc.compass.CompassPlugin;
 import org.parchmentmc.feather.manifests.VersionManifest;
 
@@ -26,12 +25,11 @@ public abstract class VersionDownload extends DefaultTask {
 
     public VersionDownload() {
         CompassPlugin plugin = getProject().getPlugins().getPlugin(CompassPlugin.class);
-        CompassExtension extension = getProject().getExtensions().getByType(CompassExtension.class);
 
         getManifest().convention(plugin.getManifestsDownloader().getVersionManifest());
         getDownloadKey().convention("client");
         getDestinationDirectory().convention(getProject().getLayout().getBuildDirectory().dir("downloads"));
-        getFileName().convention(extension.getVersion().zip(getDownloadKey(), (ver, key) -> ver + '-' + key + ".jar"));
+        getFileName().convention(getManifest().map(VersionManifest::getId).zip(getDownloadKey(), (ver, key) -> ver + '-' + key + ".jar"));
         output = getDestinationDirectory().file(getFileName());
     }
 
