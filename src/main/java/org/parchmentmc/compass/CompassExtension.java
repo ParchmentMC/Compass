@@ -35,10 +35,21 @@ public abstract class CompassExtension {
 
     public abstract DirectoryProperty getInputs();
 
+    /**
+     * The configuration for the data migration system.
+     *
+     * @return The configuration for the data migration system.
+     * @see #migration(Action)
+     */
     public MigrationConfiguration getMigration() {
         return this.migration;
     }
 
+    /**
+     * Configures the data migration system.
+     *
+     * @param configure The action or closure to configure the data migration system with.
+     */
     public void migration(Action<? super MigrationConfiguration> configure) {
         configure.execute(this.migration);
     }

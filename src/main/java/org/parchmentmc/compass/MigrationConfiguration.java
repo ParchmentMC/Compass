@@ -41,10 +41,20 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * The configuration for the data migration system.
+ *
+ * <p>The data migration system is only activated when the {@linkplain #getTargetVersion() target version} is provided
+ * with a version value. For confirmation and logging purposes, the versions used in the migration process is logged to
+ * the console.</p>
+ */
 public abstract class MigrationConfiguration {
     private static final Logger LOGGER = Logging.getLogger(MigrationConfiguration.class);
     public static final String JAMMER_CONFIGURATION_NAME = "jammer";
     private static final Splitter COMMA_SPLITTER = Splitter.on(',').trimResults();
+
+    private static final String TARGET_VERSION_PROPERTY = "migration-targetVersion";
+    private static final String EXCLUDED_VERSION_PROPERTY = "migration-excludedVersions";
 
     private final CompassExtension extension;
 
@@ -54,10 +64,10 @@ public abstract class MigrationConfiguration {
 
         // Any properties which configure this should be prefixed with "migration-"
         getTargetVersion()
-                .convention(providers.gradleProperty("migration-targetVersion"))
+                .convention(providers.gradleProperty(TARGET_VERSION_PROPERTY))
                 .finalizeValueOnRead();
         getExcludedVersions()
-                .convention(providers.gradleProperty("migration-excludedVersions")
+                .convention(providers.gradleProperty(EXCLUDED_VERSION_PROPERTY)
                         .map(COMMA_SPLITTER::split)
                         // By default, exclude the April Fools versions
                         // Note that Minecraft 2.0, despite being an April Fools version, was never published to the launcher
@@ -72,8 +82,33 @@ public abstract class MigrationConfiguration {
                 .finalizeValueOnRead();
     }
 
+    /**
+     * The target version for migrating the current data to. If this property is not configured, then the data
+     * migration system remains disabled and no tasks are registered or configured.
+     *
+     * <p>This version can be either forwards or backwards relative to the {@linkplain CompassExtension#getVersion()
+     * current version}, but it cannot be the same version as the current version.</p>
+     *
+     * <p>This can also be configured through the project property {@value TARGET_VERSION_PROPERTY}.</p>
+     *
+     * @return The target version for data migration
+     */
     public abstract Property<String> getTargetVersion();
 
+    /**
+     * The set of versions excluded from the migration process. This is useful for omitting versions which are distinct
+     * or unique from the regular version cycle, such as April Fools or experimental versions.
+     *
+     * <p>By default, the excluded versions are the April Fools versions: "15w14a", "1.RV-Pre1", "3D Shareware v1.34",
+     * "20w14infinite", "22w13oneblockatatime", and "23w13a_or_b". (Although there exists a "Minecraft 2.0" April Fools,
+     * it was never published to the launcher manifest and remains unavailable.)</p>
+     *
+     * <p>This can also be configured through the project property {@value EXCLUDED_VERSION_PROPERTY}, as a set of
+     * comma-separated values. The values from the project property override the default conventional values as stated
+     * above, so users will need to re-specify those versions if they wish to keep them excluded.</p>
+     *
+     * @return The set of versions excluded from the migration process.
+     */
     public abstract SetProperty<String> getExcludedVersions();
 
     // Below here lies implementation details
