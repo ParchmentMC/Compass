@@ -58,6 +58,6 @@ publishing {
     }
 }
 
-wrapper {
+tasks.named('wrapper', Wrapper) {
     distributionType = Wrapper.DistributionType.ALL
 }
