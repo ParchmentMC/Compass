@@ -53,7 +53,7 @@ public class CompassPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        final CompassExtension extension = project.getExtensions().create(COMPASS_EXTENSION, CompassExtension.class);
+        final CompassExtension extension = project.getExtensions().create(COMPASS_EXTENSION, CompassExtension.class, project);
         final TaskContainer tasks = project.getTasks();
 
         manifestsDownloader = new ManifestsDownloader(project);

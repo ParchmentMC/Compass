@@ -2,6 +2,7 @@ plugins {
     id 'org.parchmentmc.writtenbooks' version '0.+'
     id 'java-gradle-plugin'
     id 'maven-publish'
+    id 'groovy'
 }
 
 project.group = 'org.parchmentmc'
@@ -14,6 +15,10 @@ repositories {
     maven {
         name = 'MinecraftForge'
         url = 'https://maven.minecraftforge.net/'
+        metadataSources {
+            mavenPom()
+            gradleMetadata()
+        }
     }
     gradlePluginPortal()
     mavenCentral()
@@ -26,6 +31,9 @@ dependencies {
     implementation 'net.minecraftforge:srgutils:0.4.9'
     implementation 'org.parchmentmc.feather:io-moshi:1.0.0.3'
     implementation 'com.google.guava:guava:31.1-jre'
+
+    compileOnly 'net.minecraftforge:groovydslimprover:1.0.4'
+    implementation 'net.minecraftforge:groovydslimprover:1.0.4:runtime'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
@@ -43,7 +51,7 @@ java {
 
 gradlePlugin {
     // Define the plugin
-    plugins.register("compass") {
+    plugins.register('compass') {
         id = 'org.parchmentmc.compass'
         implementationClass = 'org.parchmentmc.compass.CompassPlugin'
     }
@@ -60,4 +68,9 @@ publishing {
 
 tasks.named('wrapper', Wrapper) {
     distributionType = Wrapper.DistributionType.ALL
+}
+
+tasks.withType(GroovyCompile).configureEach {
+    it.options.incremental = true
+    it.groovyOptions.optimizationOptions(['indy': true])
 }
