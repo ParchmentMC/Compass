@@ -158,9 +158,9 @@ public class CompassPlugin implements Plugin<Project> {
             t.setDescription("Promotes the staging data to production.");
             t.mustRunAfter(tasks.named(CREATE_STAGING_DATA_TASK_NAME));
             t.finalizedBy(clearStaging);
-            t.getInput().convention(extension.getStagingData());
+            t.getInputDirectory().convention(extension.getStagingData());
             t.getInputFormat().convention(extension.getStagingDataFormat());
-            t.getOutput().convention(extension.getProductionData());
+            t.getOutputDirectory().convention(extension.getProductionData());
             t.getOutputFormat().convention(extension.getProductionDataFormat());
         });
 
