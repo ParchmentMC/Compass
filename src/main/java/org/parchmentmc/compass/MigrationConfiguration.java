@@ -58,19 +58,18 @@ public abstract class MigrationConfiguration {
                 .finalizeValueOnRead();
         getExcludedVersions()
                 .convention(providers.gradleProperty("migration-excludedVersions")
-                        .map(COMMA_SPLITTER::split))
+                        .map(COMMA_SPLITTER::split)
+                        // By default, exclude the April Fools versions
+                        // Note that Minecraft 2.0, despite being an April Fools version, was never published to the launcher
+                        .orElse(ImmutableSet.of(
+                                "15w14a",
+                                "1.RV-Pre1",
+                                "3D Shareware v1.34",
+                                "20w14infinite",
+                                "22w13oneblockatatime",
+                                "23w13a_or_b"
+                        )))
                 .finalizeValueOnRead();
-
-        // By default, exclude the April Fools versions
-        // Note that Minecraft 2.0, despite being an April Fools version, was never published to the launcher
-        getExcludedVersions().convention(ImmutableSet.of(
-                "15w14a",
-                "1.RV-Pre1",
-                "3D Shareware v1.34",
-                "20w14infinite",
-                "22w13oneblockatatime",
-                "23w13a_or_b"
-        ));
     }
 
     public abstract Property<String> getTargetVersion();
