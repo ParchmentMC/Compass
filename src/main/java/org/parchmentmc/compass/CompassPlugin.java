@@ -90,7 +90,6 @@ public class CompassPlugin implements Plugin<Project> {
         });
 
         Provider<IMappingFile> obfMapProvider = obfuscationMapsDownloader.getObfuscationMap();
-        // noinspection NullableProblems
         Provider<IMappingFile> officialMapProvider = obfMapProvider.map(IMappingFile::reverse);
 
         intermediates.add(new DelegatingProvider("obf", officialMapProvider.map(s -> s.chain(s.reverse()))));
