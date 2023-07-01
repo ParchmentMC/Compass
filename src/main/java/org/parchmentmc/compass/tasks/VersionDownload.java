@@ -5,6 +5,8 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFile;
+import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
@@ -14,6 +16,7 @@ import org.gradle.api.tasks.TaskAction;
 import org.parchmentmc.compass.CompassPlugin;
 import org.parchmentmc.feather.manifests.VersionManifest;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 
@@ -21,16 +24,18 @@ import static org.parchmentmc.compass.util.download.DownloadUtil.createAndExecut
 import static org.parchmentmc.compass.util.download.DownloadUtil.verifyChecksum;
 
 public abstract class VersionDownload extends DefaultTask {
-    private final Provider<RegularFile> output;
+    private final RegularFileProperty output;
 
-    public VersionDownload() {
+    @Inject
+    public VersionDownload(final ObjectFactory objects) {
         CompassPlugin plugin = getProject().getPlugins().getPlugin(CompassPlugin.class);
 
         getManifest().convention(plugin.getManifestsDownloader().getVersionManifest());
         getDownloadKey().convention("client");
         getDestinationDirectory().convention(getProject().getLayout().getBuildDirectory().dir("downloads"));
         getFileName().convention(getManifest().map(VersionManifest::getId).zip(getDownloadKey(), (ver, key) -> ver + '-' + key + ".jar"));
-        output = getDestinationDirectory().file(getFileName());
+        output = objects.fileProperty()
+                .convention(getDestinationDirectory().file(getFileName()));
     }
 
     @Input
