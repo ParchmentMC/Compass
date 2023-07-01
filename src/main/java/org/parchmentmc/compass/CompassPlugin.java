@@ -14,7 +14,12 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.parchmentmc.compass.providers.DelegatingProvider;
 import org.parchmentmc.compass.providers.IntermediateProvider;
 import org.parchmentmc.compass.providers.mcpconfig.SRGProvider;
-import org.parchmentmc.compass.tasks.*;
+import org.parchmentmc.compass.tasks.CopyData;
+import org.parchmentmc.compass.tasks.CreateStagingData;
+import org.parchmentmc.compass.tasks.DisplayMinecraftVersions;
+import org.parchmentmc.compass.tasks.GenerateExport;
+import org.parchmentmc.compass.tasks.SanitizeData;
+import org.parchmentmc.compass.tasks.ValidateData;
 import org.parchmentmc.compass.util.MappingUtil;
 import org.parchmentmc.compass.util.download.BlackstoneDownloader;
 import org.parchmentmc.compass.util.download.ManifestsDownloader;
@@ -119,6 +124,8 @@ public class CompassPlugin implements Plugin<Project> {
                 t.getInputFormat().set(extension.getStagingDataFormat());
             });
         });
+
+        extension.getMigration().setup(project, this);
     }
 
     private void createValidationTask(CompassExtension extension, TaskContainer tasks) {
