@@ -1,5 +1,6 @@
 package org.parchmentmc.compass;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.gradle.api.InvalidUserDataException;
@@ -12,6 +13,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
@@ -42,15 +44,22 @@ import java.util.stream.Stream;
 public abstract class MigrationConfiguration {
     private static final Logger LOGGER = Logging.getLogger(MigrationConfiguration.class);
     public static final String JAMMER_CONFIGURATION_NAME = "jammer";
+    private static final Splitter COMMA_SPLITTER = Splitter.on(',').trimResults();
 
     private final CompassExtension extension;
 
     @Inject
-    public MigrationConfiguration(final CompassExtension extension) {
+    public MigrationConfiguration(final CompassExtension extension, final ProviderFactory providers) {
         this.extension = extension;
 
-        getTargetVersion().finalizeValueOnRead();
-        getExcludedVersions().finalizeValueOnRead();
+        // Any properties which configure this should be prefixed with "migration-"
+        getTargetVersion()
+                .convention(providers.gradleProperty("migration-targetVersion"))
+                .finalizeValueOnRead();
+        getExcludedVersions()
+                .convention(providers.gradleProperty("migration-excludedVersions")
+                        .map(COMMA_SPLITTER::split))
+                .finalizeValueOnRead();
 
         // By default, exclude the April Fools versions
         // Note that Minecraft 2.0, despite being an April Fools version, was never published to the launcher
