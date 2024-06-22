@@ -22,6 +22,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,8 +31,10 @@ import static org.parchmentmc.compass.storage.io.enigma.EnigmaWriter.writeClass;
 import static org.parchmentmc.feather.mapping.MappingDataContainer.ClassData;
 
 public class EnigmaFormattedExplodedIO implements MappingDataIO {
-    public static final EnigmaFormattedExplodedIO INSTANCE = new EnigmaFormattedExplodedIO(JSONUtil.MOSHI,
-            "    ", "mapping");
+    public static final EnigmaFormattedExplodedIO LENGTH_SORT_INSTANCE = new EnigmaFormattedExplodedIO(JSONUtil.MOSHI,
+            "    ", "mapping", true);
+    public static final EnigmaFormattedExplodedIO LEXICOGRAPHIC_SORT_INSTANCE = new EnigmaFormattedExplodedIO(JSONUtil.MOSHI,
+            "    ", "mapping", false);
 
     static final CharMatcher DOLLAR_SIGN = CharMatcher.is('$');
     static final String DOLLAR_SIGN_REGEX = "\\$";
@@ -54,11 +57,15 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
     private final Moshi moshi;
     private final String jsonIndent;
     private final String extension;
+    // Whether to manually sort inner classes by inner class name length then lexicographically
+    // If false, then sorting is lexicographically by the entire inner class FQN
+    private final boolean lengthSort;
 
-    public EnigmaFormattedExplodedIO(Moshi moshi, String jsonIndent, String extension) {
+    public EnigmaFormattedExplodedIO(Moshi moshi, String jsonIndent, String extension, boolean lengthSort) {
         this.moshi = moshi;
         this.jsonIndent = jsonIndent;
         this.extension = extension;
+        this.lengthSort = lengthSort;
     }
 
     @Override
@@ -79,11 +86,14 @@ public class EnigmaFormattedExplodedIO implements MappingDataIO {
         }
 
         // Group classes by their outermost classes (via `$` matching)
+        final Supplier<Set<String>> setCreator = lengthSort
+                ? () -> new TreeSet<>(EnigmaFormattedExplodedIO::compareClassNames)
+                : TreeSet::new;
         final Map<String, Set<String>> outerClassesToClasses = data.getClasses().stream()
                 .map(ClassData::getName)
                 .sorted()
                 .collect(Collectors.groupingBy(EnigmaWriter::stripToOuter,
-                        Collectors.toCollection(() -> new TreeSet<>(EnigmaFormattedExplodedIO::compareClassNames))));
+                        Collectors.toCollection(setCreator)));
 
         Set<String> visited = new HashSet<>();
 

@@ -9,7 +9,9 @@ import java.nio.file.Path;
 public enum MappingIOFormat implements MappingDataIO {
     MDC_SINGLE(true, SingleFileDataIO.INSTANCE),
     MDC_EXPLODED(false, ExplodedDataIO.INSTANCE),
-    ENIGMA_EXPLODED(false, EnigmaFormattedExplodedIO.INSTANCE);
+    ENIGMA_EXPLODED(false, EnigmaFormattedExplodedIO.LENGTH_SORT_INSTANCE),
+    ENIGMA_EXPLODED_LENGTH_SORT(false, EnigmaFormattedExplodedIO.LENGTH_SORT_INSTANCE),
+    ENIGMA_EXPLODED_LEXICOGRAPHIC_SORT(false, EnigmaFormattedExplodedIO.LEXICOGRAPHIC_SORT_INSTANCE);
 
     private final boolean fileBased;
     private final MappingDataIO dataIO;
