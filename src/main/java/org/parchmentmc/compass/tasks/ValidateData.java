@@ -22,7 +22,6 @@ import org.parchmentmc.compass.data.validation.impl.MemberExistenceValidator;
 import org.parchmentmc.compass.data.validation.impl.LambdaValidator;
 import org.parchmentmc.compass.data.validation.impl.MethodStandardsValidator;
 import org.parchmentmc.compass.data.validation.impl.ParameterConflictsValidator;
-import org.parchmentmc.compass.data.validation.impl.ParameterIndexValidator;
 import org.parchmentmc.compass.data.validation.impl.ParameterStandardsValidator;
 import org.parchmentmc.compass.data.validation.impl.RecordValidator;
 import org.parchmentmc.compass.data.validation.impl.SyntheticValidator;
@@ -69,7 +68,6 @@ public abstract class ValidateData extends DefaultTask implements VerificationTa
         validators.add(new SyntheticValidator());
         validators.add(new MethodStandardsValidator());
         validators.add(new ParameterConflictsValidator());
-        validators.add(new ParameterIndexValidator());
         validators.add(new RecordValidator());
         validators.add(new MemberExistenceValidator());
     }
