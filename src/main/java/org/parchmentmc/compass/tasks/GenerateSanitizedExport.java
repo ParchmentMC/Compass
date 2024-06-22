@@ -7,10 +7,15 @@ import org.parchmentmc.feather.mapping.MappingDataBuilder;
 import org.parchmentmc.feather.mapping.MappingDataContainer;
 import org.parchmentmc.feather.metadata.ClassMetadata;
 import org.parchmentmc.feather.metadata.MethodMetadata;
+import org.parchmentmc.feather.metadata.RecordMetadata;
 import org.parchmentmc.feather.metadata.SourceMetadata;
+import org.parchmentmc.feather.metadata.WithType;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public abstract class GenerateSanitizedExport extends GenerateExport {
     public GenerateSanitizedExport() {
@@ -31,6 +36,7 @@ public abstract class GenerateSanitizedExport extends GenerateExport {
         final boolean skipAnonClasses = getSkipAnonymousClassParameters().get();
 
         final Map<String, ClassMetadata> classMetadataMap = MappingUtil.buildClassMetadataMap(metadata);
+        final Map<String, String> recordClassesToCanonicalDescriptors = new HashMap<>();
 
         // Cascade parent methods first separately so that prefixes don't get applied multiple times
         builder.getClasses().forEach(clsData -> cascadeParentMethods(builder, classMetadataMap, clsData, classMetadataMap.get(clsData.getName())));
@@ -48,12 +54,19 @@ public abstract class GenerateSanitizedExport extends GenerateExport {
                 // Simple heuristic; if it starts with `lambda$`, it's a lambda.
                 boolean lambda = (methodMeta != null && methodMeta.isLambda())
                         || (methodMeta == null && methodData.getName().startsWith("lambda$"));
+                
+                // Whether the current method is a canonical constructor for a record
+                boolean recordCanonical = clsMeta != null
+                        && clsMeta.isRecord()
+                        && methodData.getName().equals("<init>")
+                        && recordClassesToCanonicalDescriptors.computeIfAbsent(clsData.getName(), 
+                                s -> createCanonicalConstructor(clsMeta)).equals(methodData.getDescriptor());
 
                 methodData.getParameters().forEach(paramData -> {
                     if (paramData.getName() != null) {
                         if ((skipAnonClasses && anonClass) || (skipLambdas && lambda)) {
                             paramData.setName(null);
-                        } else {
+                        } else if (!recordCanonical) {
                             paramData.setName(paramPrefix + capitalize(paramData.getName()));
                         }
                     }
@@ -92,5 +105,16 @@ public abstract class GenerateSanitizedExport extends GenerateExport {
             }
         }
         return false;
+    }
+
+    private static String createCanonicalConstructor(ClassMetadata classMeta) {
+        final String params = classMeta.getRecords().stream()
+                .map(RecordMetadata::getField)
+                .map(WithType::getDescriptor)
+                .map(named -> named.getMojangName().orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(""));
+
+        return "(" + params + ")V";
     }
 }
