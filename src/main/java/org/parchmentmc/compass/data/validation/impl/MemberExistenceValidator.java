@@ -47,7 +47,7 @@ public class MemberExistenceValidator extends Validator {
     public boolean visitMethod(MappingDataContainer.ClassData classData, MappingDataContainer.MethodData methodData, 
                                @Nullable ClassMetadata classMetadata, @Nullable MethodMetadata methodMetadata) {
         if (methodMetadata == null) {
-            error("Class does not exist according to metadata");
+            error("Method does not exist according to metadata");
         }
         return false;
     }
