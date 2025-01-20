@@ -1,0 +1,53 @@
+on: [ push, workflow_dispatch ]
+
+name: Build
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 8
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build using Gradle
+        run: ./gradlew build
+
+  publish:
+    name: Publish
+    # Only publish on the main or dev branches
+    if: ${{ github.ref_name == 'main' || github.ref_name == 'dev' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 8
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build using Gradle
+        run: ./gradlew build
+
+      - name: Publish using Gradle
+        run: ./gradlew publish
+        env:
+          LDTTeamJfrogUsername: ${{ secrets.PUBLISHING_USERNAME }}
+          LDTTeamJfrogPassword: ${{ secrets.PUBLISHING_PASSWORD }}
