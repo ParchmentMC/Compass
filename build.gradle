@@ -25,15 +25,15 @@ repositories {
 
 dependencies {
     implementation gradleApi()
-    implementation 'de.undercouch:gradle-download-task:5.1.0'
-    implementation 'com.squareup.moshi:moshi:1.13.0'
-    implementation 'net.minecraftforge:srgutils:0.4.9'
+    implementation 'de.undercouch:gradle-download-task:5.6.0'
+    implementation 'com.squareup.moshi:moshi:1.15.2'
+    implementation 'net.minecraftforge:srgutils:0.5.4'
     implementation 'org.parchmentmc.feather:io-moshi:1.0.0.3'
-    implementation 'com.google.guava:guava:31.1-jre'
+    implementation 'com.google.guava:guava:33.4.0-jre'
     implementation 'net.fabricmc.unpick:unpick-format-utils:2.3.0'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.4'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.4'
 }
 
 test {
